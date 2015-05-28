@@ -1,0 +1,273 @@
+\documentclass[letterpaper]{erdc}
+\usepackage[all]{draftcopy}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{calc}
+\usepackage{verbatim}
+\usepackage{appendix}
+\usepackage{multirow}
+\usepackage[section]{placeins}
+\newtheorem{thm}{Theorem}[section]
+\graphicspath{{graphics/}{graphics/2dbox_pngs/},{graphics/saltdome_pngs/}{graphics/elder_pngs/}{graphics/saltpool3d_pngs/}{graphics/3dbox_pngs/}{graphics/henry2d_pngs/},{graphics/goswami_clement_pngs/}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%begin macros section from qfrkdg-macros
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%... cek macros ...
+%differential operators
+\newcommand{\grad}{\nabla}
+\newcommand{\del}{\nabla }
+\newcommand{\deld}{\nabla \cdot}
+\newcommand{\lap}{\Delta}
+%boldface in math mode
+\newcommand{\bm}[1]{\mbox{{\boldmath ${#1}$}}}
+% vectors and tensors
+\renewcommand{\vec}[1]{{\bf #1}}
+\newcommand{\gvec}[1]{\mbox{{\boldmath ${#1}$}}}
+\newcommand{\ten}[1]{\bar{\bm{#1}}}
+%derivatives
+\newcommand{\od}[2]{\frac{d {#1}}{d {#2}}}
+\newcommand{\ods}[2]{\frac{d^2{#1}}{d {{#2}^2}}}
+\newcommand{\pd}[2]{\frac{\partial {#1}}{\partial {#2}}}
+\newcommand{\pds}[2]{\frac{\partial^2{#1}}{\partial {{#2}^2}}}
+\newcommand{\pdsm}[3]{\frac{\partial^2{#1}}{\partial {#2}\,\partial {#3}}}
+%funtional analysis
+\newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\norm}[1]{\left\| #1 \right\|}
+\newcommand{\iprod}[2]{\left( #1, #2 \right)}
+\newcommand{\dprod}[2]{\left\langle #1, #2 \right\rangle}
+%real numbers
+\newcommand{\field}[1]{\mathbb{#1}}
+\newcommand{\R}{\field{R}}
+%funciton spaces
+\newcommand{\M}{\mathcal{M}}
+%.....variable of integration 
+\newcommand{\dx}{\, \mathrm{d}x} 
+\newcommand{\dy}{\, \mathrm{d}y} 
+\newcommand{\dz}{\, \mathrm{d}z} 
+\newcommand{\dA}{\, \mathrm{d}A} 
+\newcommand{\da}{\, \mathrm{d}a} 
+\newcommand{\dV}{\, \mathrm{d}V} 
+\newcommand{\dv}{\, \mathrm{d}v} 
+\newcommand{\dt}{\, \mathrm{d}t} 
+\newcommand{\ds}{\, \mathrm{d}s}
+\newcommand{\dtau}{\, \mathrm{d}\tau}
+\newcommand{\Th}{\mathcal{T}_\Delta}
+\newcommand{\wt}{\tilde{w}}
+\newcommand{\Wt}{\tilde{W}}
+%delimiters
+\newcommand{\pl}{\left(}
+\newcommand{\pr}{\right)}
+\newcommand{\sbl}{\left[}
+\newcommand{\sbr}{\right]}
+\newcommand{\dbl}{\left[\hspace{-0.05cm}\left[}
+\newcommand{\dbr}{\right]\hspace{-0.05cm}\right]}
+\newcommand{\cbl}{\left\{ }
+\newcommand{\cbr}{\right\} }
+\newcommand{\eqn}[1]{Equation \ref {eq:#1}}%mwf capitalized for chetn edits 12/11/07 
+\newcommand{\Eqn}[1]{Equation \ref {eq:#1}} 
+\newcommand{\eqnst}[2]{equations \ref{eq:#1} and \ref{eq:#2}} 
+\newcommand{\Eqnst}[2]{Equations \ref{eq:#1} and \ref{eq:#2}} 
+\newcommand{\eqns}[2]{equations \ref{eq:#1}--\ref{eq:#2}} 
+\newcommand{\Eqns}[2]{Equations \ref{eq:#1}--\ref{eq:#2}}
+\newcommand{\msection}[1]{ \vspace{.2in} {\noindent \bf #1}.}
+\newcommand{\for}{\mbox{for}\quad}
+\newcommand{\argmin}{\mbox{argmin}}
+\newcommand{\argmax}{\mbox{argmax}}
+\newcommand{\fig}[1]{figure \ref{fig:#1}} 
+\newcommand{\Fig}[1]{Figure \ref{fig:#1}} 
+\newcommand{\figst}[2]{figures \ref {fig:#1} and \ref {fig:#2}} 
+\newcommand{\Figst}[2]{Figures \ref {fig:#1} and \ref {fig:#2}} 
+\newcommand{\figs}[2]{figures \ref{fig:#1}--\ref{fig:#2}} 
+\newcommand{\Figs}[2]{Figures \ref{fig:#1}--\ref{fig:#2}}
+\newcommand{\tab}[1]{table \ref {tab:#1}} 
+\newcommand{\Tab}[1]{Table \ref {tab:#1}} 
+\newcommand{\tabst}[2]{tables \ref {tab:#1} and \ref {tab:#2}} 
+\newcommand{\Tabst}[2]{Tables \ref {tab:#1} and \ref {tab:#2}} 
+\newcommand{\tabs}[2]{tables \ref{tab:#1}--\ref{tab:#2}} 
+\newcommand{\Tabs}[2]{Tables \ref{tab:#1}--\ref{tab:#2}}
+\newtheorem{theorem}{Theorem}
+%%velocity                                                                                                                                                                                                            
+\newcommand{\vel}{\gvec{\sigma}}
+\newenvironment{neqnarray}[1]{\begin{minipage}[t]{6.5in}  \begin{minipage}[b]{1.0in} #1 \end{minipage}  \begin{minipage}[b]{5.5in}\begin{eqnarray}}{\end{eqnarray}\end{minipage}\end{minipage}}
+\newcommand{\bneqnarray}[2]{\\ \\ \fbox{\begin{neqnarray}{#1} #2 \end{neqnarray}}\\ \\ \noindent}
+
+%element
+\newcommand{\elem}{\Omega}
+%element boundary (ind. of element)
+%\newcommand{\face}{\partial \Omega}
+\newcommand{\face}{\gamma}
+%mesh nodes
+\newcommand{\node}{\vec x}
+%node star
+\newcommand{\nodestar}[1]{\mathcal{E}({#1})}
+%faces in element not on Neumann boundary
+\newcommand{\dirIntFaces}[1]{\mathcal{F}_{i,d}({#1})}
+%faces in element not on physical boundary
+\newcommand{\intFaces}[1]{\mathcal{F}_{i}({#1})}
+%nodes beloging to an element
+\newcommand{\elemnodes}[1]{\mathcal{N}({#1})}
+%nodes beloging to an element boundary
+\newcommand{\facenodes}[1]{\mathcal{N}({#1})}
+%left and right elements at a face
+\newcommand{\lelem}{\Omega_{\ell}}
+\newcommand{\relem}{\Omega_{r}}
+%the left and right identifiers
+\newcommand{\eleft}[1]{e_{\ell}({#1})}
+\newcommand{\eright}[1]{e_{r}({#1})}
+%local numbering on nodestars
+\newcommand{\elemstar}{e^{\ast}}
+\newcommand{\estarleft}[1]{e^{\ast}_{\ell}({#1})}
+\newcommand{\estarright}[1]{e^{\ast}_{r}({#1})}
+%left and right normals to face
+\newcommand{\lnormal}{\vec{n}_{\ell}}
+\newcommand{\rnormal}{\vec{n}_{r}}
+%unique normal on face
+\newcommand{\fnormal}{\vec{n}_{f}}
+%local indeces on left and right
+\newcommand{\ileft}{i_{\ell}}
+\newcommand{\iright}{i_{r}}
+%jump operator
+%mwf orig
+%\newcommand{\jump}[1]{\dbl #1 \dbr}
+%\newcommand{\jump}[2][-0.075cm]{\left[\hspace{#1} \left[ #2 \right]\hspace{#1} \right]}
+\newcommand{\jump}[2][\!]{\left[ #1 \left[ #2 \right]#1 \right]}
+%multiscale formalism
+\newcommand{\strongRes}{\mathcal{R}}
+\newcommand{\Lop}{\mathcal{L}}
+\newcommand{\LopStar}{\mathcal{L}^{\ast}}
+\newcommand{\Ls}{\mathcal{L}_s}
+\newcommand{\LsStar}{\mathcal{L}_s^{\ast}}
+\newcommand{\LsStarApprox}{\mathcal{L}^{\ast}_{s,h}}
+\newcommand{\LsHat}{\hat{\mathcal{L}}_s}
+%richards equation stuff
+\newcommand{\psk}{$p$-$s$-$k$}
+
+%tables and display convenience
+\newcommand{\tx}[1]{\times 10^{#1}}
+%... any local macros necessary
+%element identifier
+\newcommand{\E}{\mathcal{E}}
+%ref. element identifier
+\newcommand{\hE}{\hat{\E}}
+%ref. edge identifier
+\newcommand{\he}{\hat{e}}
+%triangulation
+\newcommand{\Mh}{\mathcal{M}^h}
+%shape function on element boundary
+\newcommand{\eN}{\tilde{N}}
+%d-1 reference element shape function
+\newcommand{\heN}{\widehat{\tilde{N}}}
+%for matrices
+\newfont {\matFont}{cmssbx10 at 12 pt} 
+\newcommand{\mat}[1]{\hbox  {\matFont #1}}
+%reference element integration d's
+\newcommand{\dxh}{\, \mathrm{d}\hat{x}\mathrm{d}\hat{y}}
+\newcommand{\dsh}{\, \mathrm{d}\hat{s}}
+\newcommand{\dth}{\, \mathrm{d}\hat{t}}
+\newcommand{\ptab}{\hspace*{12pt}}
+
+% Space functions
+\newcommand{\wDel}{w_\Delta}
+\newcommand{\delw}{\delta w}
+\newcommand{\vDel}{v_\Delta}
+\newcommand{\delv}{\delta v}
+\newcommand{\uDel}{u_\Delta}
+\newcommand{\delu}{\delta u}
+
+\begin{document}
+
+\frontmatter
+
+\laboratory{Coastal and Hydraulics Laboratory}
+
+\reportnum{ERDC/CHL TR-00-00}
+
+\program{HPCMP/Military Engineering 6.2}
+
+\title{Finite Element Methods for Variable Density Flows}
+
+\author{T. J. Povich}
+
+\affiliation{Department of Mathematical Sciences \\
+United States Military Academy\\
+West Point, NY 10996}
+
+\author{C. N. Dawson}
+
+\affiliation{Computational Hydraulics Group \\
+1 University Station, C0200 \\
+The University of Texas at Austin \\
+Austin, TX 78712}
+
+\author{M. W. Farthing \and C. E. Kees}
+
+\affiliation{Coastal and Hydraulics Laboratory\\
+  U.S. Army Engineer Research and Development Center\\
+  3909 Halls Ferry Road\\
+  Vicksburg, MS 39180-6199}
+
+\coverart{coetr_gc_frontpage.pdf}
+%
+%rough bottom
+%
+
+\reporttype{Final Report}
+
+% \distribution{Distribution authorized to U.S. Government Agencies
+% only; Test and Evaluation; November 2005.  Other requests should be
+% referred to U.S. Army Engineer Research and Development Center}
+
+%\additionalinfo{Supersedes ERDC/CREL AF-01-23}
+
+\begin{abstract}
+ Saltwater intrusion into coastal freshwater aquifers is an ongoing problem that will continue to impact coastal freshwater resources as coastal populations increase.   To effectively model saltwater intrusion, the impacts of  salt content on fluid density must be accounted for to properly model saltwater/freshwater transition zones and sharp interfaces.  We present a model for variable density fluid flow and solute transport where a conforming finite element method discretization with a locally conservative velocity post-processing method is used for the flow model and a variational multi-scale stabilized conforming finite element method is used for transport.   This formulation provides a consistent velocity and performs well even in advection-dominated problems that can occur in saltwater intrusion modeling. The physical model is presented as well as the formulation of the numerical model and solution methods. The model is tested against several 2D and 3D numerical and experimental benchmark problems and the results are presented to verify the code. 
+\end{abstract}
+
+%\disclaimer{Some other disclaimer}
+%\preparedfor{U.S. Army Engineer Research and Development Center\\
+% 3909 Halls Ferry Road, Vicksburg, MS 39180-6199} 
+
+\contractnum{PP-EQM-KY01-001-P3, DD2DK8}
+
+%\monitoredby{U.S. Army Engineer Research and Development Center\\
+%  3909 Halls Ferry Road, Vicksburg, MS 39180-6199}
+
+%\preparedfor{}
+
+\maketitle
+\setcounter{tocdepth}{1}
+\tableofcontents
+
+\listoffiguresandtables
+%\listoffigures
+%
+\chapter{Preface}
+
+This report is a product of the User Productivity Enhancement,
+Technology Transfer, and Training (PETTT) Program in the Environmental
+Quality Modeling (EQM) computational technology area of the Department
+of Defense High Performance Computing Modernization Office and of the
+Multiscale and Fluid-Structure Interaction work unit of the ERDC
+Military Engineering 6.2 program. The report was prepared by LTC
+Timothy Povich and Dr. Clint Dawson of the Institute for Computational
+Engineering and Science at the University of Texas, Austin and by
+Drs. Christopher E. Kees and Matthew W. Farthing of the Hydrologic
+Systems Branch.  General supervision was provided by Dr. William
+D. Martin, Director, CHL; Dr. Charles A. Randall was the project
+manager for this eﬀort. Dr. David A. Horner was the Technical
+Director. COL Kevin J. Wilson was Commander and Executive Director of
+the Engineer Research and Development Center. Dr. Jeffrey P. Holland
+was Director.
+
+\mainmatter
+
+
+\bibliographystyle{chicago}
+\bibliography{ps.bib}
+\appendix
+%\input{GWVD_COETR_Consistent_Velocity_Appendix}
+%\input{GWVD_COETR_Velocity_Postprocessing_Appendix}
+%input{GWVD_COETR_variational_multiscale_appendix}
+
+\end{document}
