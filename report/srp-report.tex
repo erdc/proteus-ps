@@ -1,0 +1,108 @@
+\documentclass[letterpaper]{erdc}
+\usepackage[all]{draftcopy}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{calc}
+\usepackage{verbatim}
+\usepackage{appendix}
+\usepackage{multirow}
+\usepackage[section]{placeins}
+\newtheorem{thm}{Theorem}[section]
+\graphicspath{{graphics/}{graphics/2dbox_pngs/},{graphics/saltdome_pngs/}{graphics/elder_pngs/}{graphics/saltpool3d_pngs/}{graphics/3dbox_pngs/}{graphics/henry2d_pngs/},{graphics/goswami_clement_pngs/}}
+
+\include{include}
+
+\begin{document}
+
+\frontmatter
+
+\laboratory{Coastal and Hydraulics Laboratory}
+\reportnum{ERDC/CHL TR-00-00}
+\program{HPCMP/Military Engineering 6.2}
+
+\title{Finite Element Methods for Variable Density Flows}
+
+\author{S. R. Patty}
+\affiliation{Department of Mathematics \\
+Texas A\& M University\\
+College Station, TX 77843-3368}
+
+\author{C. N. Dawson}
+\affiliation{Computational Hydraulics Group \\
+1 University Station, C0200 \\
+The University of Texas at Austin \\
+Austin, TX 78712}
+
+\author{M. W. Farthing \and C. E. Kees}
+\affiliation{Coastal and Hydraulics Laboratory\\
+  U.S. Army Engineer Research and Development Center\\
+  3909 Halls Ferry Road\\
+  Vicksburg, MS 39180-6199}
+
+\coverart{coetr_gc_frontpage.pdf}
+%
+%rough bottom
+%
+
+\reporttype{Final Report}
+
+% \distribution{Distribution authorized to U.S. Government Agencies
+% only; Test and Evaluation; November 2005.  Other requests should be
+% referred to U.S. Army Engineer Research and Development Center}
+
+%\additionalinfo{Supersedes ERDC/CREL AF-01-23}
+
+\begin{abstract}
+ Saltwater intrusion into coastal freshwater aquifers is an ongoing problem that will continue to impact coastal freshwater resources as coastal populations increase.   To effectively model saltwater intrusion, the impacts of  salt content on fluid density must be accounted for to properly model saltwater/freshwater transition zones and sharp interfaces.  We present a model for variable density fluid flow and solute transport where a conforming finite element method discretization with a locally conservative velocity post-processing method is used for the flow model and a variational multi-scale stabilized conforming finite element method is used for transport.   This formulation provides a consistent velocity and performs well even in advection-dominated problems that can occur in saltwater intrusion modeling. The physical model is presented as well as the formulation of the numerical model and solution methods. The model is tested against several 2D and 3D numerical and experimental benchmark problems and the results are presented to verify the code. 
+\end{abstract}
+
+%\disclaimer{Some other disclaimer}
+%\preparedfor{U.S. Army Engineer Research and Development Center\\
+% 3909 Halls Ferry Road, Vicksburg, MS 39180-6199} 
+
+\contractnum{PP-EQM-KY01-001-P3, DD2DK8}
+
+%\monitoredby{U.S. Army Engineer Research and Development Center\\
+%  3909 Halls Ferry Road, Vicksburg, MS 39180-6199}
+
+%\preparedfor{}
+
+\maketitle
+\setcounter{tocdepth}{1}
+\tableofcontents
+
+\listoffiguresandtables
+%\listoffigures
+%
+\chapter{Preface}
+
+This report is a product of the User Productivity Enhancement,
+Technology Transfer, and Training (PETTT) Program in the Environmental
+Quality Modeling (EQM) computational technology area of the Department
+of Defense High Performance Computing Modernization Office and of the
+Multiscale and Fluid-Structure Interaction work unit of the ERDC
+Military Engineering 6.2 program. The report was prepared by LTC
+Timothy Povich and Dr. Clint Dawson of the Institute for Computational
+Engineering and Science at the University of Texas, Austin and by
+Drs. Christopher E. Kees and Matthew W. Farthing of the Hydrologic
+Systems Branch.  General supervision was provided by Dr. William
+D. Martin, Director, CHL; Dr. Charles A. Randall was the project
+manager for this eﬀort. Dr. David A. Horner was the Technical
+Director. COL Kevin J. Wilson was Commander and Executive Director of
+the Engineer Research and Development Center. Dr. Jeffrey P. Holland
+was Director.
+
+\mainmatter
+
+\chapter{Introduction}
+
+
+\bibliographystyle{chicago}
+\bibliography{ps.bib}
+\appendix
+%\input{GWVD_COETR_Consistent_Velocity_Appendix}
+%\input{GWVD_COETR_Velocity_Postprocessing_Appendix}
+%input{GWVD_COETR_variational_multiscale_appendix}
+
+\end{document}
