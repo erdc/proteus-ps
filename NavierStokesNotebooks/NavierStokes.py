@@ -5,26 +5,92 @@ This module contains the coefficients classes for various NavierStokes equation 
 
 from proteus.iproteus import TransportCoefficients
 
+class MassTransport(TransportCoefficients.TC_base):
+    r"""
+    The coefficients for conservative mass transport
+
+    Conservation of mass is given by
+
+    .. math::
+
+       \frac{\partial\rho}{\partial t}+\nabla\cdot\left(\rho\mathbf{v}\right)=0
+    """
+    def __init__(self,velocityModelIndex=-1, velocityFunction=None):
+        """Construct a coefficients object
+
+        :param velocityModelIndex: The index into the proteus model list
+
+        :param velocityFunction: A function taking as input an array of spatial
+        locations :math: `x`, time :math: `t`, and velocity :math: `v`, setting
+        the velocity parameter as a side effect.
+
+        TODO: decide how the parameters interact. I think velocityFunction
+        should override the velocity from another model
+
+        """
+        TransportCoefficients.TC_base.__init__(self,
+                                               nc = 1,
+                                               variableNames = ['rho'],
+                                               mass = {0:{0:'linear'}},
+                                               advection = {0:{0:'linear'}})
+        self.velocityModelIndex = velocityModelIndex
+        self.velocityFunction = velocityFunction
+        self.c_v = {}
+
+    def attachModels(self,modelList):
+        """
+        Attach the model for velocity
+        """
+        if self.velocityModelIndex >= 0:
+            assert self.velocityModelIndex < len(modelList), \
+                "velocity model index out of  range 0," + repr(len(modelList))
+            self.velocityModel = modelList[self.velocityModelIndex]
+            if ('velocity',0) in self.velocityModel.coefficients.q:
+                v = self.velocityModel.coefficients.q[('velocity',0)]
+                self.c_v[v.shape] = v
+            if ('velocity',0) in self.velocityModel.coefficients.ebq:
+                v = self.velocityModel.coefficients.ebq[('velocity',0)]
+                self.c_v[v.shape] = v
+            if ('velocity',0) in self.velocityModel.coefficients.ebqe:
+                v = self.velocityModel.coefficients.ebqe[('velocity',0)]
+                self.c_v[v.shape] = v
+            if ('velocity',0) in self.velocityModel.coefficients.ebq_global:
+                v = self.velocityModel.coefficients.ebq_global[('velocity',0)]
+                self.c_v[v.shape] = v
+
+    def evaluate(self,t,c):
+        """
+        Evaluate the coefficients after getting the specified velocity
+        """
+        if self.velocityFunction != None:
+            v = self.velocityFunction(c['x'],t)
+        else:#use flux shape as key since it is same shape as velocity
+            v = self.c_v[c[('f',0)].shape]
+        c[('m',0)][:] = c[('u',0)]
+        c[('dm',0,0)][:] = 1.0
+        c[('f',0)][...,0] = c[('u',0)]*v[...,0]
+        c[('f',0)][...,1] = c[('u',0)]*v[...,1]
+        c[('df',0,0)][:] = v
 
 class NavierStokes1D(TransportCoefficients.TC_base):
     r"""
     The coefficients of the 1D Navier Stokes equation
-    
+
     The compressible equations are given by
-    
-    .. math:: 
+
+    .. math::
        :nowrap:
-       
+
        \begin{align}
-         \nabla \cdot \mathbf{v}  &= r(x,t)\\ 
+         \nabla \cdot \mathbf{v}  &= r(x,t)\\
          \frac{\partial (\rho\mathbf{v})}{\partial t} + \nabla\cdot\left(\rho\mathbf{v}\otimes\mathbf{v}\right) +  \nabla p  - \nabla \cdot \left(\mu \nabla\mathbf{v}\right) &= \rho\mathbf{f}(x,t)
        \end{align}
-       
+
     with :math:`\rho` and :math:`\mu` the given density and viscosity as constants.
-     
+
     """
     def __init__(self,rofx,fofx,rho=1.0,mu=1.0):
-        TransportCoefficients.TC_base.__init__(self, 
+        TransportCoefficients.TC_base.__init__(self,
                          nc=2, #number of components
                          variableNames=['p','v'],
                          mass = {1:{1:'linear'}}, # du/dt
@@ -39,18 +105,18 @@ class NavierStokes1D(TransportCoefficients.TC_base):
         self.fofx=fofx
         self.rho=rho
         self.mu=mu
-        
+
     def evaluate(self,t,c):
         """
         evaluate quadrature point values held in the dictionary c
         These are labelled according to the 'master equation.' For example,
-         
+
         c[('a',0,0)] = diffusion coefficient for the 0th equation (first) with respect to the
                        0th potential (the solution itself)
                        The value at each quadrature point is a n_d x n_d tensor (n_d=number of space dimensions).
-                       Usually the tensor values are stored as a flat array in compressed sparse row format to save space. 
+                       Usually the tensor values are stored as a flat array in compressed sparse row format to save space.
                        By default, we assume the tensor is full though.
-                       
+
         c[('r',0)]   = reaction term for the 0th equation. This is where we will put the source term
         """
         p = c[('u',0)]
@@ -72,18 +138,18 @@ class NavierStokes1D(TransportCoefficients.TC_base):
         c[('dr',1,1)][:]  = 0.0#0
         c[('a',1,1)][...,0] = mu # -mu*\grad v
         c[('da',1,1,1)][...,0] = 0.0 # -d_(1/Re)
-        
+
 
 
 class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
     r"""
     The coefficients of the 2D Navier Stokes momentum equation with variable density.  This coefficient class
     will only represent the momentum equation and the incompressibility equation but not the conservation of mass.
-    
+
     For completeness we give them all and note that this class only represents the 2nd and 3rd equation.
     .. math::
        :nowrap:
-       
+
        \begin{equation}
        \begin{cases}
        \rho_t + \nabla\cdot(\rho\vb) = 0,&\\
@@ -91,28 +157,28 @@ class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
        \nabla \cdot \vb  = 0,&
        \end{cases}
        \end{equation}
-       
+
     where :math:`\rho>0` is the density, :math:`\mathbf{v}` is the velocity field,  :math:`p` is the pressure and :math:`\mu` is the dynamic
     viscosity which could depend on density :math:`\rho`.
-    
-    We solve this equation on a 2D disk :math:`\Omega=\{(x,y) \:|\: x^2+y^2<1\}` 
-    
+
+    We solve this equation on a 2D disk :math:`\Omega=\{(x,y) \:|\: x^2+y^2<1\}`
+
     """
     def __init__(self,rhoofx,f1ofx,f2ofx,mu=1.0):
-        
+
         sdInfo  = {(0,0):(numpy.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
                           numpy.array([0,1],dtype='i')),
                    (1,1):(numpy.array([0,1,2],dtype='i'),
                           numpy.array([0,1],dtype='i'))}
-        
-        TransportCoefficients.TC_base.__init__(self, 
+
+        TransportCoefficients.TC_base.__init__(self,
                          nc=2, #number of components
                          variableNames=['u','v','p'], # defines variable reference order [0, 1, 2]
                          mass = {0:{0:'linear'}, # du/dt
                                  1:{1:'linear'}}, # dv/dt
                          advection = {2:{0:'linear',   # \nabla\cdot [u v]
                                          1:'linear'}}, # \nabla\cdot [u v]
-                         hamiltonian = {0:{0:'nonlinear', # u u_x + v u_y    convection term   
+                         hamiltonian = {0:{0:'nonlinear', # u u_x + v u_y    convection term
                                            2:'linear'},   # p_x
                                         1:{1:'nonlinear', # u v_x + v v_y   convection term
                                            2:'linear'}},  # p_y
@@ -124,24 +190,24 @@ class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
                                       1:{1:'constant'}}, # f2(x)
                          sparseDiffusionTensors=sdInfo,
                          useSparseDiffusion = True),
-                        
-                
+
+
         self.rhoofx=rhoofx
         self.f1ofx=f1ofx
         self.f2ofx=f2ofx
         self.mu=mu
-        
+
     def evaluate(self,t,c):
         """
         evaluate quadrature point values held in the dictionary c
         These are labelled according to the 'master equation.' For example,
-         
+
         c[('a',0,0)] = diffusion coefficient for the 0th equation (first) with respect to the
                        0th potential (the solution itself)
                        The value at each quadrature point is a n_d x n_d tensor (n_d=number of space dimensions).
-                       Usually the tensor values are stored as a flat array in compressed sparse row format to save space. 
+                       Usually the tensor values are stored as a flat array in compressed sparse row format to save space.
                        By default, we assume the tensor is full though.
-                       
+
         c[('r',0)]   = reaction term for the 0th equation. This is where we will put the source term
         """
         xi=0; yi=1; # indices for first component or second component of dimension
@@ -153,7 +219,7 @@ class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
         grad_u = c[('grad(u)',ui)]
         grad_v = c[('grad(u)',vi)]
         grad_p = c[('grad(u)',pi)]
-        
+
         #equation eu = 0  rho*(u_t + u ux + v uy ) + px + div(-mu grad(u)) - f1 = 0
         c[('m',eu)][:] = rho*u  # d/dt ( rho * u) = d/dt (m_0)
         c[('dm',eu,ui)][:] = rho  # dm^0_du
@@ -163,7 +229,7 @@ class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
         c[('dH',eu,ui)][...,xi] = self.rhoofx(c['x'][:],t)*u #  dH d(u_x)
         c[('dH',eu,ui)][...,yi] = self.rhoofx(c['x'][:],t)*v #  dH d(u_y)
         c[('dH',eu,pi)][...,xi] = 1.0 #  dH/d(p_x)
-        c[('a',eu,ui)][...,0] = mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our 
+        c[('a',eu,ui)][...,0] = mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
         c[('a',eu,ui)][...,1] = mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
         c[('da',eu,ui,ui)][...,0] = 0.0 # -(da/d ui)_0   # could leave these off since it is 0
         c[('da',eu,ui,ui)][...,1] = 0.0 # -(da/d ui)_1   # could leave these off since it is 0
@@ -177,7 +243,7 @@ class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
         c[('dH',ev,vi)][...,xi] = self.rhoofx(c['x'][:],t)*u #  dH d(v_x)
         c[('dH',ev,vi)][...,yi] = self.rhoofx(c['x'][:],t)*v #  dH d(v_y)
         c[('dH',ev,pi)][...,yi] = 1.0 #  dH/d(p_y)
-        c[('a',ev,vi)][...,0] = mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our 
+        c[('a',ev,vi)][...,0] = mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
         c[('a',ev,vi)][...,1] = mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
         c[('da',ev,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
         c[('da',ev,vi,vi)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
@@ -189,5 +255,3 @@ class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
         c[('df',ediv,ui)][...,yi] = 0.0  # d_f_d_u [yi]
         c[('df',ediv,vi)][...,xi] = 0.0  # d_f_d_v [xi]
         c[('df',ediv,vi)][...,yi] = 1.0  # d_f_d_v [yi]
-        
-
