@@ -4,6 +4,7 @@ This module contains the coefficients classes for various NavierStokes equation 
 
 
 from proteus.iproteus import TransportCoefficients
+import numpy as np
 
 
 class NavierStokes1D(TransportCoefficients.TC_base):
@@ -75,7 +76,7 @@ class NavierStokes1D(TransportCoefficients.TC_base):
         
 
 
-class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
+class NavierStokes2D(TransportCoefficients.TC_base):
     r"""
     The coefficients of the 2D Navier Stokes momentum equation with variable density.  This coefficient class
     will only represent the momentum equation and the incompressibility equation but not the conservation of mass.
@@ -100,30 +101,34 @@ class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
     """
     def __init__(self,rhoofx,f1ofx,f2ofx,mu=1.0):
         
-        sdInfo  = {(0,0):(numpy.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
-                          numpy.array([0,1],dtype='i')),
-                   (1,1):(numpy.array([0,1,2],dtype='i'),
-                          numpy.array([0,1],dtype='i'))}
+        sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
+                          np.array([0,1],dtype='i')),
+                   (1,1):(np.array([0,1,2],dtype='i'),
+                          np.array([0,1],dtype='i'))}
+        dim=2; # dimension of space
+        xi=0; yi=1; # indices for first component or second component of dimension
+        eu=0; ev=1; ediv=2; # equation numbers  momentum u, momentum v, divergencefree
+        ui=0; vi=1; pi=2;  # variable name ordering
         
         TransportCoefficients.TC_base.__init__(self, 
-                         nc=2, #number of components
+                         nc=dim+1, #number of components  u, v, p
                          variableNames=['u','v','p'], # defines variable reference order [0, 1, 2]
-                         mass = {0:{0:'linear'}, # du/dt
-                                 1:{1:'linear'}}, # dv/dt
-                         advection = {2:{0:'linear',   # \nabla\cdot [u v]
-                                         1:'linear'}}, # \nabla\cdot [u v]
-                         hamiltonian = {0:{0:'nonlinear', # u u_x + v u_y    convection term   
-                                           2:'linear'},   # p_x
-                                        1:{1:'nonlinear', # u v_x + v v_y   convection term
-                                           2:'linear'}},  # p_y
-                         diffusion = {0:{1:{1:'constant'}},  # - \mu * \grad u
-                                      1:{2:{2:'constant'}}}, # - \mu * \grad v
-                         potential = {0:{0:'u'},
-                                      1:{1:'u'}}, # define the potential for the diffusion term to be the solution itself
-                         reaction  = {0:{0:'constant'}, # f1(x)
-                                      1:{1:'constant'}}, # f2(x)
+                         mass = {eu:{ui:'linear'}, # du/dt
+                                 ev:{vi:'linear'}}, # dv/dt
+                         advection = {ediv:{ui:'linear',   # \nabla\cdot [u v]
+                                            vi:'linear'}}, # \nabla\cdot [u v]
+                         hamiltonian = {eu:{ui:'nonlinear', # u u_x + v u_y    convection term   
+                                            pi:'linear'},   # p_x
+                                        ev:{vi:'nonlinear', # u v_x + v v_y   convection term
+                                            pi:'linear'}},  # p_y
+                         diffusion = {eu:{ui:{ui:'constant'}},  # - \mu * \grad u
+                                      ev:{vi:{vi:'constant'}}}, # - \mu * \grad v
+                         potential = {eu:{ui:'u'},
+                                      ev:{vi:'u'}}, # define the potential for the diffusion term to be the solution itself
+                         reaction  = {eu:{ui:'constant'}, # f1(x)
+                                      ev:{vi:'constant'}}, # f2(x)
                          sparseDiffusionTensors=sdInfo,
-                         useSparseDiffusion = True),
+                         useSparseDiffusion=True),
                         
                 
         self.rhoofx=rhoofx
