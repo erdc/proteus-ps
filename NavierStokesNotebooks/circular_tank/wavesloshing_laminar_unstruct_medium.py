@@ -7,7 +7,7 @@ import numpy as np
 
 #  Discretization -- input options
 
-Refinement = 32
+Refinement = 8
 genMesh=True
 useOldPETSc=False
 useSuperlu=True
@@ -60,7 +60,7 @@ elif spaceOrder == 2:
 
 # Domain and mesh
 
-L = (3.141 , 3.141)
+L = (1.0 , 1.0)
 he = L[0]/float(4*Refinement-1)
 #he*=0.5
 #he*=0.5
@@ -73,115 +73,6 @@ nLayersOfOverlapForParallel = 0
 structured=False
 #structured=True # Trying out a structured mesh
 
-class PointGauges(AV_base):
-    def  __init__(self,gaugeLocations={'pressure_1':(0.5,0.5,0.0)}):
-        AV_base.__init__(self)
-        self.locations=gaugeLocations
-        self.flags={}
-        self.files={}#will be opened  later
-        pointFlag=100
-        for name,point in self.locations.iteritems():
-            self.flags[name] = pointFlag
-            pointFlag += 1
-    def attachModel(self,model,ar):
-        self.model=model
-        self.vertexFlags = model.levelModelList[-1].mesh.nodeMaterialTypes
-        self.vertices = model.levelModelList[-1].mesh.nodeArray
-        #self.choose_dt=model.levelModelList[-1].timeIntegration.choose_dt
-        self.tt=model.levelModelList[-1].timeIntegration.t
-        self.p = model.levelModelList[-1].u[0].dof
-        self.u = model.levelModelList[-1].u[1].dof
-        self.v = model.levelModelList[-1].u[2].dof
-        return self
-    def attachAuxiliaryVariables(self,avDict):
-        return self
-    def calculate(self):
-        import numpy as  np
-        for name,flag  in self.flags.iteritems():
-            vnMask = self.vertexFlags == flag
-            if vnMask.any():
-                if not self.files.has_key(name):
-                    self.files[name] = open(name+'.txt','w')
-                self.files[name].write('%22.16e %22.16e %22.16e %22.16e  %22.16e  %22.16e\n' % (self.tt,self.vertices[vnMask,0],self.vertices[vnMask,1],self.p[vnMask],self.u[vnMask],self.v[vnMask]))
-
-class LineGauges(AV_base):
-    def  __init__(self,gaugeEndpoints={'pressure_1':((0.5,0.5,0.0),(0.5,1.8,0.0))},linePoints=10):
-        import numpy as  np
-        AV_base.__init__(self)
-        self.endpoints=gaugeEndpoints
-        self.flags={}
-        self.linepoints={}
-        self.files={}#while open later
-        pointFlag=1000
-        for name,(pStart,pEnd) in self.endpoints.iteritems():
-            self.flags[name] = pointFlag
-            p0 = np.array(pStart)
-            direction = np.array(pEnd) - p0
-            self.linepoints[name]=[]
-            for scale in np.linspace(0.0,1.0,linePoints):
-                self.linepoints[name].append(p0 + scale*direction)
-            pointFlag += 1
-    def attachModel(self,model,ar):
-        self.model=model
-        self.vertexFlags = model.levelModelList[-1].mesh.nodeMaterialTypes
-        self.vertices = model.levelModelList[-1].mesh.nodeArray
-        self.tt=model.levelModelList[-1].timeIntegration.t
-        self.p = model.levelModelList[-1].u[0].dof
-        self.u = model.levelModelList[-1].u[1].dof
-        self.v = model.levelModelList[-1].u[2].dof
-        return self
-    def attachAuxiliaryVariables(self,avDict):
-        return self
-    def calculate(self):
-        import numpy as  np
-        for name,flag  in self.flags.iteritems():
-            vnMask = self.vertexFlags == flag
-            if vnMask.any():
-                if not self.files.has_key(name):
-                    self.files[name] = open(name+'.txt','w')
-                for x,y,p,u,v in zip(self.vertices[vnMask,0],self.vertices[vnMask,1],self.p[vnMask],self.u[vnMask],self.v[vnMask]):
-                    self.files[name].write('%22.16e %22.16e %22.16e %22.16e  %22.16e  %22.16e\n' % (self.tt,x,y,p,u,v))
-
-class LineGauges_phi(AV_base):
-    def  __init__(self,gaugeEndpoints={'pressure_1':((0.5,0.5,0.0),(0.5,1.8,0.0))},linePoints=10):
-        import numpy as  np
-        AV_base.__init__(self)
-        self.endpoints=gaugeEndpoints
-        self.flags={}
-        self.linepoints={}
-        self.files={}#while open later
-        pointFlag=1000
-        for name,(pStart,pEnd) in self.endpoints.iteritems():
-            self.flags[name] = pointFlag
-            p0 = np.array(pStart)
-            direction = np.array(pEnd) - p0
-            self.linepoints[name]=[]
-            for scale in np.linspace(0.0,1.0,linePoints):
-                self.linepoints[name].append(p0 + scale*direction)
-            pointFlag += 1
-    def attachModel(self,model,ar):
-        self.model=model
-        self.vertexFlags = model.levelModelList[-1].mesh.nodeMaterialTypes
-        self.vertices = model.levelModelList[-1].mesh.nodeArray
-        self.tt= model.levelModelList[-1].timeIntegration.t
-        self.phi = model.levelModelList[-1].u[0].dof
-        return self
-    def attachAuxiliaryVariables(self,avDict):
-        return self
-    def calculate(self):
-        import numpy as  np
-        for name,flag  in self.flags.iteritems():
-            vnMask = self.vertexFlags == flag
-            if vnMask.any():
-                if not self.files.has_key(name):
-                    self.files[name] = open(name+'_phi.txt','w')
-                for x,y,phi in zip(self.vertices[vnMask,0],self.vertices[vnMask,1],self.phi[vnMask]):
-                    self.files[name].write('%22.16e %22.16e %22.16e %22.16e\n' % (self.tt,x,y,phi))
-
-pointGauges = PointGauges(gaugeLocations={'pointGauge_pressure':(L[0]/2.0,L[0]/2.0,0.0)})
-lineGauges  = LineGauges(gaugeEndpoints={'lineGauge_xtoH=0.825':((L[0]/2.0,0.0,0.0),(L[0]/2.0,L[1],0.0))},linePoints=20)
-lineGauges_phi  = LineGauges_phi(lineGauges.endpoints,linePoints=20)
-
 
 if useHex:
     nnx=4*Refinement+1
@@ -191,50 +82,41 @@ if useHex:
 else:
     boundaries=['left','right','bottom','top','front','back']
     boundaryTags=dict([(key,i+1) for (i,key) in enumerate(boundaries)])
-    if structured:
-        nnx=4*Refinement
-        nny=2*Refinement
-        domain = Domain.RectangularDomain(L)
-    else:
-        vertices=[[0.0,0.0],#0
-                  [L[0],0.0],#1
-                  [L[0],L[1]],#2
-                  [0.0,L[1]]]#3
-        vertexFlags=[boundaryTags['bottom'],
-                     boundaryTags['bottom'],
-                     boundaryTags['top'],
-                     boundaryTags['top']]
-        segments=[[0,1],
-                  [1,2],
-                  [2,3],
-                  [3,0]]
-        segmentFlags=[boundaryTags['bottom'],
-                      boundaryTags['right'],
-                      boundaryTags['top'],
-                      boundaryTags['left']]
-        regions=[[1.2 ,0.6]]
-        regionFlags=[1]
-        for gaugeName,gaugeCoordinates in pointGauges.locations.iteritems():
-            vertices.append(gaugeCoordinates)
-            vertexFlags.append(pointGauges.flags[gaugeName])
-        for gaugeName,gaugeLines in lineGauges.linepoints.iteritems():
-            for gaugeCoordinates in gaugeLines:
-                vertices.append(gaugeCoordinates)
-                vertexFlags.append(lineGauges.flags[gaugeName])
-        domain = Domain.PlanarStraightLineGraphDomain(vertices=vertices,
+    #
+    #set up a cicular domain
+    #
+    from math import pi, ceil, cos, sin
+    nvertices = nsegments = int(ceil(2.0*pi/he))
+    dtheta = 2.0*pi/float(nsegments)
+    vertices= []
+    vertexFlags = []
+    segments = []
+    segmentFlags = []
+    for i in range(nsegments):
+        theta = pi/2.0 - i*dtheta
+        vertices.append([0.5+cos(theta),0.5+sin(theta)])
+        if i in [nvertices-1,0,1]:
+            vertexFlags.append(boundaryTags['top'])
+        else:
+            vertexFlags.append(boundaryTags['bottom'])
+        segments.append([i,(i+1)%nvertices])
+        if i in [nsegments-1,0]:
+            segmentFlags.append(boundaryTags['top'])
+        else:
+            segmentFlags.append(boundaryTags['bottom'])
+    domain = Domain.PlanarStraightLineGraphDomain(vertices=vertices,
                                                       vertexFlags=vertexFlags,
                                                       segments=segments,
-                                                      segmentFlags=segmentFlags,
-                                                      regions=regions,
-                                                      regionFlags=regionFlags)
-        #go ahead and add a boundary tags member
-        domain.boundaryTags = boundaryTags
-        domain.writePoly("mesh")
-        domain.writePLY("mesh")
-        domain.writeAsymptote("mesh")
-        triangleOptions="VApq30Dena%8.8f" % ((he**2)/2.0,)
+                                                      segmentFlags=segmentFlags)
+    #go ahead and add a boundary tags member
+    domain.boundaryTags = boundaryTags
+    domain.writePoly("mesh")
+    #
+    #finished setting up circular domain
+    #
+    triangleOptions="VApq30Dena%8.8f" % ((he**2)/2.0,)
 
-        logEvent("""Mesh generated using: tetgen -%s %s"""  % (triangleOptions,domain.polyfile+".poly"))
+    logEvent("""Mesh generated using: tetgen -%s %s"""  % (triangleOptions,domain.polyfile+".poly"))
 # Time stepping
 T=10.0
 dt_fixed = 0.01
@@ -334,12 +216,12 @@ g = [0.0,-9.8]
 #water depth
 h=L[0]/2.0
 #amplitude
-A=2.0*L[0]/100.0
-
+A=2.0*L[0]/5.0
+from math import  pi
 def signedDistance(x):
-   d=abs(x[1] - h  - A * math.cos(x[0]))
+   d=abs(x[1] - h  - A * math.cos(pi*x[0]))
 
-   if x[1] < (h + A * math.cos(x[0])):
+   if x[1] < (h + A * math.cos(pi*x[0])):
        return - d
    else:
        return d
