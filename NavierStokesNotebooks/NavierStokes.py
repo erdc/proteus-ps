@@ -113,17 +113,17 @@ class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
                          advection = {2:{0:'linear',   # \nabla\cdot [u v]
                                          1:'linear'}}, # \nabla\cdot [u v]
                          hamiltonian = {0:{0:'nonlinear', # u u_x + v u_y    convection term   
-                                           2:'linear'},   # grad p
+                                           2:'linear'},   # p_x
                                         1:{1:'nonlinear', # u v_x + v v_y   convection term
-                                           2:'linear'}},  # grad (p)
+                                           2:'linear'}},  # p_y
                          diffusion = {0:{1:{1:'constant'}},  # - \mu * \grad u
                                       1:{2:{2:'constant'}}}, # - \mu * \grad v
                          potential = {0:{0:'u'},
                                       1:{1:'u'}}, # define the potential for the diffusion term to be the solution itself
                          reaction  = {0:{0:'constant'}, # f1(x)
-                                      1:{1:'constant'}}), # f2(x)
+                                      1:{1:'constant'}}, # f2(x)
                          sparseDiffusionTensors=sdInfo,
-                         useSparseDiffusion = True
+                         useSparseDiffusion = True),
                         
                 
         self.rhoofx=rhoofx
@@ -144,47 +144,50 @@ class NavierStokes2D_Momentum(TransportCoefficients.TC_base):
                        
         c[('r',0)]   = reaction term for the 0th equation. This is where we will put the source term
         """
-        xi=0; yi=1; ui=0; vi=1; pi=2;  # indices for better readability
-        p = c[('u',pi)]
+        xi=0; yi=1; # indices for first component or second component of dimension
+        eu=0; ev=1; ediv=2; # equation numbers  momentum u, momentum v, divergencefree
+        ui=0; vi=1; pi=2;  # variable name ordering
         u = c[('u',ui)]
         v = c[('u',vi)]
-        grad_p = c[('grad(u)',pi)]
+        p = c[('u',pi)]
         grad_u = c[('grad(u)',ui)]
         grad_v = c[('grad(u)',vi)]
-        #equation 0  rho*(u_t + u ux + v uy ) + px + div(-mu grad(u)) - f1 = 0
-        c[('m',ui)][:] = rho*u  # d/dt ( rho * u) = d/dt (m_0)
-        c[('dm',ui,ui)][:] = rho  # dm^0_du
-        c[('r',ui)][:] = -self.f1ofx(c['x'][:],t)
-        c[('dr',ui,ui)][:] = 0.0
-        c[('H',ui)][:] = grad_p[...,xi] + u*grad_u[...,xi] + v*grad_u[...,yi]  # add rho term
-        c[('dH',ui,ui)][...,xi] = u # 
-        c[('dH',ui,ui)][...,yi] = v # 
-        c[('dH',ui,pi)][...,xi] = 1.0 #  p_x
-        c[('a',ui,ui)][...,0] = mu # -mu*\grad v  tensor  [ mu  0;  0  mu]  [0 1; 2 3]  in our new notation is [0 .; . 1]
-        c[('a',ui,ui)][...,1] = mu # -mu*\grad v  
-        c[('da',ui,ui,ui)][...,0] = 0.0 # -(da/d ui)_0   # could leave these off since it is 0
-        c[('da',ui,ui,ui)][...,1] = 0.0 # -(da/d ui)_1   # could leave these off since it is 0
+        grad_p = c[('grad(u)',pi)]
+        
+        #equation eu = 0  rho*(u_t + u ux + v uy ) + px + div(-mu grad(u)) - f1 = 0
+        c[('m',eu)][:] = rho*u  # d/dt ( rho * u) = d/dt (m_0)
+        c[('dm',eu,ui)][:] = rho  # dm^0_du
+        c[('r',eu)][:] = -self.f1ofx(c['x'][:],t)
+        c[('dr',eu,ui)][:] = 0.0
+        c[('H',eu)][:] = grad_p[...,xi] + self.rhoofx(c['x'][:],t)*(u*grad_u[...,xi] + v*grad_u[...,yi])
+        c[('dH',eu,ui)][...,xi] = self.rhoofx(c['x'][:],t)*u #  dH d(u_x)
+        c[('dH',eu,ui)][...,yi] = self.rhoofx(c['x'][:],t)*v #  dH d(u_y)
+        c[('dH',eu,pi)][...,xi] = 1.0 #  dH/d(p_x)
+        c[('a',eu,ui)][...,0] = mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our 
+        c[('a',eu,ui)][...,1] = mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
+        c[('da',eu,ui,ui)][...,0] = 0.0 # -(da/d ui)_0   # could leave these off since it is 0
+        c[('da',eu,ui,ui)][...,1] = 0.0 # -(da/d ui)_1   # could leave these off since it is 0
 
-        # equation 1  rho*(v_t + u vx + v vy ) + py + div(-mu grad(v)) - f2 = 0
-        c[('m',vi)][:] = rho*v  # d/dt ( rho * v) = d/dt (m_1)
-        c[('dm',vi,vi)][:] = rho  # dm^1_dv
-        c[('r',vi)][:] = -self.f2ofx(c['x'][:],t)
-        c[('dr',vi,vi)][:] = 0.0
-        c[('H',vi)][:] = grad_p[...,xi] + u*grad_v[...,xi] + v*grad_v[...,yi]  # add rho term
-        c[('dH',vi,vi)][...,xi] = u # 
-        c[('dH',vi,vi)][...,yi] = v # 
-        c[('dH',vi,pi)][...,yi] = 1.0 #  p_y
-        c[('a',vi,vi)][...,0] = mu # -mu*\grad v  tensor  [ mu  0;  0  mu]  [0 1; 2 3]  in our new notation is [0 .; . 1]
-        c[('a',vi,vi)][...,1] = mu # -mu*\grad v  
-        c[('da',vi,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
-        c[('da',vi,vi,vi)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
+        # equation ev = 1  rho*(v_t + u vx + v vy ) + py + div(-mu grad(v)) - f2 = 0
+        c[('m',ev)][:] = rho*v  # d/dt ( rho * v) = d/dt (m_1)
+        c[('dm',ev,vi)][:] = rho  # dm^1_dv
+        c[('r',ev)][:] = -self.f2ofx(c['x'][:],t)
+        c[('dr',ev,vi)][:] = 0.0
+        c[('H',ev)][:] = grad_p[...,xi] + self.rhoofx(c['x'][:],t)(u*grad_v[...,xi] + v*grad_v[...,yi])  # add rho term
+        c[('dH',ev,vi)][...,xi] = self.rhoofx(c['x'][:],t)*u #  dH d(v_x)
+        c[('dH',ev,vi)][...,yi] = self.rhoofx(c['x'][:],t)*v #  dH d(v_y)
+        c[('dH',ev,pi)][...,yi] = 1.0 #  dH/d(p_y)
+        c[('a',ev,vi)][...,0] = mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our 
+        c[('a',ev,vi)][...,1] = mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
+        c[('da',ev,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
+        c[('da',ev,vi,vi)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
 
-        #equation 2  div [u v] = 0
-        c[('f',pi)][...,0] = u
-        c[('f',pi)][...,1] = v
-        c[('df',pi,ui)][...,0] = 1.0  # d_f^0_d_u^0
-        c[('df',pi,ui)][...,1] = 0.0  # d_f^0_d_u^0
-        c[('df',pi,vi)][...,0] = 0.0  # d_f^0_d_u^0
-        c[('df',pi,vi)][...,1] = 1.0  # d_f^0_d_u^0
+        #equation ediv = 2  div [u v] = 0
+        c[('f',ediv)][...,xi] = u
+        c[('f',ediv)][...,yi] = v
+        c[('df',ediv,ui)][...,xi] = 1.0  # d_f_d_u [xi]
+        c[('df',ediv,ui)][...,yi] = 0.0  # d_f_d_u [yi]
+        c[('df',ediv,vi)][...,xi] = 0.0  # d_f_d_v [xi]
+        c[('df',ediv,vi)][...,yi] = 1.0  # d_f_d_v [yi]
         
 
