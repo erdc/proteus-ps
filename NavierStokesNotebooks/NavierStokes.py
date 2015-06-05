@@ -87,7 +87,7 @@ class NavierStokes1D(TransportCoefficients.TC_base):
          \frac{\partial (\rho\mathbf{v})}{\partial t} + \nabla\cdot\left(\rho\mathbf{v}\otimes\mathbf{v}\right) +  \nabla p  - \nabla \cdot \left(\mu \nabla\mathbf{v}\right) &= \rho\mathbf{f}(x,t)
        \end{align}
 
-    with :math:`\rho` and :math:`\mu` the given density and viscosity as constants.
+    with :math:`\rho` and :math:`\mu` the density and given viscosity.
 
     """
     def __init__(self,rofx,fofx,rho=1.0,mu=1.0):
@@ -162,9 +162,18 @@ class NavierStokes2D(TransportCoefficients.TC_base):
     viscosity which could depend on density :math:`\rho`.
 
     We solve this equation on a 2D disk :math:`\Omega=\{(x,y) \:|\: x^2+y^2<1\}`
+    
+    :param densityModelIndex: The index into the proteus model list
+
+    :param densityFunction: A function taking as input an array of spatial
+    locations :math: `x`, time :math: `t`, and density :math: `\rho`, setting
+    the density parameter as a side effect.
+
+    TODO: decide how the parameters interact. I think densityFunction
+    should override the density from another model
 
     """
-    def __init__(self,rhoofx,f1ofx,f2ofx,mu=1.0):
+    def __init__(self,f1ofx,f2ofx,mu=1.0,densityModelIndex=-1,densityFunction=None):
         
         sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
                           np.array([0,1],dtype='i')),
@@ -196,10 +205,35 @@ class NavierStokes2D(TransportCoefficients.TC_base):
                          useSparseDiffusion = True),
 
 
-        self.rhoofx=rhoofx
+        # self.rhoofx=rhoofx
         self.f1ofx=f1ofx
         self.f2ofx=f2ofx
         self.mu=mu
+        self.densityModelIndex = densityModelIndex
+        self.densityFunction = densityFunction
+        self.c_rho = {}
+        
+        
+    def attachModels(self,modelList):
+        """
+        Attach the model for density
+        """
+        if self.densityModelIndex >= 0:
+            assert self.densityModelIndex < len(modelList), \
+                "density model index out of range 0," + repr(len(modelList))
+            self.densityModel = modelList[self.densityModelIndex]
+            if ('density',0) in self.densityModel.coefficients.q:
+                rho = self.densityModel.coefficients.q[('density',0)]
+                self.c_rho[rho.shape] = rho
+            if ('density',0) in self.densityModel.coefficients.ebq:
+                rho = self.densityModel.coefficients.ebq[('density',0)]
+                self.c_rho[rho.shape] = rho
+            if ('density',0) in self.densityModel.coefficients.ebqe:
+                rho = self.densityModel.coefficients.ebqe[('density',0)]
+                self.c_rho[rho.shape] = rho
+            if ('density',0) in self.densityModel.coefficients.ebq_global:
+                rho = self.densityModel.coefficients.ebq_global[('density',0)]
+                self.c_rho[rho.shape] = rho
 
     def evaluate(self,t,c):
         """
@@ -223,15 +257,20 @@ class NavierStokes2D(TransportCoefficients.TC_base):
         grad_u = c[('grad(u)',ui)]
         grad_v = c[('grad(u)',vi)]
         grad_p = c[('grad(u)',pi)]
+        
+        if self.densityFunction != None:
+            rho = self.densityFunction(c['x'],t)
+        else:#use mass shape as key since it is same shape as density
+            rho = self.c_rho[c[('m',0)].shape]
 
         #equation eu = 0  rho*(u_t + u ux + v uy ) + px + div(-mu grad(u)) - f1 = 0
-        c[('m',eu)][:] = self.rhoofx(c['x'][:],t)*u  # d/dt ( rho * u) = d/dt (m_0)
-        c[('dm',eu,ui)][:] = self.rhoofx(c['x'][:],t)  # dm^0_du
+        c[('m',eu)][:] = rho*u  # d/dt ( rho * u) = d/dt (m_0)
+        c[('dm',eu,ui)][:] = rho  # dm^0_du
         c[('r',eu)][:] = -self.f1ofx(c['x'][:],t)
         c[('dr',eu,ui)][:] = 0.0
-        c[('H',eu)][:] = grad_p[...,xi] + self.rhoofx(c['x'][:],t)*(u*grad_u[...,xi] + v*grad_u[...,yi])
-        c[('dH',eu,ui)][...,xi] = self.rhoofx(c['x'][:],t)*u #  dH d(u_x)
-        c[('dH',eu,ui)][...,yi] = self.rhoofx(c['x'][:],t)*v #  dH d(u_y)
+        c[('H',eu)][:] = grad_p[...,xi] + rho*(u*grad_u[...,xi] + v*grad_u[...,yi])
+        c[('dH',eu,ui)][...,xi] = rho*u #  dH d(u_x)
+        c[('dH',eu,ui)][...,yi] = rho*v #  dH d(u_y)
         c[('dH',eu,pi)][...,xi] = 1.0 #  dH/d(p_x)
         c[('a',eu,ui)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our 
         c[('a',eu,ui)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
@@ -239,13 +278,13 @@ class NavierStokes2D(TransportCoefficients.TC_base):
         c[('da',eu,ui,ui)][...,1] = 0.0 # -(da/d ui)_1   # could leave these off since it is 0
 
         # equation ev = 1  rho*(v_t + u vx + v vy ) + py + div(-mu grad(v)) - f2 = 0
-        c[('m',ev)][:] = self.rhoofx(c['x'][:],t)*v  # d/dt ( rho * v) = d/dt (m_1)
-        c[('dm',ev,vi)][:] = self.rhoofx(c['x'][:],t)  # dm^1_dv
+        c[('m',ev)][:] = rho*v  # d/dt ( rho * v) = d/dt (m_1)
+        c[('dm',ev,vi)][:] = rho  # dm^1_dv
         c[('r',ev)][:] = -self.f2ofx(c['x'][:],t)
         c[('dr',ev,vi)][:] = 0.0
-        c[('H',ev)][:] = grad_p[...,yi] + self.rhoofx(c['x'][:],t)*(u*grad_v[...,xi] + v*grad_v[...,yi])  # add rho term
-        c[('dH',ev,vi)][...,xi] = self.rhoofx(c['x'][:],t)*u #  dH d(v_x)
-        c[('dH',ev,vi)][...,yi] = self.rhoofx(c['x'][:],t)*v #  dH d(v_y)
+        c[('H',ev)][:] = grad_p[...,yi] + rho*(u*grad_v[...,xi] + v*grad_v[...,yi])  # add rho term
+        c[('dH',ev,vi)][...,xi] = rho*u #  dH d(v_x)
+        c[('dH',ev,vi)][...,yi] = rho*v #  dH d(v_y)
         c[('dH',ev,pi)][...,yi] = 1.0 #  dH/d(p_y)
         c[('a',ev,vi)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our 
         c[('a',ev,vi)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
