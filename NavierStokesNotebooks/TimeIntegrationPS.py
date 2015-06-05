@@ -1,3 +1,5 @@
+import proteus
+
 class NonConservativeBackwardEuler(proteus.TimeIntegration.BackwardEuler):
     def __init__(self,transport,integrateInterpolationPoints=False):
         proteus.TimeIntegration.BackwardEuler.__init__(self,transport,integrateInterpolationPoints=integrateInterpolationPoints)
