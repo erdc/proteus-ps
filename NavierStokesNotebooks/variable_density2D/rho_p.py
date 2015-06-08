@@ -10,7 +10,7 @@ domain = ctx.domain
 nd = ctx.nd
 name = "mass_transport"
 
-coefficients=MassTransport(velocityFunction=ctx.velocityFunction)
+coefficients=NavierStokes.MassTransport(velocityFunction=ctx.velocityFunction)
 
 #this function's job is to return another function holding the Dirichlet boundary conditions 
 # wherever they are set
@@ -18,7 +18,7 @@ coefficients=MassTransport(velocityFunction=ctx.velocityFunction)
 def getDBC_rho(x,flag):
     if flag in [ctx.boundaryTags['bottom'],
                 ctx.boundaryTags['top']]:
-        return lambda x,t: rhotrue(x,t)
+        return lambda x,t: ctx.rhotrue(x,t)
     
 def getNone(x,flag):
     return None

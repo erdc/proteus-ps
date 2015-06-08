@@ -155,6 +155,6 @@ ns_nl_atol_res = max(1.0e-8,0.01*he**2)
 T=10.0
 
 nFrames = 41
-dt = physics.T/(nFrames-1)
+dt = T/(nFrames-1)
 tnList = [i*dt for i in range(nFrames)]
 

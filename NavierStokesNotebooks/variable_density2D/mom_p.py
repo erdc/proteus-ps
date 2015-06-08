@@ -77,18 +77,18 @@ class getIBC_v:
     def uOfXT(self,x,t):
         return self.vtrue(x,t)
     
-physics.initialConditions = {0:getIBC_u(),
-                             1:getIBC_v(),
-                             2:getIBC_p()}
+initialConditions = {0:getIBC_u(),
+                     1:getIBC_v(),
+                     2:getIBC_p()}
 
-physics.dirichletConditions = {0:getDBC_u,
-                               1:getDBC_v,
-                               2:getDBC_p }
+dirichletConditions = {0:getDBC_u,
+                       1:getDBC_v,
+                       2:getDBC_p }
 
-physics.advectiveFluxBoundaryConditions = {2:getNone}#dummy condition for non-existent  advective flux
-#physics.advectiveFluxBoundaryConditions = {1:getZeroFlux}#dummy condition for non-existent  advective flux
+advectiveFluxBoundaryConditions = {2:getNone}#dummy condition for non-existent  advective flux
+#advectiveFluxBoundaryConditions = {1:getZeroFlux}#dummy condition for non-existent  advective flux
 
-physics.diffusiveFluxBoundaryConditions = {0:{0:getZeroFlux},
-                                           1:{1:getZeroFlux}}#viscous flux
-physics.fluxBoundaryConditions = {0:'outFlow',1:'outFlow',2:'mixedFlow'}
-#physics.fluxBoundaryConditions = {0:'setFlow',1:'setFlow',2:'setFlow'}
+diffusiveFluxBoundaryConditions = {0:{0:getZeroFlux},
+                                   1:{1:getZeroFlux}}#viscous flux
+fluxBoundaryConditions = {0:'outFlow',1:'outFlow',2:'mixedFlow'}
+#fluxBoundaryConditions = {0:'setFlow',1:'setFlow',2:'setFlow'}
