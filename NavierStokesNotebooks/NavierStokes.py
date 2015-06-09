@@ -36,42 +36,79 @@ class MassTransport(TransportCoefficients.TC_base):
                                                advection = {0:{0:'linear'}})
         self.velocityModelIndex = velocityModelIndex
         self.velocityFunction = velocityFunction
+        self.c_u = {}
         self.c_v = {}
 
     def attachModels(self,modelList):
         """
         Attach the model for velocity
         """
+        # if self.velocityModelIndex >= 0:
+        #     assert self.velocityModelIndex < len(modelList), \
+        #         "velocity model index out of  range 0," + repr(len(modelList))
+        #     self.velocityModel = modelList[self.velocityModelIndex]
+        #     if ('velocity',0) in self.velocityModel.q:
+        #         v = self.velocityModel.q[('velocity',0)]
+        #         self.c_v[v.shape] = v
+        #     if ('velocity',0) in self.velocityModel.ebq:
+        #         v = self.velocityModel.ebq[('velocity',0)]
+        #         self.c_v[v.shape] = v
+        #     if ('velocity',0) in self.velocityModel.ebqe:
+        #         v = self.velocityModel.ebqe[('velocity',0)]
+        #         self.c_v[v.shape] = v
+        #     if ('velocity',0) in self.velocityModel.ebq_global:
+        #         v = self.velocityModel.ebq_global[('velocity',0)]
+        #         self.c_v[v.shape] = v
         if self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
-            if ('velocity',0) in self.velocityModel.q:
-                v = self.velocityModel.q[('velocity',0)]
+            if ('u',0) in self.velocityModel.q:
+                u = self.velocityModel.q[('u',0)]
+                v = self.velocityModel.q[('u',1)]
+                self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
-            if ('velocity',0) in self.velocityModel.ebq:
-                v = self.velocityModel.ebq[('velocity',0)]
+            if ('u',0) in self.velocityModel.ebq:
+                u = self.velocityModel.ebq[('u',0)]
+                v = self.velocityModel.ebq[('u',1)]
+                self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
-            if ('velocity',0) in self.velocityModel.ebqe:
-                v = self.velocityModel.ebqe[('velocity',0)]
+            if ('u',0) in self.velocityModel.ebqe:
+                u = self.velocityModel.ebqe[('u',0)]
+                v = self.velocityModel.ebqe[('u',1)]
+                self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
-            if ('velocity',0) in self.velocityModel.ebq_global:
-                v = self.velocityModel.ebq_global[('velocity',0)]
+            if ('u',0) in self.velocityModel.ebq_global:
+                u = self.velocityModel.ebq_global[('u',0)]
+                v = self.velocityModel.ebq_global[('u',1)]
+                self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
 
     def evaluate(self,t,c):
         """
         Evaluate the coefficients after getting the specified velocity
         """
+        # if self.velocityFunction != None:
+        #     v = self.velocityFunction(c['x'],t)
+        # else:#use flux shape as key since it is same shape as velocity
+        #     v = self.c_v[c[('f',0)].shape]
+        # c[('m',0)][:] = c[('u',0)]
+        # c[('dm',0,0)][:] = 1.0
+        # c[('f',0)][...,0] = c[('u',0)]*v[...,0]
+        # c[('f',0)][...,1] = c[('u',0)]*v[...,1]
+        # c[('df',0,0)][:] = v
         if self.velocityFunction != None:
-            v = self.velocityFunction(c['x'],t)
+            u = self.velocityFunction(c['x'],t)[...,0]
+            v = self.velocityFunction(c['x'],t)[...,1]
         else:#use flux shape as key since it is same shape as velocity
-            v = self.c_v[c[('f',0)].shape]
+            u = self.c_u[c[('m',0)].shape]
+            v = self.c_v[c[('m',0)].shape]
         c[('m',0)][:] = c[('u',0)]
         c[('dm',0,0)][:] = 1.0
-        c[('f',0)][...,0] = c[('u',0)]*v[...,0]
-        c[('f',0)][...,1] = c[('u',0)]*v[...,1]
-        c[('df',0,0)][:] = v
+        c[('f',0)][...,0] = c[('u',0)]*u
+        c[('f',0)][...,1] = c[('u',0)]*v
+        c[('df',0,0)][...,0] = u
+        c[('df',0,0)][...,1] = v
 
 
 class NavierStokes1D(TransportCoefficients.TC_base):
