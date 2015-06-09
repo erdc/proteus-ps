@@ -3,6 +3,9 @@ from proteus.default_n import *
 from mom_p import *
 
 
+triangleOptions = ctx.triangleOptions
+
+
 femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # u velocity space
              1:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # v velocity space
              2:FemTools.C0_AffineLinearOnSimplexWithNodalBasis} #p pressure space

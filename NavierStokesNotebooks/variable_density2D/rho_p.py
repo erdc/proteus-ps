@@ -10,7 +10,8 @@ domain = ctx.domain
 nd = ctx.nd
 name = "mass_transport"
 
-coefficients=NavierStokes.MassTransport(velocityFunction=ctx.velocityFunction)
+# coefficients=NavierStokes.MassTransport(velocityFunction=ctx.velocityFunction)
+coefficients=NavierStokes.MassTransport(velocityFunction=None,velocityModelIndex=1) # from pnList in *_so.py  0 = density,  1 = (u,v,p)
 
 #this function's job is to return another function holding the Dirichlet boundary conditions 
 # wherever they are set
@@ -34,5 +35,5 @@ initialConditions = {0:getIBC_rho()}
 
 dirichletConditions = {0:getDBC_rho}
 
-advectiveFluxBoundaryConditions = {0:getNone}#
+advectiveFluxBoundaryConditions = {0:getNone}
 fluxBoundaryConditions = {0:'outFlow'}

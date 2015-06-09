@@ -46,17 +46,17 @@ class MassTransport(TransportCoefficients.TC_base):
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
-            if ('velocity',0) in self.velocityModel.coefficients.q:
-                v = self.velocityModel.coefficients.q[('velocity',0)]
+            if ('velocity',0) in self.velocityModel.q:
+                v = self.velocityModel.q[('velocity',0)]
                 self.c_v[v.shape] = v
-            if ('velocity',0) in self.velocityModel.coefficients.ebq:
-                v = self.velocityModel.coefficients.ebq[('velocity',0)]
+            if ('velocity',0) in self.velocityModel.ebq:
+                v = self.velocityModel.ebq[('velocity',0)]
                 self.c_v[v.shape] = v
-            if ('velocity',0) in self.velocityModel.coefficients.ebqe:
-                v = self.velocityModel.coefficients.ebqe[('velocity',0)]
+            if ('velocity',0) in self.velocityModel.ebqe:
+                v = self.velocityModel.ebqe[('velocity',0)]
                 self.c_v[v.shape] = v
-            if ('velocity',0) in self.velocityModel.coefficients.ebq_global:
-                v = self.velocityModel.coefficients.ebq_global[('velocity',0)]
+            if ('velocity',0) in self.velocityModel.ebq_global:
+                v = self.velocityModel.ebq_global[('velocity',0)]
                 self.c_v[v.shape] = v
 
     def evaluate(self,t,c):
@@ -72,6 +72,7 @@ class MassTransport(TransportCoefficients.TC_base):
         c[('f',0)][...,0] = c[('u',0)]*v[...,0]
         c[('f',0)][...,1] = c[('u',0)]*v[...,1]
         c[('df',0,0)][:] = v
+
 
 class NavierStokes1D(TransportCoefficients.TC_base):
     r"""
@@ -203,9 +204,7 @@ class NavierStokes2D(TransportCoefficients.TC_base):
                                       ev:{vi:'constant'}}, # f2(x)
                          sparseDiffusionTensors=sdInfo,
                          useSparseDiffusion = True),
-
-
-        # self.rhoofx=rhoofx
+        self.vectorComponents=[ui,vi]
         self.f1ofx=f1ofx
         self.f2ofx=f2ofx
         self.mu=mu
@@ -222,17 +221,17 @@ class NavierStokes2D(TransportCoefficients.TC_base):
             assert self.densityModelIndex < len(modelList), \
                 "density model index out of range 0," + repr(len(modelList))
             self.densityModel = modelList[self.densityModelIndex]
-            if ('density',0) in self.densityModel.coefficients.q:
-                rho = self.densityModel.coefficients.q[('density',0)]
+            if ('u',0) in self.densityModel.q:
+                rho = self.densityModel.q[('u',0)]
                 self.c_rho[rho.shape] = rho
-            if ('density',0) in self.densityModel.coefficients.ebq:
-                rho = self.densityModel.coefficients.ebq[('density',0)]
+            if ('u',0) in self.densityModel.ebq:
+                rho = self.densityModel.ebq[('u',0)]
                 self.c_rho[rho.shape] = rho
-            if ('density',0) in self.densityModel.coefficients.ebqe:
-                rho = self.densityModel.coefficients.ebqe[('density',0)]
+            if ('u',0) in self.densityModel.ebqe:
+                rho = self.densityModel.ebqe[('u',0)]
                 self.c_rho[rho.shape] = rho
-            if ('density',0) in self.densityModel.coefficients.ebq_global:
-                rho = self.densityModel.coefficients.ebq_global[('density',0)]
+            if ('u',0) in self.densityModel.ebq_global:
+                rho = self.densityModel.ebq_global[('u',0)]
                 self.c_rho[rho.shape] = rho
 
     def evaluate(self,t,c):

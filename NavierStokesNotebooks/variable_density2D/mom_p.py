@@ -12,11 +12,17 @@ name = "navier_stokes_2d"
 
 
 #the object for evaluating the coefficients   
+# # uncoupled system
+# coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
+#                                          f2ofx=ctx.f2true,
+#                                          mu=ctx.mu,
+#                                          densityFunction=ctx.rhotrue)
+
 coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
                                          f2ofx=ctx.f2true,
                                          mu=ctx.mu,
-                                         densityFunction=ctx.rhotrue)   
-
+                                         densityFunction=None,
+                                         densityModelIndex=0)  # from pnList in *_so.py  0 = density,  1 = (u,v,p)
 
 
 # Define boundary conditions and initial conditions of system
