@@ -97,6 +97,122 @@ was Director.
 
 \chapter{Introduction}
 
+% why choose this method over others?  because of the variable coefficient laplacian equation which is hard to solve well
+%\[ \nabla\cdot \left( \frac{1}{\rho^{k+1} \nabla \phi} \right) = \Psi,\hspace{1.5cm} \left.\partial_{\n}\phi\right|_{\partial\Omega} = 0 \]
+
+%
+%
+%
+%
+\chapter{Variable Density Incompressible Navier-Stokes Time Stepping Techniques}
+
+%
+%
+%
+\section{Preliminaries}
+
+%
+%
+\subsection{Notation}
+Find the solutions at time $t^{k+1}$
+\begin{equation}(\rho^{k+1}_h, \ub^{k+1}_{h}, p^{k+1}_h) \in W_h\times\X_h\times M_h  \end{equation}
+
+%
+%
+%
+\section{Penalty-like Perturbation of Continuous Equations}
+
+Solve the perturbed Navier-Stokes system
+\begin{equation}
+  \begin{cases}
+    \rho\left(\ub_t + \ub\cdot\nabla\ub  \right) + \nabla p -\mu\Delta\ub = \fb, & \left.\ub\right|_{\partial\Omega} = 0\\
+    \nabla\cdot\ub - \frac{\veps}{\rho}\Delta \phi = 0,& \partial_\n \phi = 0\\
+    \veps p_t = \phi
+  \end{cases}
+\end{equation}
+
+%
+%
+%
+\section{BDF1 Incremental Rotational Scheme}
+
+%
+%
+\subsection{Time-stepping technique}
+We proceed in a three step update scheme.  First we update the density,  second the velocity, and third the pressure.  So given
+\begin{equation}(\rho^{k}_h, \ub^{k}_{h}, p^{k}_h) \in W_h\times\X_h\times M_h  \end{equation}
+we update to obtain
+\begin{equation}(\rho^{k+1}_h, \ub^{k+1}_{h}, p^{k+1}_h) \in W_h\times\X_h\times M_h.\end{equation}
+
+%
+\subsubsection{Density Update}
+
+We first solve the hyperbolic system with a monotone preserving scheme such as subgrid viscosity, edge stabilization or entropy viscosity using a DG or CG solver.  The equation of update is
+
+\begin{equation}
+  \frac{\rho^{k+1} - \rho^k}{\tau^{k+1}} + \nabla\cdot\left(\rho_h^{k+1}\ub^{k} \right) - \frac{\rho^{k+1}}{2}\nabla\cdot\ub^{k} = 0
+\end{equation}
+where the last term is a consistent stabilization which leads to unconditional stability of the scheme.   Our choice of hyperbolic solver scheme doesn't matter as long as it satisfies the following stability hypothesis:
+\begin{equation}
+  \chi \leq \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x), \hspace{2cm} \displaystyle\max_{\x\in\overline{\Omega}} \rho_{h}^{k+1}(\x) \leq c_{\rho}
+\end{equation}
+for all $k\geq 1$.
+
+Thus we obtain the weak solution $\rho_h^{k+1}\in W_h$ that satifies the above requirements.
+
+% In particular we seek the weak solution $\rho_h^{k+1}\in W_h$ such that
+% 
+% \begin{equation}
+%   \dprod{ \frac{\rho^{k+1} - \rho^k}{\tau^{k+1}} }{w_h} + \dprod{\nabla\cdot\left(\rho_h^{k+1}\ub^{k} \right)}{w_h} - \dprod{\frac{\rho^{k+1}}{2}\nabla\cdot\ub^{k}}{w_h} = 0
+% \end{equation}
+
+
+%
+\subsubsection{Velocity Update}
+Once we have the density $\rho_h^{k+1}$ we can now solve for the velocity.  It turns out that we do not explicitly require this velocity to be divergence free, but simply penalize the divergence using the pressure rotational update.  We define our update terms
+\begin{align*}
+  \rho_h^{*} &= \frac{1}{2}\left( \rho_h^{k+1} - \rho_h^{k} \right)\\
+  \delta p_h^{k} &= p_h^{k} - p_h^{k-1}\\
+    p_h^{\#} &= p_h^{k} + \delta p_h^{k} = 2p_h^{k} - p_h^{k-1}
+\end{align*}
+so that $p_h^{\#}$ is a second order extrapolation of pressure to time $t^{k+1}$.  Next we  solve for $\ub_h^{k+1}\in\X_h$ that satisfies the following system for all $\vb_h\in\X_h$,
+\begin{equation}
+  \begin{split}
+\dprod{ \frac{\rho_h^{*}\ub_h^{k+1}-\rho_h^{k}\ub_h^{k} }{\tau^{k+1}} }{\vb_h} + \dprod{ \rho_h^{k+1}\ub_h^{k}\cdot\nabla\ub_h^{k+1} }{\vb_h}&\\
+ + \dprod{ \frac{1}{2}\nabla\cdot\left(\ub_h^{k}\right)\ub_h^{k+1} }{\vb_h} + \mu\dprod{ \nabla \ub_h^{k+1} }{\nabla\vb_h}&\\
+  +\dprod{\nabla p_h^{\#}}{\vb_h} &= \dprod{\fb^{k+1}}{\vb_h}.
+\end{split}
+\end{equation}
+
+%
+\subsubsection{Pressure Update}
+Now that we have $\rho_h^{k+1}$ and $\ub_h^{k+1}$, we solve for the pressure increment $\phi_h^{\flat}\in M_h$ which then allows us to solve for the pressure $p_h^{k+1}\in M_h$.  
+Recalling that $\chi \leq \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x)$ (note that we will often choose it to be the minimum), we let $\phi_h^{\flat}\in M_h$ be the weak solution of
+\begin{equation}
+  \Delta \phi^{\flat} = \frac{\chi}{\tau^{k+1}}\nabla\cdot \ub^{k+1}, \hspace{1cm} \left.\partial_\n\phi^{\flat}\right|_{\partial\Omega} = 0
+\end{equation}
+mainly it solves
+\begin{equation}
+  \dprod{\nabla\phi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau^{k+1}}\dprod{\ub_h^{k+1}}{\nabla r_h}
+\end{equation}
+for all $r_h \in M_h$.  Then we update the pressure as
+\begin{equation}
+  p^{k+1} = \phi^{\flat} + p^{k} - \mu\nabla\cdot \ub^{k+1},
+\end{equation}
+or in other words, we solve for $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h$
+\begin{equation}
+  \dprod{p_h^{k+1}}{r_h} = \dprod{\phi_h^{\flat} + p_h^{k}}{r_h} + \mu\dprod{\ub_h^{k+1}}{\nabla r_h}.
+\end{equation}
+The last term involving the divergence of velocity makes this the rotational form and leaving it off is the standard form.  In standard form, it is simple enough to just add $p_h^{k+1}$ and $\phi_h^{\flat}$ to update $p_h^{k+1}$ instead of solving the linear system.
+
+
+
+
+
+\section{BDF2 Incremental Rotational Scheme}
+
+
+
 
 \bibliographystyle{chicago}
 \bibliography{ps.bib}
