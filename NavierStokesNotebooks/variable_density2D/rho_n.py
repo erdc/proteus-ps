@@ -14,7 +14,7 @@ timeIntegration = TimeIntegration.VBDF
 
 timeOrder = 2
 stepController  = StepControl.Min_dt_cfl_controller
-runCFL= 0.33
+runCFL= 0.99
 
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
@@ -31,10 +31,8 @@ subgridError = SubgridError.Advection_ASGS(coefficients,
 #numerics.nny= 41
 
 #matrix type
-numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions)
-#numerics.numericalFluxType = MixedDarcy_exterior
-#numerics.numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior
-#numerics.numericalFluxType = NumericalFlux.Advection_Diagonal_average
+#numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
+numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior #weak boundary conditions (upwind)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py

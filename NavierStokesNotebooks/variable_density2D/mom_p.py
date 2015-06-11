@@ -12,16 +12,10 @@ name = "navier_stokes_2d"
 
 
 #the object for evaluating the coefficients
-# # uncoupled system
-# coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
-#                                          f2ofx=ctx.f2true,
-#                                          mu=ctx.mu,
-#                                          densityFunction=ctx.rhotrue)
-
 coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
                                          f2ofx=ctx.f2true,
                                          mu=ctx.mu,
-                                         densityFunction=None,
+                                         densityFunction=None, #set to ctx.rhotrue for exact densit (uncoupled  flow)
                                          densityModelIndex=0)  # from pnList in *_so.py  0 = density,  1 = (u,v,p)
 
 
@@ -96,4 +90,4 @@ advectiveFluxBoundaryConditions = {2:getNone}
 diffusiveFluxBoundaryConditions = {0:{0:getZeroFlux},
                                    1:{1:getZeroFlux}}
 
-fluxBoundaryConditions = {0:'outFlow',1:'outFlow',2:'mixedFlow'}
+fluxBoundaryConditions = {0:'noFlow',1:'noFlow',2:'noFlow'}

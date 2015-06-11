@@ -16,7 +16,7 @@ from TimeIntegrationPS import NonConservativeBackwardEuler, NonConservativeVBDF
 timeIntegration = NonConservativeVBDF
 timeOrder = 2
 stepController  = StepControl.Min_dt_cfl_controller
-runCFL = 0.33
+runCFL = 0.99
 
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
@@ -55,5 +55,7 @@ nl_atol_res = ctx.ns_nl_atol_res
 
 periodicDirichletConditions=None
 
+#all of these  should work
+#conservativeFlux = {2:'point-eval'}
 #conservativeFlux = {2:'pwl-bdm'}
-conservativeFlux = {2:'point-eval'}
+#conservativeFlux = {2:'pwl-bdm-opt'}
