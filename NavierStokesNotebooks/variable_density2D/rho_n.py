@@ -14,7 +14,7 @@ timeIntegration = TimeIntegration.VBDF
 
 timeOrder = 2
 stepController  = StepControl.Min_dt_cfl_controller
-runCFL= 0.99
+runCFL= 0.33
 
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
@@ -55,4 +55,3 @@ tolFac = 0.0
 nl_atol_res = ctx.ns_nl_atol_res
 
 periodicDirichletConditions=None
-

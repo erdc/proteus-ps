@@ -10,9 +10,13 @@ femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # u velocity 
              1:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # v velocity space
              2:FemTools.C0_AffineLinearOnSimplexWithNodalBasis} #p pressure space
 
-from TimeIntegrationPS import NonConservativeBackwardEuler
+from TimeIntegrationPS import NonConservativeBackwardEuler, NonConservativeVBDF
 # numerics.timeIntegration = TimeIntegration.BackwardEuler
-timeIntegration = NonConservativeBackwardEuler
+#timeIntegration = NonConservativeBackwardEuler
+timeIntegration = NonConservativeVBDF
+timeOrder = 2
+stepController  = StepControl.Min_dt_cfl_controller
+runCFL = 0.33
 
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
@@ -51,3 +55,5 @@ nl_atol_res = ctx.ns_nl_atol_res
 
 periodicDirichletConditions=None
 
+#conservativeFlux = {2:'pwl-bdm'}
+conservativeFlux = {2:'point-eval'}

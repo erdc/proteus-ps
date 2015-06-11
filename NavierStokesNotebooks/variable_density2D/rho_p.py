@@ -10,17 +10,18 @@ domain = ctx.domain
 nd = ctx.nd
 name = "mass_transport"
 
-# coefficients=NavierStokes.MassTransport(velocityFunction=ctx.velocityFunction)
-coefficients=NavierStokes.MassTransport(velocityFunction=None,velocityModelIndex=1) # from pnList in *_so.py  0 = density,  1 = (u,v,p)
+#coefficients=NavierStokes.MassTransport(velocityFunction=ctx.velocityFunction)
+#coefficients=NavierStokes.MassTransport(velocityFunction=None,velocityModelIndex=1) # from pnList in *_so.py  0 = density,  1 = (u,v,p)
+coefficients=NavierStokes.MassTransport(velocityFunction=None,velocityModelIndex=1,useVelocityComponents=True) # from pnList in *_so.py  0 = density,  1 = (u,v,p)
 
-#this function's job is to return another function holding the Dirichlet boundary conditions 
+#this function's job is to return another function holding the Dirichlet boundary conditions
 # wherever they are set
 
 def getDBC_rho(x,flag):
     if flag in [ctx.boundaryTags['bottom'],
                 ctx.boundaryTags['top']]:
         return lambda x,t: ctx.rhotrue(x,t)
-    
+
 def getNone(x,flag):
     return None
 
@@ -30,7 +31,7 @@ class getIBC_rho:
         pass
     def uOfXT(self,x,t):
         return self.rhotrue(x,t)
-    
+
 initialConditions = {0:getIBC_rho()}
 
 dirichletConditions = {0:getDBC_rho}
