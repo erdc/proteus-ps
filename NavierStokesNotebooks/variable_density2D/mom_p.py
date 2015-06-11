@@ -101,7 +101,8 @@ advectiveFluxBoundaryConditions = {2:getNone}#dummy condition for non-existent  
 #advectiveFluxBoundaryConditions = {1:getZeroFlux}#dummy condition for non-existent  advective flux
 
 diffusiveFluxBoundaryConditions = {0:{0:getZeroFlux},
-                                   1:{1:getZeroFlux}}#viscous flux
+                                   1:{1:getZeroFlux}}
+                                   
 # fluxBoundaryConditions = {0:'outFlow',1:'outFlow',2:'mixedFlow'}
 fluxBoundaryConditions = {0:'noFlux',1:'noFlux',2:'noFlux'}
 #fluxBoundaryConditions = {0:'setFlow',1:'setFlow',2:'setFlow'}

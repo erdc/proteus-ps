@@ -12,7 +12,10 @@ name = "mass_transport"
 
 # coefficients=NavierStokes.MassTransport(velocityFunction=ctx.velocityFunction,useVelocityFunction=True)
 # coefficients=NavierStokes.MassTransport(velocityFunction=None,velocityModelIndex=1,useVelocityFunction=False) # from pnList in *_so.py  0 = density,  1 = (u,v,p)
-coefficients=NavierStokes.MassTransport(velocityFunction=ctx.velocityFunction,velocityModelIndex=1,useVelocityFunction=False) # from pnList in *_so.py  0 = density,  1 = (u,v,p)
+coefficients=NavierStokes.MassTransport(velocityFunction=ctx.velocityFunction,
+                                        velocityModelIndex=1,
+                                        useVelocityFunction=False,
+                                        useVelocityComponents=True) # from pnList in *_so.py  0 = density,  1 = (u,v,p)
 
 #this function's job is to return another function holding the Dirichlet boundary conditions 
 # wherever they are set

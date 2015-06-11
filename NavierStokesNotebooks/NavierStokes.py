@@ -16,7 +16,10 @@ class MassTransport(TransportCoefficients.TC_base):
 
        \frac{\partial\rho}{\partial t}+\nabla\cdot\left(\rho\mathbf{v}\right)=0
     """
-    def __init__(self,velocityModelIndex=-1, velocityFunction=None,useVelocityFunction=False):
+    def __init__(self,velocityModelIndex=-1, 
+                 velocityFunction=None,
+                 useVelocityFunction=False,
+                 useVelocityComponents=False):
         """Construct a coefficients object
 
         :param velocityModelIndex: The index into the proteus model list
@@ -39,28 +42,30 @@ class MassTransport(TransportCoefficients.TC_base):
         self.useVelocityFunction = useVelocityFunction
         self.c_u = {}
         self.c_v = {}
+        self.c_velocity = {}
+        self.useVelocityComponents = useVelocityComponents
 
     def attachModels(self,modelList):
         """
         Attach the model for velocity
-        """
-        # if self.velocityModelIndex >= 0:
-        #     assert self.velocityModelIndex < len(modelList), \
-        #         "velocity model index out of  range 0," + repr(len(modelList))
-        #     self.velocityModel = modelList[self.velocityModelIndex]
-        #     if ('velocity',0) in self.velocityModel.q:
-        #         v = self.velocityModel.q[('velocity',0)]
-        #         self.c_v[v.shape] = v
-        #     if ('velocity',0) in self.velocityModel.ebq:
-        #         v = self.velocityModel.ebq[('velocity',0)]
-        #         self.c_v[v.shape] = v
-        #     if ('velocity',0) in self.velocityModel.ebqe:
-        #         v = self.velocityModel.ebqe[('velocity',0)]
-        #         self.c_v[v.shape] = v
-        #     if ('velocity',0) in self.velocityModel.ebq_global:
-        #         v = self.velocityModel.ebq_global[('velocity',0)]
-        #         self.c_v[v.shape] = v
-        if self.velocityModelIndex >= 0:
+        """        
+        if not self.useVelocityComponents and self.velocityModelIndex >= 0:
+            assert self.velocityModelIndex < len(modelList), \
+                "velocity model index out of  range 0," + repr(len(modelList))
+            self.velocityModel = modelList[self.velocityModelIndex]
+            if ('velocity',2) in self.velocityModel.q:
+                v = self.velocityModel.q[('velocity',2)]
+                self.c_velocity[v.shape] = v
+            if ('velocity',2) in self.velocityModel.ebq:
+                v = self.velocityModel.ebq[('velocity',2)]
+                self.c_velocity[v.shape] = v
+            if ('velocity',2) in self.velocityModel.ebqe:
+                v = self.velocityModel.ebqe[('velocity',2)]
+                self.c_velocity[v.shape] = v
+            if ('velocity',2) in self.velocityModel.ebq_global:
+                v = self.velocityModel.ebq_global[('velocity',2)]
+                self.c_velocity[v.shape] = v
+        elif self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
@@ -84,6 +89,8 @@ class MassTransport(TransportCoefficients.TC_base):
                 v = self.velocityModel.ebq_global[('u',1)]
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
+                
+
 
     def evaluate(self,t,c):
         """
@@ -105,16 +112,20 @@ class MassTransport(TransportCoefficients.TC_base):
         #     u = self.c_u[c[('m',0)].shape]
         #     v = self.c_v[c[('m',0)].shape]
         
+        
         if self.useVelocityFunction == True:
             u = self.velocityFunction(c['x'],t)[...,0]
             v = self.velocityFunction(c['x'],t)[...,1]
-        else:#use flux shape as key since it is same shape as velocity
+        else: #use flux shape as key since it is same shape as velocity
             if (t - 0.0) < 1.e-10:   # only on first step use velocity function
                 u = self.velocityFunction(c['x'],t)[...,0]
                 v = self.velocityFunction(c['x'],t)[...,1]
-            else:
+            elif self.useVelocityComponents:
                 u = self.c_u[c[('m',0)].shape]
                 v = self.c_v[c[('m',0)].shape]
+            else:
+                u = self.c_velocity[c[('f',0)].shape][...,0]
+                v = self.c_velocity[c[('f',0)].shape][...,1]
         
         c[('m',0)][:] = c[('u',0)]
         c[('dm',0,0)][:] = 1.0
