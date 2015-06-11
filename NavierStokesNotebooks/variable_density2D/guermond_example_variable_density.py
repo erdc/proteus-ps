@@ -153,7 +153,6 @@ ns_nl_atol_res = max(1.0e-8,0.01*he**2)
 
 # Time stepping
 T=10.0
-
 nFrames = 41
 dt = T/(nFrames-1)
 tnList = [i*dt for i in range(nFrames)]

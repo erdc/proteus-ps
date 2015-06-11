@@ -121,15 +121,40 @@ Find the solutions at time $t^{k+1}$
 %
 %
 \section{Penalty-like Perturbation of Continuous Equations}
+The standard approach to creating splittings has been to think about the splitting operator as a projection scheme, where we have the two sequences of velocities $\{\ub^{k}\}$ and $\{\tilde{\ub}^{k}\}$ and the pressure increment $\{\phi^{k}\}$ that represent the standard Helmholtz decomposition of $L^{2}$ velocity fields into solenoidal and irrotational components
+\begin{equation}
+  \tilde{\ub}^{k} = \ub^{k} + \frac{\rho}{\tau}\nabla \phi^{k}.
+\end{equation}
+Thus we can view $\ub^{k}$ as the projection of our velocity field $\tilde{\ub}^{k}$ onto the divergence free subset of velocity fields.  This works just fine in the case of constant density but for variable density it is not so simple as we cannot just pull the density out of the divergence and end up with a variable coefficient laplacian equation to solve each time step.
 
-Solve the perturbed Navier-Stokes system
+\begin{equation}
+  -\nabla\cdot\left(\frac{1}{\rho^{k+1}} \nabla\phi \right) = F,  \hspace{1cm} \left.\partial_n \phi\right|_{\partial\Omega} = 0
+\end{equation}  
+This can be badly conditioned and rather more difficult to assemble and solve than the constant coefficient version.  Also, here it is clear to see why uniform lower bounds on the density $\rho^{k+1}$ must be maintained.
+
+We instead look at the constant density projection scheme in terms of an $\epsilon$ perturbation of the original system. Thus the formerly stated projection part becomes a penalty-like adjustment that is easily generalized to the variable density framework.
+
+The incremental pressure correction algorithm, an improvement on the original Chorin/Themam algorithm for constant density, can be expressed solely in terms of the non-solenoidal velocity $\tilde{\ub}^{k}$ and pressure $p^{k}$ in the form
 \begin{equation}
   \begin{cases}
+    \rho\left(\frac{\tilde{\ub}^{k+1} - \tilde{\ub}^{k}}{\tau} + \tilde{\ub}^{k}\cdot\nabla\tilde{\ub}^{k+1} \right) - \mu\Delta\tilde{\ub}^{k+1} + \nabla\left(p^{k} + \phi^{k}  \right) = \fb^{k+1}, & \left.\tilde{\ub}^{k}\right|_{\partial\Omega} = 0\\
+    \nabla\cdot\tilde{\ub}^{k+1} - \frac{\tau}{\rho}\Delta\phi^{n+1}, &\left.\partial_\n \phi\right|_{\partial\Omega} = 0\\
+    p^{k+1} = p^{k} + \phi^{k+1}
+  \end{cases}
+\end{equation}
+This can be seen as a discrete version of the following system   
+\begin{equation}\label{eqn:discreteperturbation}
+  \begin{cases}
     \rho\left(\ub_t + \ub\cdot\nabla\ub  \right) + \nabla p -\mu\Delta\ub = \fb, & \left.\ub\right|_{\partial\Omega} = 0\\
-    \nabla\cdot\ub - \frac{\veps}{\rho}\Delta \phi = 0,& \partial_\n \phi = 0\\
+    \nabla\cdot\ub - \frac{\veps}{\rho}\Delta \phi = 0,& \left.\partial_\n \phi\right|_{\partial\Omega} = 0\\
     \veps p_t = \phi
   \end{cases}
 \end{equation}
+where we have replaced difference quotients with time derivatives and substituted $\veps = \tau$ for the remaining $\tau$'s and recognized $p^{k} + \phi^{k} = p^{k} + \left( p^{k} - p^{k-1} \right) = 2p^{k} - p^{k-1} \approx p^{k+1}$ as a second order extrapolation of pressure to time $t^{k+1}$.
+
+This is a second order $\mathcal{O}(\veps^2)$ perturbation of the constant density incompressible navier stokes equations.  Simpler versions of this discrete system were observed by Rannacher in \textbf{add citation here} to be nothing more than penalities on the divergence of velocity in the momentum equation in a norm resembling the $H^{-1}$ norm.  Hense the term penalty-like algorithms.  As described in \cite{guermond2009splitting}, the system~$\mathbf{\left(\ref{eqn:discreteperturbation}\right)}$ is the starting point for the algorithms described below.
+
+
 
 %
 %
@@ -159,13 +184,6 @@ where the last term is a consistent stabilization which leads to unconditional s
 for all $k\geq 1$.
 
 Thus we obtain the weak solution $\rho_h^{k+1}\in W_h$ that satifies the above requirements.
-
-% In particular we seek the weak solution $\rho_h^{k+1}\in W_h$ such that
-% 
-% \begin{equation}
-%   \dprod{ \frac{\rho^{k+1} - \rho^k}{\tau^{k+1}} }{w_h} + \dprod{\nabla\cdot\left(\rho_h^{k+1}\ub^{k} \right)}{w_h} - \dprod{\frac{\rho^{k+1}}{2}\nabla\cdot\ub^{k}}{w_h} = 0
-% \end{equation}
-
 
 %
 \subsubsection{Velocity Update}

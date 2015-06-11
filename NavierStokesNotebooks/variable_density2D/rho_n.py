@@ -14,7 +14,11 @@ timeIntegration = TimeIntegration.VBDF
 
 timeOrder = 2
 stepController  = StepControl.Min_dt_cfl_controller
-runCFL= 0.99
+# runCFL= 0.99
+runCFL= 0.5
+
+# stepController=FixedStep
+# DT = 0.01
 
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
@@ -24,6 +28,7 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 subgridError = SubgridError.Advection_ASGS(coefficients,
                                            ctx.nd,
                                            lag=False)
+                                           
 #numerics.shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(physics.coefficients,
 #                                                                physics.nd,
 #                                                                lag = True,

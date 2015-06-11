@@ -24,6 +24,12 @@ coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
                                          densityFunction=None,
                                          densityModelIndex=0)  # from pnList in *_so.py  0 = density,  1 = (u,v,p)
 
+# coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
+#                                          f2ofx=ctx.f2true,
+#                                          mu=ctx.mu,
+#                                          densityFunction=ctx.rhotrue,
+#                                          densityModelIndex=0)  # from pnList in *_so.py  0 = density,  1 = (u,v,p)
+
 
 # Define boundary conditions and initial conditions of system
 
@@ -96,5 +102,6 @@ advectiveFluxBoundaryConditions = {2:getNone}#dummy condition for non-existent  
 
 diffusiveFluxBoundaryConditions = {0:{0:getZeroFlux},
                                    1:{1:getZeroFlux}}#viscous flux
-fluxBoundaryConditions = {0:'outFlow',1:'outFlow',2:'mixedFlow'}
+# fluxBoundaryConditions = {0:'outFlow',1:'outFlow',2:'mixedFlow'}
+fluxBoundaryConditions = {0:'noFlux',1:'noFlux',2:'noFlux'}
 #fluxBoundaryConditions = {0:'setFlow',1:'setFlow',2:'setFlow'}

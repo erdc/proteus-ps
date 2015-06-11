@@ -16,7 +16,7 @@ class MassTransport(TransportCoefficients.TC_base):
 
        \frac{\partial\rho}{\partial t}+\nabla\cdot\left(\rho\mathbf{v}\right)=0
     """
-    def __init__(self,velocityModelIndex=-1, velocityFunction=None):
+    def __init__(self,velocityModelIndex=-1, velocityFunction=None,useVelocityFunction=False):
         """Construct a coefficients object
 
         :param velocityModelIndex: The index into the proteus model list
@@ -36,6 +36,7 @@ class MassTransport(TransportCoefficients.TC_base):
                                                advection = {0:{0:'linear'}})
         self.velocityModelIndex = velocityModelIndex
         self.velocityFunction = velocityFunction
+        self.useVelocityFunction = useVelocityFunction
         self.c_u = {}
         self.c_v = {}
 
@@ -97,12 +98,24 @@ class MassTransport(TransportCoefficients.TC_base):
         # c[('f',0)][...,0] = c[('u',0)]*v[...,0]
         # c[('f',0)][...,1] = c[('u',0)]*v[...,1]
         # c[('df',0,0)][:] = v
-        if self.velocityFunction != None:
+        # if self.velocityFunction != None:
+        #     u = self.velocityFunction(c['x'],t)[...,0]
+        #     v = self.velocityFunction(c['x'],t)[...,1]
+        # else:#use flux shape as key since it is same shape as velocity
+        #     u = self.c_u[c[('m',0)].shape]
+        #     v = self.c_v[c[('m',0)].shape]
+        
+        if self.useVelocityFunction == True:
             u = self.velocityFunction(c['x'],t)[...,0]
             v = self.velocityFunction(c['x'],t)[...,1]
         else:#use flux shape as key since it is same shape as velocity
-            u = self.c_u[c[('m',0)].shape]
-            v = self.c_v[c[('m',0)].shape]
+            if (t - 0.0) < 1.e-10:   # only on first step use velocity function
+                u = self.velocityFunction(c['x'],t)[...,0]
+                v = self.velocityFunction(c['x'],t)[...,1]
+            else:
+                u = self.c_u[c[('m',0)].shape]
+                v = self.c_v[c[('m',0)].shape]
+        
         c[('m',0)][:] = c[('u',0)]
         c[('dm',0,0)][:] = 1.0
         c[('f',0)][...,0] = c[('u',0)]*u
