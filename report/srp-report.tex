@@ -175,7 +175,7 @@ we update to obtain
 We first solve the hyperbolic system with a monotone preserving scheme such as subgrid viscosity, edge stabilization or entropy viscosity using a DG or CG solver.  The equation of update is
 
 \begin{equation}
-  \frac{\rho^{k+1} - \rho^k}{\tau^{k+1}} + \nabla\cdot\left(\rho_h^{k+1}\ub^{k} \right) - \frac{\rho^{k+1}}{2}\nabla\cdot\ub^{k} = 0
+  \frac{\rho^{k+1} - \rho^k}{\tau} + \nabla\cdot\left(\rho_h^{k+1}\ub^{k} \right) - \frac{\rho^{k+1}}{2}\nabla\cdot\ub^{k} = 0
 \end{equation}
 where the last term is a consistent stabilization which leads to unconditional stability of the scheme.   Our choice of hyperbolic solver scheme doesn't matter as long as it satisfies the following stability hypothesis:
 \begin{equation}
@@ -196,7 +196,7 @@ Once we have the density $\rho_h^{k+1}$ we can now solve for the velocity.  It t
 so that $p_h^{\#}$ is a second order extrapolation of pressure to time $t^{k+1}$.  Next we  solve for $\ub_h^{k+1}\in\X_h$ that satisfies the following system for all $\vb_h\in\X_h$,
 \begin{equation}
   \begin{split}
-\dprod{ \frac{\rho_h^{*}\ub_h^{k+1}-\rho_h^{k}\ub_h^{k} }{\tau^{k+1}} }{\vb_h} + \dprod{ \rho_h^{k+1}\ub_h^{k}\cdot\nabla\ub_h^{k+1} }{\vb_h}&\\
+\dprod{ \frac{\rho_h^{*}\ub_h^{k+1}-\rho_h^{k}\ub_h^{k} }{\tau} }{\vb_h} + \dprod{ \rho_h^{k+1}\ub_h^{k}\cdot\nabla\ub_h^{k+1} }{\vb_h}&\\
  + \dprod{ \frac{1}{2}\nabla\cdot\left(\ub_h^{k}\right)\ub_h^{k+1} }{\vb_h} + \mu\dprod{ \nabla \ub_h^{k+1} }{\nabla\vb_h}&\\
   +\dprod{\nabla p_h^{\#}}{\vb_h} &= \dprod{\fb^{k+1}}{\vb_h}.
 \end{split}
@@ -207,11 +207,11 @@ so that $p_h^{\#}$ is a second order extrapolation of pressure to time $t^{k+1}$
 Now that we have $\rho_h^{k+1}$ and $\ub_h^{k+1}$, we solve for the pressure increment $\phi_h^{\flat}\in M_h$ which then allows us to solve for the pressure $p_h^{k+1}\in M_h$.  
 Recalling that $\chi \leq \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x)$ (note that we will often choose it to be the minimum), we let $\phi_h^{\flat}\in M_h$ be the weak solution of
 \begin{equation}
-  \Delta \phi^{\flat} = \frac{\chi}{\tau^{k+1}}\nabla\cdot \ub^{k+1}, \hspace{1cm} \left.\partial_\n\phi^{\flat}\right|_{\partial\Omega} = 0
+  \Delta \phi^{\flat} = \frac{\chi}{\tau}\nabla\cdot \ub^{k+1}, \hspace{1cm} \left.\partial_\n\phi^{\flat}\right|_{\partial\Omega} = 0
 \end{equation}
 mainly it solves
 \begin{equation}
-  \dprod{\nabla\phi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau^{k+1}}\dprod{\ub_h^{k+1}}{\nabla r_h}
+  \dprod{\nabla\phi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}
 \end{equation}
 for all $r_h \in M_h$.  Then we update the pressure as
 \begin{equation}
