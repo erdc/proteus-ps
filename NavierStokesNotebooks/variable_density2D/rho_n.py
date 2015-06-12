@@ -36,10 +36,8 @@ subgridError = SubgridError.Advection_ASGS(coefficients,
 #numerics.nny= 41
 
 #matrix type
-numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions)
-#numerics.numericalFluxType = MixedDarcy_exterior
-#numerics.numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior
-#numerics.numericalFluxType = NumericalFlux.Advection_Diagonal_average
+#numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
+numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior #weak boundary conditions (upwind)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
@@ -60,4 +58,3 @@ tolFac = 0.0
 nl_atol_res = ctx.ns_nl_atol_res
 
 periodicDirichletConditions=None
-

@@ -16,9 +16,8 @@ class MassTransport(TransportCoefficients.TC_base):
 
        \frac{\partial\rho}{\partial t}+\nabla\cdot\left(\rho\mathbf{v}\right)=0
     """
-    def __init__(self,velocityModelIndex=-1, 
+    def __init__(self,velocityModelIndex=-1,
                  velocityFunction=None,
-                 useVelocityFunction=False,
                  useVelocityComponents=False):
         """Construct a coefficients object
 
@@ -39,7 +38,6 @@ class MassTransport(TransportCoefficients.TC_base):
                                                advection = {0:{0:'linear'}})
         self.velocityModelIndex = velocityModelIndex
         self.velocityFunction = velocityFunction
-        self.useVelocityFunction = useVelocityFunction
         self.c_u = {}
         self.c_v = {}
         self.c_velocity = {}
@@ -48,7 +46,7 @@ class MassTransport(TransportCoefficients.TC_base):
     def attachModels(self,modelList):
         """
         Attach the model for velocity
-        """        
+        """
         if not self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
@@ -89,44 +87,20 @@ class MassTransport(TransportCoefficients.TC_base):
                 v = self.velocityModel.ebq_global[('u',1)]
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
-                
-
 
     def evaluate(self,t,c):
         """
         Evaluate the coefficients after getting the specified velocity
         """
-        # if self.velocityFunction != None:
-        #     v = self.velocityFunction(c['x'],t)
-        # else:#use flux shape as key since it is same shape as velocity
-        #     v = self.c_v[c[('f',0)].shape]
-        # c[('m',0)][:] = c[('u',0)]
-        # c[('dm',0,0)][:] = 1.0
-        # c[('f',0)][...,0] = c[('u',0)]*v[...,0]
-        # c[('f',0)][...,1] = c[('u',0)]*v[...,1]
-        # c[('df',0,0)][:] = v
-        # if self.velocityFunction != None:
-        #     u = self.velocityFunction(c['x'],t)[...,0]
-        #     v = self.velocityFunction(c['x'],t)[...,1]
-        # else:#use flux shape as key since it is same shape as velocity
-        #     u = self.c_u[c[('m',0)].shape]
-        #     v = self.c_v[c[('m',0)].shape]
-        
-        
-        if self.useVelocityFunction == True:
+        if self.velocityFunction != None:
             u = self.velocityFunction(c['x'],t)[...,0]
             v = self.velocityFunction(c['x'],t)[...,1]
-        else: #use flux shape as key since it is same shape as velocity
-            if (t - 0.0) < 1.e-10:   # only on first step use velocity function
-                u = self.velocityFunction(c['x'],t)[...,0]
-                v = self.velocityFunction(c['x'],t)[...,1]
-            elif self.useVelocityComponents:
-                u = self.c_u[c[('m',0)].shape]
-                v = self.c_v[c[('m',0)].shape]
-            else:
-                u = self.c_velocity[c[('f',0)].shape][...,0]
-                v = self.c_velocity[c[('f',0)].shape][...,1]
-        
+        elif self.useVelocityComponents:
+            u = self.c_u[c[('m',0)].shape]
+            v = self.c_v[c[('m',0)].shape]
+        else:
+            u = self.c_velocity[c[('f',0)].shape][...,0]
+            v = self.c_velocity[c[('f',0)].shape][...,1]
         c[('m',0)][:] = c[('u',0)]
         c[('dm',0,0)][:] = 1.0
         c[('f',0)][...,0] = c[('u',0)]*u
@@ -224,7 +198,7 @@ class NavierStokes2D(TransportCoefficients.TC_base):
     viscosity which could depend on density :math:`\rho`.
 
     We solve this equation on a 2D disk :math:`\Omega=\{(x,y) \:|\: x^2+y^2<1\}`
-    
+
     :param densityModelIndex: The index into the proteus model list
 
     :param densityFunction: A function taking as input an array of spatial
@@ -236,7 +210,7 @@ class NavierStokes2D(TransportCoefficients.TC_base):
 
     """
     def __init__(self,f1ofx,f2ofx,mu=1.0,densityModelIndex=-1,densityFunction=None):
-        
+
         sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
                           np.array([0,1],dtype='i')),
                    (1,1):(np.array([0,1,2],dtype='i'),
@@ -245,15 +219,15 @@ class NavierStokes2D(TransportCoefficients.TC_base):
         xi=0; yi=1; # indices for first component or second component of dimension
         eu=0; ev=1; ediv=2; # equation numbers  momentum u, momentum v, divergencefree
         ui=0; vi=1; pi=2;  # variable name ordering
-        
-        TransportCoefficients.TC_base.__init__(self, 
+
+        TransportCoefficients.TC_base.__init__(self,
                          nc=dim+1, #number of components  u, v, p
                          variableNames=['u','v','p'], # defines variable reference order [0, 1, 2]
                          mass = {eu:{ui:'linear'}, # du/dt
                                  ev:{vi:'linear'}}, # dv/dt
                          advection = {ediv:{ui:'linear',   # \nabla\cdot [u v]
                                             vi:'linear'}}, # \nabla\cdot [u v]
-                         hamiltonian = {eu:{ui:'nonlinear', # u u_x + v u_y    convection term   
+                         hamiltonian = {eu:{ui:'nonlinear', # u u_x + v u_y    convection term
                                             pi:'linear'},   # p_x
                                         ev:{vi:'nonlinear', # u v_x + v v_y   convection term
                                             pi:'linear'}},  # p_y
@@ -272,8 +246,8 @@ class NavierStokes2D(TransportCoefficients.TC_base):
         self.densityModelIndex = densityModelIndex
         self.densityFunction = densityFunction
         self.c_rho = {}
-        
-        
+
+
     def attachModels(self,modelList):
         """
         Attach the model for density
@@ -317,7 +291,7 @@ class NavierStokes2D(TransportCoefficients.TC_base):
         grad_u = c[('grad(u)',ui)]
         grad_v = c[('grad(u)',vi)]
         grad_p = c[('grad(u)',pi)]
-        
+
         if self.densityFunction != None:
             rho = self.densityFunction(c['x'],t)
         else:#use mass shape as key since it is same shape as density
@@ -332,7 +306,7 @@ class NavierStokes2D(TransportCoefficients.TC_base):
         c[('dH',eu,ui)][...,xi] = rho*u #  dH d(u_x)
         c[('dH',eu,ui)][...,yi] = rho*v #  dH d(u_y)
         c[('dH',eu,pi)][...,xi] = 1.0 #  dH/d(p_x)
-        c[('a',eu,ui)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our 
+        c[('a',eu,ui)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
         c[('a',eu,ui)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
         c[('da',eu,ui,ui)][...,0] = 0.0 # -(da/d ui)_0   # could leave these off since it is 0
         c[('da',eu,ui,ui)][...,1] = 0.0 # -(da/d ui)_1   # could leave these off since it is 0
@@ -346,7 +320,7 @@ class NavierStokes2D(TransportCoefficients.TC_base):
         c[('dH',ev,vi)][...,xi] = rho*u #  dH d(v_x)
         c[('dH',ev,vi)][...,yi] = rho*v #  dH d(v_y)
         c[('dH',ev,pi)][...,yi] = 1.0 #  dH/d(p_y)
-        c[('a',ev,vi)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our 
+        c[('a',ev,vi)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
         c[('a',ev,vi)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
         c[('da',ev,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
         c[('da',ev,vi,vi)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0

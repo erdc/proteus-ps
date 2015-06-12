@@ -59,5 +59,7 @@ nl_atol_res = ctx.ns_nl_atol_res
 
 periodicDirichletConditions=None
 
+#all of these  should work
+#conservativeFlux = {2:'point-eval'}
 #conservativeFlux = {2:'pwl-bdm'}
-# conservativeFlux = {2:'point-eval'}
+#conservativeFlux = {2:'pwl-bdm-opt'}

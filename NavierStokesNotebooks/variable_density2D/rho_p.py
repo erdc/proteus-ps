@@ -10,21 +10,19 @@ domain = ctx.domain
 nd = ctx.nd
 name = "mass_transport"
 
-# coefficients=NavierStokes.MassTransport(velocityFunction=ctx.velocityFunction,useVelocityFunction=True)
-# coefficients=NavierStokes.MassTransport(velocityFunction=None,velocityModelIndex=1,useVelocityFunction=False) # from pnList in *_so.py  0 = density,  1 = (u,v,p)
-coefficients=NavierStokes.MassTransport(velocityFunction=ctx.velocityFunction,
-                                        velocityModelIndex=1,
-                                        useVelocityFunction=False,
-                                        useVelocityComponents=True) # from pnList in *_so.py  0 = density,  1 = (u,v,p)
+# from pnList in *_so.py  0 = density,  1 = (u,v,p)
+coefficients=NavierStokes.MassTransport(velocityFunction=None, #or ctx.velocityFunction to use exact solution (uncoupled transport)
+                                        velocityModelIndex=1,  #don't  change this unless the order in so-file is changed
+                                        useVelocityComponents=True) #set to false  to use 'velocity' (possible post-processed)
 
-#this function's job is to return another function holding the Dirichlet boundary conditions 
+#this function's job is to return another function holding the Dirichlet boundary conditions
 # wherever they are set
 
 def getDBC_rho(x,flag):
-    if flag in [ctx.boundaryTags['bottom'],
-                ctx.boundaryTags['top']]:
-        return lambda x,t: ctx.rhotrue(x,t)
-    
+   if flag in [ctx.boundaryTags['bottom'],
+               ctx.boundaryTags['top']]:
+       return lambda x,t: ctx.rhotrue(x,t)
+
 def getNone(x,flag):
     return None
 
@@ -34,11 +32,11 @@ class getIBC_rho:
         pass
     def uOfXT(self,x,t):
         return self.rhotrue(x,t)
-    
+
 initialConditions = {0:getIBC_rho()}
 
 dirichletConditions = {0:getDBC_rho}
 
 advectiveFluxBoundaryConditions = {0:getNone}
-# fluxBoundaryConditions = {0:'outFlow'}
-fluxBoundaryConditions = {0:'noFlux'}
+
+fluxBoundaryConditions = {0:'outFlow'} #this only has an effect when numericalFlux is not used

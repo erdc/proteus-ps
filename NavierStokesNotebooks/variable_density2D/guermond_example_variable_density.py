@@ -20,13 +20,13 @@ quad_degree = 5  # exact for polynomials of this degree
 # from sympy.interactive import printing
 # printing.init_printing(use_latex=True)
 
-# Create the manufactured solution and run through sympy 
+# Create the manufactured solution and run through sympy
 # to create the forcing function and solutions etc
 #
-# Import specific sympy functions to avoid overloading 
+# Import specific sympy functions to avoid overloading
 # numpy etc functions
 from sympy.utilities.lambdify import lambdify
-from sympy import (symbols, 
+from sympy import (symbols,
                    simplify,
                    diff)
 from sympy.functions import (sin as sy_sin,
@@ -41,7 +41,7 @@ xs,ys,ts = symbols('x y t')
 # viscosity coefficient
 mu = 1.0
 
-# Given solution: (Modify here and if needed add more sympy.functions above with 
+# Given solution: (Modify here and if needed add more sympy.functions above with
 #                  notation sy_* to distinguish as symbolic functions)
 rs = sy_sqrt(xs*xs + ys*ys)
 thetas = sy_atan2(ys,xs)
@@ -70,7 +70,7 @@ f1l = lambdify((xs, ys, ts), f1s, "numpy")
 f2l = lambdify((xs, ys, ts), f2s, "numpy")
 
 # convert python expressions to the format we need for multidimensional x values
-def ptrue(x,t): 
+def ptrue(x,t):
     return pl(x[...,0],x[...,1],t)
 
 def utrue(x,t):
@@ -99,7 +99,7 @@ def velocityFunction(x,t):
 unitCircle = True
 if unitCircle:
     from math import pi, ceil, cos, sin
-    
+
     # modify these for changing circular domain location and size
     radius = 1.0
     center_x = 0.0
@@ -131,22 +131,22 @@ if unitCircle:
             segmentFlags.append(boundaryTags['top'])
         else:
             segmentFlags.append(boundaryTags['bottom'])
-            
+
     domain = Domain.PlanarStraightLineGraphDomain(vertices=vertices,
                                                   vertexFlags=vertexFlags,
                                                   segments=segments,
                                                   segmentFlags=segmentFlags)
-    #go ahead and add a boundary tags member 
+    #go ahead and add a boundary tags member
     domain.boundaryTags = boundaryTags
     domain.writePoly("mesh")
-    
+
     #
     #finished setting up circular domain
     #
     triangleOptions="VApq30Dena%8.8f" % ((he**2)/2.0,)
 
     logEvent("""Mesh generated using: triangle -%s %s"""  % (triangleOptions,domain.polyfile+".poly"))
-    
+
 
 # numerical tolerances
 ns_nl_atol_res = max(1.0e-8,0.01*he**2)
