@@ -13,12 +13,12 @@ femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis}#density space
 timeIntegration = TimeIntegration.VBDF
 timeOrder = 2
 
-# stepController  = StepControl.Min_dt_cfl_controller
+stepController  = StepControl.Min_dt_cfl_controller
 # runCFL= 0.99
-# runCFL= 0.33
+runCFL= 0.5
 
-stepController=FixedStep
-DT = ctx.DT
+# stepController=FixedStep
+# DT = ctx.DT
 
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)

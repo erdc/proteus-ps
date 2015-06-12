@@ -8,7 +8,7 @@
 \usepackage{appendix}
 \usepackage{multirow}
 \usepackage[section]{placeins}
-\newtheorem{thm}{Theorem}[section]
+
 \graphicspath{{graphics/}{graphics/2dbox_pngs/},{graphics/saltdome_pngs/}{graphics/elder_pngs/}{graphics/saltpool3d_pngs/}{graphics/3dbox_pngs/}{graphics/henry2d_pngs/},{graphics/goswami_clement_pngs/}}
 
 \include{include}
@@ -27,12 +27,6 @@
 \affiliation{Department of Mathematics \\
 Texas A\& M University\\
 College Station, TX 77843-3368}
-
-\author{C. N. Dawson}
-\affiliation{Computational Hydraulics Group \\
-1 University Station, C0200 \\
-The University of Texas at Austin \\
-Austin, TX 78712}
 
 \author{M. W. Farthing \and C. E. Kees}
 \affiliation{Coastal and Hydraulics Laboratory\\
@@ -54,7 +48,7 @@ Austin, TX 78712}
 %\additionalinfo{Supersedes ERDC/CREL AF-01-23}
 
 \begin{abstract}
- Saltwater intrusion into coastal freshwater aquifers is an ongoing problem that will continue to impact coastal freshwater resources as coastal populations increase.   To effectively model saltwater intrusion, the impacts of  salt content on fluid density must be accounted for to properly model saltwater/freshwater transition zones and sharp interfaces.  We present a model for variable density fluid flow and solute transport where a conforming finite element method discretization with a locally conservative velocity post-processing method is used for the flow model and a variational multi-scale stabilized conforming finite element method is used for transport.   This formulation provides a consistent velocity and performs well even in advection-dominated problems that can occur in saltwater intrusion modeling. The physical model is presented as well as the formulation of the numerical model and solution methods. The model is tested against several 2D and 3D numerical and experimental benchmark problems and the results are presented to verify the code. 
+  Add abstract
 \end{abstract}
 
 %\disclaimer{Some other disclaimer}
@@ -106,6 +100,24 @@ was Director.
 %
 \chapter{Variable Density Incompressible Navier-Stokes Time Stepping Techniques}
 
+The system of equations treated here are
+\begin{equation}\label{eqn:variabledensityNavierStokes}
+  \begin{cases}
+    \rho_t + \nabla\cdot\left( \rho \ub\right) = 0 &\\
+    \rho\left(\ub_t + \ub\cdot\nabla\ub  \right) + \nabla p - \mu\Delta \ub = \f &\\
+    \nabla\cdot \ub = 0
+  \end{cases}
+\end{equation}
+with initial and boundary conditions
+\begin{equation}\label{eqn:variabledensityNavierStokesBCIC}
+  \begin{cases}
+    \rho(\x,0) = \rho_0(\x), & \left.\rho(\x,t)\right|_{\partial\Omega^{in}} = a(\x,t)\\
+    \ub(\x,0) = \ub_0(\x), & \left.\ub(\x,t)\right|_{\partial\Omega} = 0
+  \end{cases}
+\end{equation}
+where the inflow boundary, $\partial\Omega^{in} = \{ \x\in \partial\Omega \:|\: \ub\cdot\n <0 \}$ where $\n$ is the outward unit normal vector.  Under the restrictive assumption that $\left.\ub(\x,t)\right|_{\partial\Omega} = 0$, we have $\partial\Omega^{in}= \emptyset$.
+
+
 %
 %
 %
@@ -152,7 +164,7 @@ This can be seen as a discrete version of the following system
 \end{equation}
 where we have replaced difference quotients with time derivatives and substituted $\veps = \tau$ for the remaining $\tau$'s and recognized $p^{k} + \phi^{k} = p^{k} + \left( p^{k} - p^{k-1} \right) = 2p^{k} - p^{k-1} \approx p^{k+1}$ as a second order extrapolation of pressure to time $t^{k+1}$.
 
-This is a second order $\mathcal{O}(\veps^2)$ perturbation of the constant density incompressible navier stokes equations.  Simpler versions of this discrete system were observed by Rannacher in \textbf{add citation here} to be nothing more than penalities on the divergence of velocity in the momentum equation in a norm resembling the $H^{-1}$ norm.  Hense the term penalty-like algorithms.  As described in \cite{guermond2009splitting}, the system~$\mathbf{\left(\ref{eqn:discreteperturbation}\right)}$ is the starting point for the algorithms described below.
+This is a second order $\mathcal{O}(\veps^2)$ perturbation of the constant density incompressible navier stokes equations.  Simpler versions of this discrete system were observed by Rannacher in \cite{rannacher1992chorin} to be nothing more than penalities on the divergence of velocity in the momentum equation in a norm resembling the $H^{-1}$ norm.  Hense the term penalty-like algorithms.  As described in \cite{guermond2009splitting}, the system~$\left(\ref{eqn:discreteperturbation}\right)$ is the starting point for the algorithms described below.
 
 
 
@@ -160,6 +172,8 @@ This is a second order $\mathcal{O}(\veps^2)$ perturbation of the constant densi
 %
 %
 \section{BDF1 Incremental Rotational Scheme}
+\textbf{add in introduction of how toget from penalty equations to BDF1 algorithm}
+
 
 %
 %
@@ -189,18 +203,26 @@ Thus we obtain the weak solution $\rho_h^{k+1}\in W_h$ that satifies the above r
 \subsubsection{Velocity Update}
 Once we have the density $\rho_h^{k+1}$ we can now solve for the velocity.  It turns out that we do not explicitly require this velocity to be divergence free, but simply penalize the divergence using the pressure rotational update.  We define our update terms
 \begin{align*}
-  \rho_h^{*} &= \frac{1}{2}\left( \rho_h^{k+1} - \rho_h^{k} \right)\\
+  \rho_h^{*} &= \frac{1}{2}\left( \rho_h^{k+1} + \rho_h^{k} \right)\\
   \delta p_h^{k} &= p_h^{k} - p_h^{k-1}\\
     p_h^{\#} &= p_h^{k} + \delta p_h^{k} = 2p_h^{k} - p_h^{k-1}
 \end{align*}
 so that $p_h^{\#}$ is a second order extrapolation of pressure to time $t^{k+1}$.  Next we  solve for $\ub_h^{k+1}\in\X_h$ that satisfies the following system for all $\vb_h\in\X_h$,
-\begin{equation}
+\begin{equation}\label{eqn:bdf1_momentum_constanttimestep}
   \begin{split}
-\dprod{ \frac{\rho_h^{*}\ub_h^{k+1}-\rho_h^{k}\ub_h^{k} }{\tau} }{\vb_h} + \dprod{ \rho_h^{k+1}\ub_h^{k}\cdot\nabla\ub_h^{k+1} }{\vb_h}&\\
- + \dprod{ \frac{1}{2}\nabla\cdot\left(\ub_h^{k}\right)\ub_h^{k+1} }{\vb_h} + \mu\dprod{ \nabla \ub_h^{k+1} }{\nabla\vb_h}&\\
-  +\dprod{\nabla p_h^{\#}}{\vb_h} &= \dprod{\fb^{k+1}}{\vb_h}.
+\dprod{ \frac{\rho_h^{*}\ub_h^{k+1}-\rho_h^{k}\ub_h^{k} }{\tau} }{\vb_h} + \dprod{ \rho_h^{k+1}\ub_h^{k}\cdot\nabla\ub_h^{k+1} }{\vb_h}+ \mu\dprod{ \nabla \ub_h^{k+1} }{\nabla\vb_h}&\\
+ + \dprod{ \frac{1}{2}\nabla\cdot\left(\rho_h^{k+1}\ub_h^{k}\right)\ub_h^{k+1} }{\vb_h} +\dprod{\nabla p_h^{\#}}{\vb_h} &= \dprod{\fb^{k+1}}{\vb_h}.
 \end{split}
 \end{equation}
+
+We note that Equation~(\ref{eqn:bdf1_momentum_constanttimestep}) can be rewritten in a more recognizable format that emphasizes the consistent stabilizing term as a scaled version of conservation of mass, namely
+\begin{equation}
+  \begin{split}
+\dprod{\rho_h^{k} \frac{\ub_h^{k+1}-\ub_h^{k} }{\tau} }{\vb_h} &+ \dprod{ \rho_h^{k+1}\ub_h^{k}\cdot\nabla\ub_h^{k+1} }{\vb_h} + \mu\dprod{ \nabla \ub_h^{k+1} }{\nabla\vb_h}+\dprod{\nabla p_h^{\#}}{\vb_h}\\
+ &+ \frac{1}{2}\dprod{ \left(\frac{\rho_h^{k+1} - \rho_h^{k}}{\tau} + \nabla\cdot\left(\rho_h^{k+1}\ub_h^{k}\right)  \right )\ub_h^{k+1} }{\vb_h} = \dprod{\fb^{k+1}}{\vb_h}.
+\end{split}
+\end{equation}
+
 
 %
 \subsubsection{Pressure Update}
@@ -223,6 +245,68 @@ or in other words, we solve for $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h
 \end{equation}
 The last term involving the divergence of velocity makes this the rotational form and leaving it off is the standard form.  In standard form, it is simple enough to just add $p_h^{k+1}$ and $\phi_h^{\flat}$ to update $p_h^{k+1}$ instead of solving the linear system.
 
+
+\subsection{Summary of BDF1 Constant Time Step Incremental Rotational Algorithm}\label{subsec:BDF1constantTimeSummary}
+Given $(\rho^{k}, \ub^{k}, p^{k})\in W_h\times \X_h\times M_h$ where the spaces $\X_h\times M_h$ satisfy the standard LBB inf-sup conditions, for instance a Taylor-Hood spaces $\Proj^2\times\Proj^1$.   First, solve for $\rho^{k+1}\in W_h$ such that
+\begin{equation}
+  \frac{\rho^{k+1} - \rho^k}{\tau} + \nabla\cdot\left(\rho_h^{k+1}\ub^{k} \right) - \frac{\rho^{k+1}}{2}\nabla\cdot\ub^{k} = 0.
+\end{equation}
+using a monotone preserving hyperbolic transport method.  Second, find $\ub^{k+1}_h\in\X_h$ such that for all $\vb_h\in\X_h$,
+\begin{equation}
+  \begin{split}
+\dprod{ \frac{\frac{1}{2}\left( \rho_h^{k+1} + \rho_h^{k} \right)\ub_h^{k+1}-\rho_h^{k}\ub_h^{k} }{\tau} }{\vb_h} + \dprod{ \rho_h^{k+1}\ub_h^{k}\cdot\nabla\ub_h^{k+1} }{\vb_h} + \mu\dprod{ \nabla \ub_h^{k+1} }{\nabla\vb_h}& \\
++ \dprod{ \frac{1}{2}\nabla\cdot\left(\rho_h^{k+1}\ub_h^{k}\right)\ub_h^{k+1} }{\vb_h} +\dprod{\nabla \left(2p_h^{k} - p_h^{k-1}\right)}{\vb_h} &= \dprod{\fb^{k+1}}{\vb_h}.
+\end{split}
+\end{equation}
+Finally we find $\phi_h^{\flat}\in M_h$ such that for all $r_h\in M_h$,
+\begin{equation}
+  \dprod{\nabla\phi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}
+\end{equation}
+where $\chi \leq \displaystyle\min_{\x\in\overline{\Omega}}\rho_0(\x)$ and update the pressure $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h$
+\begin{equation}
+  \dprod{p_h^{k+1}}{r_h} = \dprod{\phi_h^{\flat} + p_h^{k}}{r_h} + \mu\dprod{\ub_h^{k+1}}{\nabla r_h}.
+\end{equation}
+
+Thus we have solved for $(\rho^{k+1}, \ub^{k+1}, p^{k+1})$ and can move on to the next time step.
+
+
+\subsection{Error analysis of BDF1 Constant Time Step Incremental Rotational Algorithm}
+The stability of the above algorithm is proved in \cite{guermond2009splitting} and the error analysis was carried out in \cite{guermond2011error}.  We refer the reader to those articles for details and give the main results contained in Theorem 4.2 of \cite{guermond2011error}.
+
+We define the Stokes projection, $\left(\Pi_h\ub(t),\Pi_h p(t)\right) \in \X_h\times M_h$, of the solution $\left(\ub(t),p(t)\right)$ to (\ref{eqn:variabledensityNavierStokes})-(\ref{eqn:variabledensityNavierStokesBCIC}) to be the pair that solves
+\begin{equation}
+  \begin{cases}
+    \mu\dprod{\nabla\Pi_h\ub(t)}{\nabla\vb_h} + \dprod{\nabla\Pi_h p(t)}{\vb_h} = \mu\dprod{\nabla \ub(t)}{\nabla\vb_h} - \dprod{p(t)}{\nabla\cdot\vb_h}, & \forall \vb_h \in \X_h\\
+    \dprod{\Pi_h \ub(t)}{\nabla r_h} = 0, & \forall r_h\in M_h
+  \end{cases}
+\end{equation}
+
+\begin{theorem}
+  Assume that the true solution to (\ref{eqn:variabledensityNavierStokes}) and (\ref{eqn:variabledensityNavierStokesBCIC}) satisfies (with $l\geq 1$)
+  \begin{equation}
+    \ub\in W^{2,\infty}\left(\mathbf{H}_0^1(\Omega)\cap \mathbf{H}^{l+1}(\Omega)\right), \hspace{1cm} p\in W^{1,\infty}\left(H^{l}(\Omega) \right)
+  \end{equation}
+  Let $(\ub_h)_{\tau}$ be the solutions of velocity as described in Subsection~\ref{subsec:BDF1constantTimeSummary}.  Then if one of either
+  \begin{equation}
+    \|p_h^0 - \Pi_h p^0 \|_{L^2(\Omega)} \leq c h^{\frac{l+1}{2}}
+  \end{equation}
+  or
+  \begin{equation}
+    \|p_h^0\|_{H^1(\Omega)} \leq c \hspace{0.5cm} \mbox{and} \hspace{0.5cm} \dprod{\ub_h^0}{\nabla r_h} = 0 \hspace{0.25cm} \forall r_h\in M_h
+  \end{equation}
+  is satisfied, then
+  \begin{equation}
+    \|\left(\ub\right)_\tau - \left(\ub_h\right)_{\tau} \|_{\ell^{\infty}(\mathbf{L}^2(\Omega))} \leq c\left( \tau + h^{\min(l+1,m)} \right)
+  \end{equation}
+  and
+  \begin{equation}
+    \|\left(\ub\right)_\tau - \left(\ub_h\right)_{\tau} \|_{\ell^{2}(\mathbf{H}^1(\Omega))} \leq c\left( \tau + h^{\min(l,m)} \right)
+  \end{equation}
+\end{theorem}
+
+\begin{remark}
+  Here $m>0$ is a constant that deals with the coupling between velocity and our solution of density transport.  In particular it depends on the method we use to solve the mass conservation.  The details are described in Section 4.2 of \cite{guermond2011error} where they conjecture that one can obtain $m=1$ by approximating the mass conservation with a linear first-order viscosity or first-order level set or phase field approach.  They further conjecture that $m>1$ if one uses a nonlinear stabilization technique like discontinuous Galerkin with limiters or entropy viscosity.  
+\end{remark}
 
 
 
