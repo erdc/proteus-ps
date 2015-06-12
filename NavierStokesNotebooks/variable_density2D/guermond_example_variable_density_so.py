@@ -10,7 +10,8 @@ pnList = [("rho_p", "rho_n"),
 #modelSpinUpList = [1]
 name = "guermond_example_variable_density_p"
 
-systemStepControllerType = Sequential_MinAdaptiveModelStep
+#systemStepControllerType = Sequential_MinAdaptiveModelStep
+systemStepControllerType = Sequential_MinModelStep
 
 needEBQ_GLOBAL = True
 needEBQ = True

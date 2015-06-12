@@ -11,11 +11,13 @@ femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # u velocity 
              2:FemTools.C0_AffineLinearOnSimplexWithNodalBasis} #p pressure space
 
 from TimeIntegrationPS import NonConservativeBackwardEuler, NonConservativeVBDF
-# numerics.timeIntegration = TimeIntegration.BackwardEuler
+timeIntegration = TimeIntegration.BackwardEuler
 #timeIntegration = NonConservativeBackwardEuler
-timeIntegration = NonConservativeVBDF
+#timeIntegration = NonConservativeVBDF
 timeOrder = 2
-stepController  = StepControl.Min_dt_cfl_controller
+#stepController  = StepControl.Min_dt_cfl_controller
+stepController  = StepControl.FixedStep
+DT = 0.01
 runCFL = 0.99
 
 #Quadrature rules for elements and element  boundaries

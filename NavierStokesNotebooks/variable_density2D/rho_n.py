@@ -8,12 +8,14 @@ triangleOptions = ctx.triangleOptions
 
 femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis}#density space
 
-# numerics.timeIntegration = TimeIntegration.BackwardEuler
+timeIntegration = TimeIntegration.BackwardEuler
 # timeIntegration = TimeIntegration.BackwardEuler_cfl
-timeIntegration = TimeIntegration.VBDF
+#timeIntegration = TimeIntegration.VBDF
 
 timeOrder = 2
-stepController  = StepControl.Min_dt_cfl_controller
+#stepController  = StepControl.Min_dt_cfl_controller
+stepController  = StepControl.FixedStep
+DT = 0.01
 runCFL= 0.99
 
 #Quadrature rules for elements and element  boundaries

@@ -156,4 +156,4 @@ T=10.0
 
 nFrames = 41
 dt = T/(nFrames-1)
-tnList = [i*dt for i in range(nFrames)]
+tnList = [0.0,0.01,T]#i*dt for i in range(nFrames)]
