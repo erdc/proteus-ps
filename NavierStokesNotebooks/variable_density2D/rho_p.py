@@ -12,8 +12,8 @@ name = "mass_transport"
 
 # from pnList in *_so.py  0 = density,  1 = (u,v,p)
 coefficients=NavierStokes.MassTransport(velocityFunction=None, #or ctx.velocityFunction to use exact solution (uncoupled transport)
-                                        velocityModelIndex=1,  #don't  change this unless the order in so-file is changed
-                                        useVelocityComponents=False) #set to false  to use 'velocity' (possible post-processed)
+                                        velocityModelIndex=1,  #don't change this unless the order in so-file is changed
+                                        useVelocityComponents=False) #set to false to use 'velocity' (possible post-processed)
 
 #this function's job is to return another function holding the Dirichlet boundary conditions
 # wherever they are set

@@ -16,11 +16,11 @@ from TimeIntegrationPS import NonConservativeBackwardEuler, NonConservativeVBDF
 timeIntegration = NonConservativeVBDF
 timeOrder = 2
 
-stepController  = StepControl.Min_dt_cfl_controller
-runCFL = 0.5
+# stepController  = StepControl.Min_dt_cfl_controller
+# runCFL = 0.5
 
-# stepController  = FixedStep
-# DT = ctx.DT
+stepController  = FixedStep
+DT = ctx.DT
 
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
