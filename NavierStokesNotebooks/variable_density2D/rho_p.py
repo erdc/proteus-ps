@@ -15,6 +15,8 @@ coefficients=NavierStokes.MassTransport(velocityFunction=None, #or ctx.velocityF
                                         velocityModelIndex=1,  #don't change this unless the order in so-file is changed
                                         useVelocityComponents=False) #set to false to use 'velocity' (possible post-processed)
 
+analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.rhotrue)}
+
 #this function's job is to return another function holding the Dirichlet boundary conditions
 # wherever they are set
 

@@ -25,6 +25,12 @@ coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
                                          densityModelIndex=0)  # from pnList in *_so.py  0 = density,  1 = (u,v,p)
 
 
+analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue),#,ctx.gradutrue),
+                      1:ctx.AnalyticSolutionConverter(ctx.vtrue),#,ctx.gradvtrue),
+                      2:ctx.AnalyticSolutionConverter(ctx.ptrue)}#,ctx.gradptrue)}
+                      
+analyticalSolutionVelocity = {ctx.AnalyticSolutionConverter(ctx.velocityFunction)}
+
 # Define boundary conditions and initial conditions of system
 
 def getDBC_p(x,flag):
