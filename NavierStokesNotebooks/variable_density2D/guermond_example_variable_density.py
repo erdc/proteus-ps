@@ -109,6 +109,10 @@ def velocityFunction(x,t):
                       vtrue(x,t)[...,np.newaxis].transpose())
                     ).transpose()
 
+def velocityFunctionLocal(x,t):
+    return np.array([utrue(x,t),vtrue(x,t)])
+                    
+
 # analytic derivatives
 def dudxtrue(x,t):
     return dul_dx(x[...,0],x[...,1],t)
@@ -125,22 +129,15 @@ def dpdxtrue(x,t):
 def dpdytrue(x,t):
     return dpl_dy(x[...,0],x[...,1],t)
 
-# # analytic gradients
-# def gradutrue(x,t):
-#     return np.vstack((dudxtrue(x,t)[...,np.newaxis].transpose(),
-#                       dudytrue(x,t)[...,np.newaxis].transpose())
-#                     ).transpose()
-#
-# def gradvtrue(x,t):
-#     return np.vstack((dvdxtrue(x,t)[...,np.newaxis].transpose(),
-#                       dvdytrue(x,t)[...,np.newaxis].transpose())
-#                     ).transpose()
-#
-# def gradptrue(x,t):
-#     return np.vstack((dpdxtrue(x,t)[...,np.newaxis].transpose(),
-#                       dpdytrue(x,t)[...,np.newaxis].transpose())
-#                     ).transpose()
+# analytic gradients
+def gradutrue(x,t):
+    return np.array([dudxtrue(x,t), dudytrue(x,t)])
 
+def gradvtrue(x,t):
+    return np.array([dvdxtrue(x,t), dvdytrue(x,t)])
+
+def gradptrue(x,t):
+    return np.array([dpdxtrue(x,t), dpdytrue(x,t)])
 
 
 class AnalyticSolutionConverter:

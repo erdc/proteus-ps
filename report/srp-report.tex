@@ -310,6 +310,16 @@ We define the Stokes projection, $\left(\Pi_h\ub(t),\Pi_h p(t)\right) \in \X_h\t
 
 
 
+% \subsection{BDF1 Variable Time Step Scheme}
+% In the case of variable time step  $\tau^{k} := t^{k}-t^{k-1}$, there is only one change for BDF1.  The choice of pressure for the momentum equations is augmented to reflect the second order extrapolation in variable time steps:
+% \begin{equation}
+%   p^{\sharp}_h := p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\delta p_h^{k} = p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^{k} - p_h^{k-1} \right).
+% \end{equation}
+% Everything else is kept the same as above.  The convergence results have not been proved for the case of variable time stepping but it is reasonable to suspect that under proper CFL conditions with a maximal time step enforced as well
+%
+% \begin{equation}
+%   \tau^{k+1} \leq \min {c h_{min}, \tau^{max}}, $c<1$
+% \end{equation}
 
 \section{BDF2 Incremental Rotational Scheme}
 
