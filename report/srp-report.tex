@@ -219,7 +219,7 @@ where the last term is a consistent stabilization which leads to unconditional s
 \end{equation}
 for all $k\geq 1$.
 
-Thus we obtain the weak solution $\rho_h^{k+1}\in W_h$ that satifies the above requirements.
+Thus we obtain the weak solution $\rho_h^{k+1}\in W_h$ that satifies the above requirements.  We will discuss techniques for solving the density advection equation in Section~\ref{sec:ConservationOfMassNumericalApproach}
 
 %
 \subsection{Velocity Update}
@@ -333,7 +333,7 @@ We define the Stokes projection, $\left(\Pi_h\ub(t),\Pi_h p(t)\right) \in \X_h\t
 
 %
 %
-\section{BDF1 Variable Time Step Scheme}\label{sec:BDF1VariableTimeSteppingAlgorithm}
+\section{BDF1 Variable Time Stepping Algorithm}\label{sec:BDF1VariableTimeSteppingAlgorithm}
 In the case of variable time step  $\tau^{k} := t^{k}-t^{k-1}$, there is only one change for BDF1.  The choice of pressure for the momentum equations is augmented to reflect the second order extrapolation in variable time steps:
 \begin{equation}
   p^{\sharp}_h := p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\delta p_h^{k} = p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^{k} - p_h^{k-1} \right).
@@ -345,15 +345,74 @@ Notice that this reduces to the above case when $\tau^{k+1}=\tau^{k} = \tau$.  E
 This time stepping controls the conservation of mass equation since the physical velocity being used is $\ub^{k}$, and the conservation of momentum equations since we are using the semi-implicit convection term $\ub^{k}\cdot\nabla\ub^{k+1}$, thus again the physical velocity is $\ub^{k}$.  It is common to choose in practice the values $c=0.33$ or $c=0.5$.
 
 
+\section{Hyperbolic Conservation of Mass Algorithms}\label{sec:ConservationOfMassNumericalApproach}
+
+
 
 %
 %
 \section{BDF2 Constant Time Stepping Algorithm}\label{sec:BDF2ConstantTimeSteppingAlgorithm}
 
+The above BDF1 schemes are proved in \cite{Guermond2011} to be first order accurate in time for the $\mathbf{L}^2(\Omega)$ and $\mathbf{H}^1(\Omega)$ norms of velocity.  However, because we have used a second order extrapolation of pressure
+\begin{equation}
+  p^{\sharp}_h = p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^{k} - p_h^{k-1} \right) \approx p_h^{k+1} + \mathcal{O}\left(\left(\tau^{k+1}\right)^2 \right)
+\end{equation}
+to split the system of equations, they point out that the splitting error of the algorithm is expected to be second order.  Thus it seems logical to introduce a second order approximation to the time derivative for the velocity equations.  Likewise it might be advantageous to use an second order extrapolation of velocity 
+\begin{equation}
+  \ub^{*}_h = \ub_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( \ub_h^{k} - \ub_h^{k-1} \right)
+\end{equation}
+for the semi-implicit convection term, $\ub_h^{*}\cdot\nabla\ub_h^{n+1}$, again eliminating the nonlinearity and preserving the second order in time approximation.
+
+
 %
 %
 \section{BDF2 Variable Time Stepping Algorithm}\label{sec:BDF2VariableTimeSteppingAlgorithm}
 
+\subsection{Density Update}
+Again, the approach to solving this hyperbolic equation is not specified here but is discussed in section~\ref{sec:ConservationOfMassNumericalApproach}.  We will choose a second order hyperbolic scheme that preserves the following stability properties.  First, that there are constants $\chi, c > 0$ such that 
+\begin{equation}
+  \chi \leq \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x),  \hspace{1.5cm} \displaystyle\sup_{\x\in\overline{\Omega}}\rho_h^{k+1}(\x) \leq c \hspace{1cm} \forall k\geq 1
+\end{equation}
+and secondly that when solving for $\rho_h^{k+1}\in W_h$, that there is a uniform constant $M$ such that
+\begin{equation}
+  \displaystyle\max_{0\leq n\leq k-1} \left \| \frac{\rho_h^{n+1} - \rho_h^{n}}{\tau}\right\|_{L^{\infty}(\Omega)} \leq M\chi.
+\end{equation}
+
+\subsection{Velocity Update}
+We define
+\begin{equation}
+  \rho_h^{*} := \frac{3}{2}\rho_h^{k+1} - \frac{2}{3}\rho_h^{k} + \frac{1}{6}\rho_h^{k-1} = \rho_h^{k+1} + \frac{1}{6}\left(3\rho_h^{k+1} -4\rho_h^{k} + \rho_h^{k-1} \right)
+\end{equation}
+\begin{equation}
+  p_h^{\sharp} := p_h^{k} + \frac{4}{3}\phi_h{^k} - \frac{1}{3}\phi_h^{k-1}.
+\end{equation}
+and the second order extrapolation of velocity
+\begin{equation}
+  \ub^{*}_h = 2\ub_h^{k}  - \ub_h^{k-1}.
+\end{equation}
+Now compute $\ub_h^{k+1}\in\X_h$ so that for all $\vb_h\in\X_h$,
+\begin{equation}
+  \begin{split}
+    \dprod{\frac{3\rho_h{^*}\ub_h^{k+1} - 4\rho_h^{k+1}\ub_h^{k} + \rho_h^{k+1}\ub_h{^k-1}}{2\tau}}{\vb_h}  + \dprod{\mu\nabla\ub_h^{k+1}}{\nabla\vb_h} &\\
+   + \dprod{\nabla p_h^{\sharp}}{\vb_h} + \dprod{\rho_h^{k+1}\ub_h^{*}\cdot\nabla\ub_h^{k+1} + \frac{1}{2}\ub_h^{k+1}\nabla\cdot\left( \rho_h^{k+1}\ub_h^{*} \right)}{\vb_h} &= \dprod{\fb^{k+1}}{\vb_h}
+  \end{split}
+\end{equation}
+Notice that we only use $\phi_h^{k+1}$ or $\rho_h^{*}$ in the above equation.
+
+\begin{remark}
+If the terms are smooth enough, then we have
+\begin{align}
+  &\frac{3\rho_h^{*}\ub_h^{k+1}-4\rho_h^{k+1}\ub_h^{k} +\rho_h^{k+1}\ub_h^{k-1}}{2\tau} +\frac{1}{2}\nabla\cdot\left(\rho_h^{k+1}\ub_h^{*}\right)\ub_h^{k+1}\\
+   &= \rho_h^{k+1}\left(\frac{3\ub_h^{k+1} - 4\ub_h^{k} + \ub_h^{k-1}}{2\tau}\right) + \frac{1}{2} \left( \frac{3\rho_h^{k+1} -4\rho_h^{k} + \rho_h^{k-1}}{2\tau} + \nabla\cdot\left(\rho_h^{k+1}\ub_h^{*}\right)\right)\ub_h^{k+1}\\
+  &= \left[\rho_h\frac{d\ub_h}{dt} \right]^{k+1} + \frac{1}{2} \left[ \frac{d\rho_h}{dt} +\nabla\cdot\left(\rho_h\ub_h\right)\right]^{k+1}\ub_h^{k+1} + \mathcal{O}(\tau^2)\\
+  &=\left[\rho_h\frac{d\ub_h}{dt} \right]^{k+1} + \mathcal{O}(\tau^{2})
+\end{align}
+where we have used the fact that $\ub_h^{*}$ is a second order in time approximation to $\ub_h^{k+1}$ and the conservation of mass property of continuous equations.
+\end{remark}
+
+
+\subsection{Penalty Term Update}
+\subsection{Pressure Update}
 
 
 \section{Numerical Results}\label{sec:NumericalResults}
