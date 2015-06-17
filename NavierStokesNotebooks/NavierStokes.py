@@ -46,23 +46,37 @@ class MassTransport(TransportCoefficients.TC_base):
     def attachModels(self,modelList):
         """
         Attach the model for velocity
+        
+        Note that we must use ('velocity',2) since we want the velocity post processor to associate itself
+        with the divergence free property which is our third (2) equation.  Then ('velocity',2) will extract
+        the velocity components from the post processor and pass those along.  There are at least three possible 
+        post processors for divergence free equation of velocity set in mom_n.py:
+        
+        conservativeFlux = {2:'point-eval'}  - will return computed velocities without change 
+                                               (since there is no diffusion in eqn (2) )
+        conservativeFlux = {2:'pwl-bdm'}     - will return velocities projected onto the bdm space (CG 
+                                               Taylor-Hood enriched with DG pw linears on each element)
+        conservativeFlux = {2:'pwl-bdm-opt'} - same as pwl-bdm but optimized in a special way to be more 
+                                               effective.  any additional comments ?
+        
+        Notice that again we are applying the conservativeFlux post processing to the divergence free equation (2).
         """
         if not self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
             if ('velocity',2) in self.velocityModel.q:
-                v = self.velocityModel.q[('velocity',2)]
-                self.c_velocity[v.shape] = v
+                vel = self.velocityModel.q[('velocity',2)]
+                self.c_velocity[vel.shape] = vel
             if ('velocity',2) in self.velocityModel.ebq:
-                v = self.velocityModel.ebq[('velocity',2)]
-                self.c_velocity[v.shape] = v
+                vel = self.velocityModel.ebq[('velocity',2)]
+                self.c_velocity[vel.shape] = vel
             if ('velocity',2) in self.velocityModel.ebqe:
-                v = self.velocityModel.ebqe[('velocity',2)]
-                self.c_velocity[v.shape] = v
+                vel = self.velocityModel.ebqe[('velocity',2)]
+                self.c_velocity[vel.shape] = vel
             if ('velocity',2) in self.velocityModel.ebq_global:
-                v = self.velocityModel.ebq_global[('velocity',2)]
-                self.c_velocity[v.shape] = v
+                vel = self.velocityModel.ebq_global[('velocity',2)]
+                self.c_velocity[vel.shape] = vel
         elif self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
