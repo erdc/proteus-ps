@@ -98,7 +98,7 @@ was Director.
 %
 %
 %
-\chapter{Variable Density Incompressible Navier-Stokes Time Stepping Techniques}
+\chapter{Variable Density Incompressible Navier-Stokes Equations}
 
 The system of equations treated here are
 \begin{equation}\label{eqn:variabledensityNavierStokes}
@@ -123,11 +123,19 @@ where the inflow boundary, $\partial\Omega^{in} = \{ \x\in \partial\Omega \:|\: 
 %
 \section{Preliminaries}
 
+
 %
 %
 \subsection{Notation}
 Find the solutions at time $t^{k+1}$
 \begin{equation}(\rho^{k+1}_h, \ub^{k+1}_{h}, p^{k+1}_h) \in W_h\times\X_h\times M_h  \end{equation}
+
+
+%
+%
+%
+\section{Projection Schemes}
+
 
 %
 %
@@ -168,23 +176,37 @@ This is a second order $\mathcal{O}(\veps^2)$ perturbation of the constant densi
 
 
 
-%
-%
-%
-\section{BDF1 Incremental Rotational Scheme}
-\textbf{add in introduction of how toget from penalty equations to BDF1 algorithm}
+
 
 
 %
 %
-\subsection{Time-stepping technique}
+%
+%
+\chapter{Penalty-Like Time-Splitting Algorithms for Variable Density}
+\textbf{(Note rewrite this first paragraph to be more clear.)} The key to making the jump from the constant density schemes to the below defined variable density schemes is to think of the system~$\left(\ref{eqn:discreteperturbation}\right)$ not as a projection scheme but as a penalty scheme with the penalty being applied on the divergence of velocity.  Then the pressure increment equation (the second one) can be easily modified to accomodate the variable density since instead of using the varying density in the second equation, we replace it with the constant $\veps = \chi \leq \min_{\x\in\overline{\Omega}}\rho_0(\x)$ as in equation~$\left(\ref{eqn:pressureincrementlaplacian}\right)$.  This prevents us from having to solve a variable coefficient laplacian equation at each time step and instead we can solve a constant coefficient laplacian equation for the pressure increment $\phi$.  Once we have taken care of that equation, we proceed with all the standard approaches to discretizing the other momentum equations.  In particular, we will use a semi-implicit convection term $\ub^{k}\cdot\nabla\ub^{k+1}$ to remove the nonlinearity.  The rotational part of the scheme will modify the update of pressure with an extra term consisting of a penalty for divergence of velocity as seen in equation~$\left(\ref{eqn:rotationalpressureupdate}\right)$.  
+
+The velocity described below is not explicitly enforced to be divergence free.  The penalty terms will push it in the right direction but we cannot guarantee that it will even be numerically divergence free, meaning that 
+\begin{equation}
+  \dprod{\ub_h}{\nabla\wb_h} = 0, \hspace{1cm}\forall\wb_h\in\X_h
+\end{equation}
+may not hold.  In the proteus python package in which this will be implemented, it is possible to add some post processing to the velocity.  We can supplement the existing space after the fact with element-wise piecewise constant terms to get the Raviart-Thomas (RT) element space and project the existing solution into that space while minimizing the residual between the exisiting velocity and the new projected velocity under various norms.    Thus the post processed velocity will be enforced to be divergence free and close in some sense to the computed velocity.  It is also possible to add in piecewise linear terms to get the Brezzi-Douglas-Marini-1 (BDM-1) element space.  These post processed velocities can be used for the conservation of mass equation and may provide a better solution of density.
+
+We will not hereafter distinguish between the velocity and the post processed velocity.  The theory only pertains to the computed velocity and so by default we will only be using the computed velocity.  However, in some of the examples and results we may include the use of the various post processed velocities in our algorithm.
+
+We now introduce the algorithms and some theory on expected convergence rates.  We will include the BDF1 constant time step algorithm in Section~\ref{sec:BDF1ConstantTimeSteppingAlgorithm} as well as the modification for variable time stepping in Section~\ref{sec:BDF1VariableTimeSteppingAlgorithm}.  We will then describe the BDF2 constant time step and variable time step algorithms in Section~\ref{sec:BDF2ConstantTimeSteppingAlgorithm} and Section~\ref{sec:BDF2VariableTimeSteppingAlgorithm} respectively, along with some conjectured rates of convergence for them.  We will finish with some numerical examples and observed convergence rates in Section~\ref{sec:NumericalResults}.
+
+
+%
+%
+\section{BDF1 Constant Time Stepping Algorithm}\label{sec:BDF1ConstantTimeSteppingAlgorithm}
 We proceed in a three step update scheme.  First we update the density,  second the velocity, and third the pressure.  So given
 \begin{equation}(\rho^{k}_h, \ub^{k}_{h}, p^{k}_h) \in W_h\times\X_h\times M_h  \end{equation}
 we update to obtain
 \begin{equation}(\rho^{k+1}_h, \ub^{k+1}_{h}, p^{k+1}_h) \in W_h\times\X_h\times M_h.\end{equation}
 
 %
-\subsubsection{Density Update}
+\subsection{Density Update}
 
 We first solve the hyperbolic system with a monotone preserving scheme such as subgrid viscosity, edge stabilization or entropy viscosity using a DG or CG solver.  The equation of update is
 
@@ -200,7 +222,7 @@ for all $k\geq 1$.
 Thus we obtain the weak solution $\rho_h^{k+1}\in W_h$ that satifies the above requirements.
 
 %
-\subsubsection{Velocity Update}
+\subsection{Velocity Update}
 Once we have the density $\rho_h^{k+1}$ we can now solve for the velocity.  It turns out that we do not explicitly require this velocity to be divergence free, but simply penalize the divergence using the pressure rotational update.  We define our update terms
 \begin{align*}
   \rho_h^{*} &= \frac{1}{2}\left( \rho_h^{k+1} + \rho_h^{k} \right)\\
@@ -225,10 +247,10 @@ We note that Equation~(\ref{eqn:bdf1_momentum_constanttimestep}) can be rewritte
 
 
 %
-\subsubsection{Pressure Update}
+\subsection{Pressure Update}
 Now that we have $\rho_h^{k+1}$ and $\ub_h^{k+1}$, we solve for the pressure increment $\phi_h^{\flat}\in M_h$ which then allows us to solve for the pressure $p_h^{k+1}\in M_h$.  
 Recalling that $\chi \leq \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x)$ (note that we will often choose it to be the minimum), we let $\phi_h^{\flat}\in M_h$ be the weak solution of
-\begin{equation}
+\begin{equation}\label{eqn:pressureincrementlaplacian}
   \Delta \phi^{\flat} = \frac{\chi}{\tau}\nabla\cdot \ub^{k+1}, \hspace{1cm} \left.\partial_\n\phi^{\flat}\right|_{\partial\Omega} = 0
 \end{equation}
 mainly it solves
@@ -236,7 +258,7 @@ mainly it solves
   \dprod{\nabla\phi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}
 \end{equation}
 for all $r_h \in M_h$.  Then we update the pressure as
-\begin{equation}
+\begin{equation}\label{eqn:rotationalpressureupdate}
   p^{k+1} = \phi^{\flat} + p^{k} - \mu\nabla\cdot \ub^{k+1},
 \end{equation}
 or in other words, we solve for $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h$
@@ -309,20 +331,32 @@ We define the Stokes projection, $\left(\Pi_h\ub(t),\Pi_h p(t)\right) \in \X_h\t
 \end{remark}
 
 
-
-\subsection{BDF1 Variable Time Step Scheme}
+%
+%
+\section{BDF1 Variable Time Step Scheme}\label{sec:BDF1VariableTimeSteppingAlgorithm}
 In the case of variable time step  $\tau^{k} := t^{k}-t^{k-1}$, there is only one change for BDF1.  The choice of pressure for the momentum equations is augmented to reflect the second order extrapolation in variable time steps:
 \begin{equation}
   p^{\sharp}_h := p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\delta p_h^{k} = p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^{k} - p_h^{k-1} \right).
 \end{equation}
-Everything else is kept the same as above.  The convergence results have not been proved for the case of variable time stepping but it is reasonable to suspect that they still hold under a standard CFL conditions augmented with a maximally allowed time step, ie
+Notice that this reduces to the above case when $\tau^{k+1}=\tau^{k} = \tau$.  Everything else in the algorithm is kept the same as above.  The convergence results have not been proved for the case of variable time stepping but it seems reasonable to expect them to still hold under a standard Courant-Friedrich-Levy (CFL) conditions augmented with a maximally allowed time step, ie
 \begin{equation}
-  \tau^{k+1} \leq \min \left\{c \frac{\min_{T\in\mathcal{T}_h}\left(h_{T}/p_T\right)}{\|\ub^{k}\|_{L^{\infty}(\Omega)}}, \tau^{max}\right\}, \hspace{1cm} c<1.
+  \tau^{k+1} \leq \min \left\{c \frac{\min_{T\in\mathcal{T}_h}\left(h_{T}/p_T\right)}{\|\ub^{k}\|_{L^{\infty}(\Omega)}}, \tau^{max}\right\}, \hspace{1cm} c<1, \hspace{0.5cm}\tau^{\max} \mbox{ small enough}.
 \end{equation}
 This time stepping controls the conservation of mass equation since the physical velocity being used is $\ub^{k}$, and the conservation of momentum equations since we are using the semi-implicit convection term $\ub^{k}\cdot\nabla\ub^{k+1}$, thus again the physical velocity is $\ub^{k}$.  It is common to choose in practice the values $c=0.33$ or $c=0.5$.
-\section{BDF2 Incremental Rotational Scheme}
 
 
+
+%
+%
+\section{BDF2 Constant Time Stepping Algorithm}\label{sec:BDF2ConstantTimeSteppingAlgorithm}
+
+%
+%
+\section{BDF2 Variable Time Stepping Algorithm}\label{sec:BDF2VariableTimeSteppingAlgorithm}
+
+
+
+\section{Numerical Results}\label{sec:NumericalResults}
 
 
 \bibliographystyle{chicago}
