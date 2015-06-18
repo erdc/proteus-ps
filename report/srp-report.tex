@@ -364,10 +364,6 @@ to split the system of equations, they point out that the splitting error of the
 for the semi-implicit convection term, $\ub_h^{*}\cdot\nabla\ub_h^{n+1}$, again eliminating the nonlinearity and preserving the second order in time approximation.
 
 
-%
-%
-\section{BDF2 Variable Time Stepping Algorithm}\label{sec:BDF2VariableTimeSteppingAlgorithm}
-
 \subsection{Density Update}
 Again, the approach to solving this hyperbolic equation is not specified here but is discussed in section~\ref{sec:ConservationOfMassNumericalApproach}.  We will choose a second order hyperbolic scheme that preserves the following stability properties.  First, that there are constants $\chi, c > 0$ such that 
 \begin{equation}
@@ -384,7 +380,7 @@ We define
   \rho_h^{*} := \frac{3}{2}\rho_h^{k+1} - \frac{2}{3}\rho_h^{k} + \frac{1}{6}\rho_h^{k-1} = \rho_h^{k+1} + \frac{1}{6}\left(3\rho_h^{k+1} -4\rho_h^{k} + \rho_h^{k-1} \right)
 \end{equation}
 \begin{equation}
-  p_h^{\sharp} := p_h^{k} + \frac{4}{3}\phi_h{^k} - \frac{1}{3}\phi_h^{k-1}.
+  p_h^{\sharp} := p_h^{k} + \frac{4}{3}\phi_h^{k} - \frac{1}{3}\phi_h^{k-1}.
 \end{equation}
 and the second order extrapolation of velocity
 \begin{equation}
@@ -393,28 +389,82 @@ and the second order extrapolation of velocity
 Now compute $\ub_h^{k+1}\in\X_h$ so that for all $\vb_h\in\X_h$,
 \begin{equation}
   \begin{split}
-    \dprod{\frac{3\rho_h{^*}\ub_h^{k+1} - 4\rho_h^{k+1}\ub_h^{k} + \rho_h^{k+1}\ub_h{^k-1}}{2\tau}}{\vb_h}  + \dprod{\mu\nabla\ub_h^{k+1}}{\nabla\vb_h} &\\
+    \dprod{\frac{3\rho_h^{*}\ub_h^{k+1} - 4\rho_h^{k+1}\ub_h^{k} + \rho_h^{k+1}\ub_h^{k-1}}{2\tau}}{\vb_h}  + \dprod{\mu\nabla\ub_h^{k+1}}{\nabla\vb_h} &\\
    + \dprod{\nabla p_h^{\sharp}}{\vb_h} + \dprod{\rho_h^{k+1}\ub_h^{*}\cdot\nabla\ub_h^{k+1} + \frac{1}{2}\ub_h^{k+1}\nabla\cdot\left( \rho_h^{k+1}\ub_h^{*} \right)}{\vb_h} &= \dprod{\fb^{k+1}}{\vb_h}
   \end{split}
 \end{equation}
-Notice that we only use $\phi_h^{k+1}$ or $\rho_h^{*}$ in the above equation.
+Notice that we only use $\rho_h^{k+1}$ or $\rho_h^{*}$ in the above equation.
 
 \begin{remark}
 If the terms are smooth enough, then we have
 \begin{align}
   &\frac{3\rho_h^{*}\ub_h^{k+1}-4\rho_h^{k+1}\ub_h^{k} +\rho_h^{k+1}\ub_h^{k-1}}{2\tau} +\frac{1}{2}\nabla\cdot\left(\rho_h^{k+1}\ub_h^{*}\right)\ub_h^{k+1}\\
    &= \rho_h^{k+1}\left(\frac{3\ub_h^{k+1} - 4\ub_h^{k} + \ub_h^{k-1}}{2\tau}\right) + \frac{1}{2} \left( \frac{3\rho_h^{k+1} -4\rho_h^{k} + \rho_h^{k-1}}{2\tau} + \nabla\cdot\left(\rho_h^{k+1}\ub_h^{*}\right)\right)\ub_h^{k+1}\\
-  &= \left[\rho_h\frac{d\ub_h}{dt} \right]^{k+1} + \frac{1}{2} \left[ \frac{d\rho_h}{dt} +\nabla\cdot\left(\rho_h\ub_h\right)\right]^{k+1}\ub_h^{k+1} + \mathcal{O}(\tau^2)\\
-  &=\left[\rho_h\frac{d\ub_h}{dt} \right]^{k+1} + \mathcal{O}(\tau^{2})
+  &= \left.\left(\rho_h\frac{d\ub_h}{dt} \right)\right|_{t=t^{k+1}} + \left.\frac{1}{2} \left( \frac{d\rho_h}{dt} +\nabla\cdot\left(\rho_h\ub_h\right)\right)\right|_{t=t^{k+1}}\ub_h^{k+1} + \mathcal{O}(\tau^2)\\
+  &=\left.\left(\rho_h\frac{d\ub_h}{dt} \right)\right|_{t=t^{k+1}} + \mathcal{O}(\tau^{2})
 \end{align}
-where we have used the fact that $\ub_h^{*}$ is a second order in time approximation to $\ub_h^{k+1}$ and the conservation of mass property of continuous equations.
+where we have used (1) the fact that $\ub_h^{*}$ is a second order in time approximation to $\ub_h^{k+1}$ and (2) the conservation of mass property to cancel the second term for the last step.
 \end{remark}
 
 
+
+
+%
+%
 \subsection{Penalty Term Update}
+We compute the pressure correction $\phi_h^{k+1}\in M_h$ so that for all $r_h\in M_h$,
+\begin{equation}
+  \dprod{\nabla\phi_h^{k+1}}{\nabla r_h} = \frac{3\chi}{2\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}.
+\end{equation}
+
+%
+%
 \subsection{Pressure Update}
+Finally, we update the pressure with the pressure correction and the rotational term $\mu\nabla\cdot\ub_h^{k+1}$
+\begin{equation}
+  p_h^{k+1} = p_h^{k} + \phi_h^{k+1} - \mu\nabla\cdot\ub_h^{k+1}
+\end{equation}
+meaning we seek $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h$
+\begin{equation}
+  \dprod{p_h^{k+1}}{r_h} = \dprod{p_h^{k} + \phi_h^{k+1}}{r_h} + \dprod{\ub_h^{k+1}}{\nabla r_h}.
+\end{equation}
 
 
+\begin{remark}
+Now that we have defined $\phi_h^{k}$, we can show what $p_h^{\sharp}$ represents.  In the non-rotational scheme, we have
+\begin{equation}
+  \phi_h^{k+1} = p_h^{k+1} - p_h^{k}
+\end{equation}
+so that
+  \begin{align}
+    p_h^{\sharp} &= p_h^{k} + \frac{4}{3}\phi_h^{k} - \frac{1}{3}\phi_h^{k-1}\\
+    &= p_h^{k} + \frac{4}{3}\left(p_h^{k} - p_h^{k-1}\right) - \frac{1}{3}\left(p_h^{k-1} - p_h^{k-2}\right)\\
+    &= \frac{7}{3}p_h^{k} - \frac{5}{3}p_h^{k-1}+ \frac{1}{3}p_h^{k-2} \\
+    &= \frac{1}{3}\left( 3p_h^{k} - 3p_h^{k-1} + p_h^{k-2} \right) + \frac{2}{3}\left(2p_h^{k} - p_h^{k-1}  \right)\\
+    &= \frac{1}{3}p_h^{k+1} + \mathcal{O}(\tau^{3}) + \frac{2}{3} p_h^{k+1} + \mathcal{O}(\tau^{2})\\
+    &= p_h^{k+1} + \mathcal{O}\left(\tau^2+\tau^3\right)
+  \end{align}
+  since the following extrapolation schemes hold for smooth $f(t)$ with constant time step $\tau>0$, where $f^{k} := f\left(t^{k}\right)$, and $t^k = t^0+k\tau$:
+  \begin{equation}
+    f^{k+1} = 3f^k - 3f^{k-1}+f^{k-2} + \mathcal{O}(\tau^3) \mbox{ and } f^{k+1}=2f^{k} - f^{k-1}+\mathcal{O}(\tau^2).
+  \end{equation}
+  
+  When the rotational scheme, there is an extra set of terms
+  \begin{align}
+    -\frac{4}{3}\mu\nabla\cdot\ub_h^{k} + \frac{1}{3}\mu\nabla\cdot\ub_h^{k-1} &= \mu\nabla\cdot\left( -\frac{4}{3}\ub_h^{k} + \frac{1}{3}\ub_h^{k-1} \right) 
+  \end{align}
+  which can be seen as a 
+\end{remark}
+
+%
+%
+%
+\section{BDF2 Variable Time Stepping Algorithm}\label{sec:BDF2VariableTimeSteppingAlgorithm}
+
+
+%
+%
+%
 \section{Numerical Results}\label{sec:NumericalResults}
 
 
