@@ -11,12 +11,25 @@ nd = ctx.nd
 name = "navier_stokes_2d"
 
 
-#the object for evaluating the coefficients
+#the object for evaluating the coefficients   
+# # uncoupled system
+# coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
+#                                          f2ofx=ctx.f2true,
+#                                          mu=ctx.mu,
+#                                          densityFunction=ctx.rhotrue)
+
 coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
                                          f2ofx=ctx.f2true,
                                          mu=ctx.mu,
                                          densityFunction=None, #set to ctx.rhotrue for exact densit (uncoupled  flow)
                                          densityModelIndex=0)  # from pnList in *_so.py  0 = density,  1 = (u,v,p)
+
+
+analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue,ctx.gradutrue),
+                      1:ctx.AnalyticSolutionConverter(ctx.vtrue,ctx.gradvtrue),
+                      2:ctx.AnalyticSolutionConverter(ctx.ptrue,ctx.gradptrue)}
+                      
+analyticalSolutionVelocity = {2:ctx.AnalyticSolutionConverter(ctx.velocityFunctionLocal)}
 
 
 # Define boundary conditions and initial conditions of system

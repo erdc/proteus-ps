@@ -1,7 +1,24 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %begin macros section from qfrkdg-macros
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%... cek macros ...
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+% \newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{claim}{Claim}
+
+
+
 
 %% Create shortcut commands for various fonts and common symbols
 
@@ -148,7 +165,6 @@
 \newcommand{\Tabst}[2]{Tables \ref {tab:#1} and \ref {tab:#2}} 
 \newcommand{\tabs}[2]{tables \ref{tab:#1}--\ref{tab:#2}} 
 \newcommand{\Tabs}[2]{Tables \ref{tab:#1}--\ref{tab:#2}}
-\newtheorem{theorem}{Theorem}
 %%velocity                                                                                                                                                                                                            
 \newcommand{\vel}{\gvec{\sigma}}
 \newenvironment{neqnarray}[1]{\begin{minipage}[t]{6.5in}  \begin{minipage}[b]{1.0in} #1 \end{minipage}  \begin{minipage}[b]{5.5in}\begin{eqnarray}}{\end{eqnarray}\end{minipage}\end{minipage}}
@@ -236,4 +252,8 @@
 \newcommand{\delv}{\delta v}
 \newcommand{\uDel}{u_\Delta}
 \newcommand{\delu}{\delta u}
+
+
+
+
 
