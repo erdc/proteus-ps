@@ -6,9 +6,11 @@ ctx = Context.get()
 
 import NavierStokes
 
-domain = ctx.domain
+# import stuff from guermond_example_variable_density.py
 nd = ctx.nd
 name = "navier_stokes_2d"
+domain = ctx.domain
+
 
 
 #the object for evaluating the coefficients   
@@ -21,7 +23,7 @@ name = "navier_stokes_2d"
 coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
                                          f2ofx=ctx.f2true,
                                          mu=ctx.mu,
-                                         densityFunction=None, #set to ctx.rhotrue for exact densit (uncoupled  flow)
+                                         densityFunction=None, #set to ctx.rhotrue for exact density (uncoupled  flow)
                                          densityModelIndex=0)  # from pnList in *_so.py  0 = density,  1 = (u,v,p)
 
 

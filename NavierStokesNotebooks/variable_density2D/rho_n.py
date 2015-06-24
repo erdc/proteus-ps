@@ -1,10 +1,10 @@
 from proteus import *
 from proteus.default_n import *
 from rho_p import *
-
+from proteus import Context
+ctx = Context.get()
 
 triangleOptions = ctx.triangleOptions
-
 
 femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis}#density space
 
@@ -19,6 +19,12 @@ timeOrder = 2
 
 stepController=FixedStep
 DT = ctx.DT
+
+
+# domain stuff for parallel
+parallelPartitioningType = ctx.parallelPartitioningType
+nLayersOfOverlapForParallel = ctx.nLayersOfOverlapForParallel
+structured=ctx.structured
 
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
@@ -39,13 +45,20 @@ subgridError = SubgridError.Advection_ASGS(coefficients,
 #numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
 numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior #weak boundary conditions (upwind)
 matrix = LinearAlgebraTools.SparseMatrix
-#use petsc solvers wrapped by petsc4py
-#numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
-#numerics.levelLinearSolver = LinearSolvers.KSP_petsc4py
-#using petsc4py requires weak boundary condition enforcement
-#can also use our internal wrapper for SuperLU
-multilevelLinearSolver = LinearSolvers.LU
-levelLinearSolver = LinearSolvers.LU
+
+if ctx.usePetsc:
+    #use petsc solvers wrapped by petsc4py
+    multilevelLinearSolver = LinearSolvers.KSP_petsc4py
+    levelLinearSolver = LinearSolvers.KSP_petsc4py
+    #using petsc4py requires weak boundary condition enforcement
+else:
+    #can also use our internal wrapper for SuperLU
+    multilevelLinearSolver = LinearSolvers.LU
+    levelLinearSolver = LinearSolvers.LU
+
+linear_solver_options_prefix = 'rans2p_'
+# linearSolverConvergenceTest  = 'r-true'
+# levelNonlinearSolverConvergenceTest = 'r'
 
 multilevelNonlinearSolver = NonlinearSolvers.Newton
 levelNonlinearSolver = NonlinearSolvers.Newton

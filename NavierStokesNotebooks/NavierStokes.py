@@ -239,8 +239,11 @@ class NavierStokes2D(TransportCoefficients.TC_base):
                          variableNames=['u','v','p'], # defines variable reference order [0, 1, 2]
                          mass = {eu:{ui:'linear'}, # du/dt
                                  ev:{vi:'linear'}}, # dv/dt
-                         advection = {ediv:{ui:'linear',   # \nabla\cdot [u v]
-                                            vi:'linear'}}, # \nabla\cdot [u v]
+                         advection = {eu:{ui:'linear'},  # dummy flux for numericalFlux upwinding diagonal terms
+                                      ev:{vi:'linear'},  # dummy flux for numericalFlux upwinding diagonal terms
+                                      ediv:{ui:'linear',   # \nabla\cdot [u v]
+                                            vi:'linear',   # \nabla\cdot [u v]
+                                            pi:'linear'}}, # dummy flux for numericalFlux upwinding diagonal terms
                          hamiltonian = {eu:{ui:'nonlinear', # u u_x + v u_y    convection term
                                             pi:'linear'},   # p_x
                                         ev:{vi:'nonlinear', # u v_x + v v_y   convection term
@@ -346,3 +349,5 @@ class NavierStokes2D(TransportCoefficients.TC_base):
         c[('df',ediv,ui)][...,yi] = 0.0  # d_f_d_u [yi]
         c[('df',ediv,vi)][...,xi] = 0.0  # d_f_d_v [xi]
         c[('df',ediv,vi)][...,yi] = 1.0  # d_f_d_v [yi]
+        # c[('df',ediv,pi)][...,xi] = 0.0  # d_f_d_p [xi]
+        # c[('df',ediv,pi)][...,yi] = 0.0  # d_f_d_p [yi]

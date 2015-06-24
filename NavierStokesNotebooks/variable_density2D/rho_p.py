@@ -6,9 +6,11 @@ ctx = Context.get()
 
 import NavierStokes
 
-domain = ctx.domain
+# import stuff from guermond_example_variable_density.py
 nd = ctx.nd
 name = "mass_transport"
+domain = ctx.domain
+
 
 # from pnList in *_so.py  0 = density,  1 = (u,v,p)
 coefficients=NavierStokes.MassTransport(velocityFunction=None, #or ctx.velocityFunction to use exact solution (uncoupled transport)

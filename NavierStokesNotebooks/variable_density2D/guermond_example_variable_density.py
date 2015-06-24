@@ -12,14 +12,11 @@ nd = 2
 # Numerics
 quad_degree = 5  # exact for polynomials of this degree
 
+# switch between parallel and SuperLU single processing for linear algebra solver
+usePetsc = False
 
-# solutions
-
-#use numpy for evaluations
-# from IPython.display import  display
-# from sympy.interactive import printing
-# printing.init_printing(use_latex=True)
-
+# Exact solutions
+#
 # Create the manufactured solution and run through sympy
 # to create the forcing function and solutions etc
 #
@@ -167,7 +164,7 @@ if unitCircle:
     radius = 1.0
     center_x = 0.0
     center_y = 0.0
-    he = 2.0*pi/150.0  # h size for edges of circle
+    he = 2.0*pi/50.0  # h size for edges of circle
 
     # no need to modify past here
     nvertices = nsegments = int(ceil(2.0*pi/he))
@@ -201,7 +198,8 @@ if unitCircle:
                                                   segmentFlags=segmentFlags)
     #go ahead and add a boundary tags member
     domain.boundaryTags = boundaryTags
-    domain.writePoly("mesh")
+    # domain.writePoly("mesh")
+    domain.writePoly("mesh_%3.0e_h" %he)
 
     #
     #finished setting up circular domain
@@ -210,6 +208,24 @@ if unitCircle:
 
     logEvent("""Mesh generated using: triangle -%s %s"""  % (triangleOptions,domain.polyfile+".poly"))
 
+
+
+# parallel stuff
+# Two options for parallel partitioning:  by nodes or by elements
+#  By nodes:
+#    The nodes are divided up and for each node, the system has access to all the information on elements that are touching that node.
+#    Thus we don't need to have overlap since it can immediately construct the matrix row corresponding to that node. 
+#    Set nLayersOfOverlapForParallel = 0 for this setting.
+#  By elements:
+#    The elements are divided up and construction of matrix is done element by element.  The system may not have access to the
+#    neighboring elements so we must have the nLayersOfOverlapForParallel = 1 to guarantee that we have the information
+#    needed to construct the matrices.
+
+parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node
+nLayersOfOverlapForParallel = 0
+# parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.element
+# nLayersOfOverlapForParallel = 1
+structured=False
 
 # numerical tolerances
 ns_nl_atol_res = max(1.0e-8,0.01*he**2)
