@@ -36,9 +36,9 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 
 
 #Matrix type
-# numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions)
+numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions)
 #numericalFluxType = MixedDarcy_exterior
-numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior
+# numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior
 #numericalFluxType = NumericalFlux.Advection_Diagonal_average
 matrix = LinearAlgebraTools.SparseMatrix
 
