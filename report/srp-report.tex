@@ -249,7 +249,7 @@ We note that Equation~(\ref{eqn:bdf1_momentum_constanttimestep}) can be rewritte
 %
 \subsection{Pressure Update}
 Now that we have $\rho_h^{k+1}$ and $\ub_h^{k+1}$, we solve for the pressure increment $\phi_h^{\flat}\in M_h$ which then allows us to solve for the pressure $p_h^{k+1}\in M_h$.  
-Recalling that $\chi \leq \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x)$ (note that we will often choose it to be the minimum), we let $\phi_h^{\flat}\in M_h$ be the weak solution of
+Recalling that $\chi \leq \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x)$ (note that in practice we will often choose $\chi = \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x)$), we let $\phi_h^{\flat}\in M_h$ be the weak solution of
 \begin{equation}\label{eqn:pressureincrementlaplacian}
   \Delta \phi^{\flat} = \frac{\chi}{\tau}\nabla\cdot \ub^{k+1}, \hspace{1cm} \left.\partial_\n\phi^{\flat}\right|_{\partial\Omega} = 0
 \end{equation}
@@ -295,11 +295,11 @@ Thus we have solved for $(\rho^{k+1}, \ub^{k+1}, p^{k+1})$ and can move on to th
 \subsection{Error analysis of BDF1 Constant Time Step Incremental Rotational Algorithm}
 The stability of the above algorithm is proved in \cite{guermond2009splitting} and the error analysis was carried out in \cite{guermond2011error}.  We refer the reader to those articles for details and give the main results contained in Theorem 4.2 of \cite{guermond2011error}.
 
-We define the Stokes projection, $\left(\Pi_h\ub(t),\Pi_h p(t)\right) \in \X_h\times M_h$, of the solution $\left(\ub(t),p(t)\right)$ to (\ref{eqn:variabledensityNavierStokes})-(\ref{eqn:variabledensityNavierStokesBCIC}) to be the pair that solves
+We define the Stokes projection of the solution $\left(\ub(t),p(t)\right)$ to (\ref{eqn:variabledensityNavierStokes})-(\ref{eqn:variabledensityNavierStokesBCIC}) to be the pair, $\left(\mathbf{S}_h\ub(t),S_h p(t)\right) \in \X_h\times M_h$, that solves
 \begin{equation}
   \begin{cases}
-    \mu\dprod{\nabla\Pi_h\ub(t)}{\nabla\vb_h} + \dprod{\nabla\Pi_h p(t)}{\vb_h} = \mu\dprod{\nabla \ub(t)}{\nabla\vb_h} - \dprod{p(t)}{\nabla\cdot\vb_h}, & \forall \vb_h \in \X_h\\
-    \dprod{\Pi_h \ub(t)}{\nabla r_h} = 0, & \forall r_h\in M_h
+    \dprod{\mu\nabla \mathbf{S}_h\ub(t)}{\nabla\vb_h} + \dprod{\nabla S_h p(t)}{\vb_h} = \dprod{\mu\nabla \ub(t)}{\nabla\vb_h} - \dprod{p(t)}{\nabla\cdot\vb_h}, & \forall \vb_h \in \X_h\\
+    \dprod{\mathbf{S}_h \ub(t)}{\nabla r_h} = 0, & \forall r_h\in M_h
   \end{cases}
 \end{equation}
 
@@ -310,7 +310,7 @@ We define the Stokes projection, $\left(\Pi_h\ub(t),\Pi_h p(t)\right) \in \X_h\t
   \end{equation}
   Let $(\ub_h)_{\tau}$ be the solutions of velocity as described in Subsection~\ref{subsec:BDF1constantTimeSummary}.  Then if one of either
   \begin{equation}
-    \|p_h^0 - \Pi_h p^0 \|_{L^2(\Omega)} \leq c h^{\frac{l+1}{2}}
+    \|p_h^0 - S_h p(0) \|_{L^2(\Omega)} \leq c h^{\frac{l+1}{2}}
   \end{equation}
   or
   \begin{equation}
