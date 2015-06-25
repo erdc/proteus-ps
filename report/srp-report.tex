@@ -158,7 +158,7 @@ The incremental pressure correction algorithm, an improvement on the original Ch
 \begin{equation}
   \begin{cases}
     \rho\left(\frac{\tilde{\ub}^{k+1} - \tilde{\ub}^{k}}{\tau} + \tilde{\ub}^{k}\cdot\nabla\tilde{\ub}^{k+1} \right) - \mu\Delta\tilde{\ub}^{k+1} + \nabla\left(p^{k} + \phi^{k}  \right) = \fb^{k+1}, & \left.\tilde{\ub}^{k}\right|_{\partial\Omega} = 0\\
-    \nabla\cdot\tilde{\ub}^{k+1} - \frac{\tau}{\rho}\Delta\phi^{n+1}, &\left.\partial_\n \phi\right|_{\partial\Omega} = 0\\
+    \nabla\cdot\tilde{\ub}^{k+1} - \frac{\tau}{\rho}\Delta\phi^{n+1}=0, &\left.\partial_\n \phi\right|_{\partial\Omega} = 0\\
     p^{k+1} = p^{k} + \phi^{k+1}
   \end{cases}
 \end{equation}
