@@ -167,7 +167,7 @@ if unitCircle:
     radius = 1.0
     center_x = 0.0
     center_y = 0.0
-    he = 2.0*pi/50.0  # h size for edges of circle
+    he = 2.0*pi/150.0  # h size for edges of circle
 
     # no need to modify past here
     nvertices = nsegments = int(ceil(2.0*pi/he))
@@ -216,11 +216,12 @@ ns_nl_atol_res = max(1.0e-8,0.01*he**2)
 
 # actual time step for FixedStep
 T=10.0
-DT = 0.2
+DT = 0.00625
 nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]
 
-
+# dummy variable for time integration order outputting ( not used anywhere buit in output file names )
+globalTimeOrder = 2
 
 # Time stepping for output
 # T=10.0
