@@ -220,7 +220,8 @@ DT = 0.1
 nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]
 
-
+# dummy variable for time integration order outputting ( not used anywhere buit in output file names )
+globalTimeOrder = 2
 
 # Time stepping for output
 # T=10.0
