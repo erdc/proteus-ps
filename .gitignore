@@ -28,5 +28,11 @@ mesh*
 *.toc
 *.lot
 *.aux
+*.lb
+*.nav
+*.snm
+*.synctex.gz
+*.bbl
+*.blg
 *Gauge*.txt
 *History*.txt
