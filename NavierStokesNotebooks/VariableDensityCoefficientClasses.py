@@ -10,7 +10,7 @@ from proteus.iproteus import TransportCoefficients
 import numpy as np
 
 
-class MassTransport(TransportCoefficients.TC_base):
+class DensityTransport2D(TransportCoefficients.TC_base):
     r"""
     The coefficients for conservative mass transport
 
@@ -166,17 +166,17 @@ class MassTransport(TransportCoefficients.TC_base):
             u = self.velocityFunction(c['x'],t)[...,0]
             v = self.velocityFunction(c['x'],t)[...,1]
             if self.useStabilityTerms:
-                divVelocity = self.divVelocityFunction(c['x'],t)
+                div_vel = self.divVelocityFunction(c['x'],t)
         elif self.useVelocityComponents:
             u = self.c_u[c[('m',0)].shape]
             v = self.c_v[c[('m',0)].shape]
             if self.useStabilityTerms:
-                divVelocity = self.c_u[c[('f',0)].shape][0] + self.c_u[c[('f',0)].shape][1]
+                div_vel = self.c_u[c[('f',0)].shape][0] + self.c_u[c[('f',0)].shape][1]
         else:
             u = self.c_velocity[c[('f',0)].shape][...,0]
             v = self.c_velocity[c[('f',0)].shape][...,1]
             if self.useStabilityTerms:
-                divVelocity = self.c_u[c[('f',0)].shape][0] + self.c_u[c[('f',0)].shape][1]
+                div_vel = self.c_u[c[('f',0)].shape][0] + self.c_u[c[('f',0)].shape][1]
         c[('m',0)][:] = c[('u',0)]
         c[('dm',0,0)][:] = 1.0
         c[('f',0)][...,0] = c[('u',0)]*u
@@ -184,11 +184,218 @@ class MassTransport(TransportCoefficients.TC_base):
         c[('df',0,0)][...,0] = u
         c[('df',0,0)][...,1] = v
         if useStabilityTerms:
-            c[('r',0)][:]     = -0.5*c[('u',0)]*divVelocity
-            c[('dr',0,0)][:]   = -0.5*divVelocity
+            c[('r',0)][:]     = -0.5*c[('u',0)]*div_vel
+            c[('dr',0,0)][:]   = -0.5*div_vel
 
 
 
+
+class VelocityTransport2D(TransportCoefficients.TC_base):
+    r"""
+    The coefficients of the 2D Navier Stokes momentum equation with variable density.  This coefficient class
+    will only represent the momentum equation but not the incompressibility equation and not the conservation of mass.
+
+    For completeness we give them all and note that this class only represents the 2nd and 3rd equation.
+    .. math::
+       :nowrap:
+
+       \begin{equation}
+       \begin{cases}
+       \rho_t + \nabla\cdot(\rho\vb) = 0,&\\
+       \rho\left(\frac{\partial \vb}{\partial t} + \vb\cdot\nabla\vb\right) +  \nabla p  - \nabla \cdot \left(\mu \nabla\vb\right) = \fb(x,t),&\\
+       \nabla \cdot \vb  = 0,&
+       \end{cases}
+       \end{equation}
+
+    where :math:`\rho>0` is the density, :math:`\mathbf{v}` is the velocity field,  :math:`p` is the pressure and :math:`\mu` is the dynamic
+    viscosity which could depend on density :math:`\rho`.
+
+    We solve this equation on a 2D disk :math:`\Omega=\{(x,y) \:|\: x^2+y^2<1\}`
+
+    :param densityModelIndex: The index into the proteus model list
+
+    :param densityFunction: A function taking as input an array of spatial
+    locations :math: `x`, time :math: `t`, and density :math: `\rho`, setting
+    the density parameter as a side effect.
+
+    TODO: decide how the parameters interact. I think densityFunction
+    should override the density from another model
+
+    """
+    def __init__(self,
+                 f1ofx=None,
+                 f2ofx=None,
+                 mu=1.0,
+                 densityModelIndex=-1,
+                 densityFunction=None,
+                 pressureModelIndex=-1,
+                 pressureFunction=None,
+                 pressureIncrementModelIndex=-1,
+                 pressureIncrementFunction=None,
+                 useStabilityTerms=False):
+
+        sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
+                          np.array([0,1],dtype='i')),
+                   (1,1):(np.array([0,1,2],dtype='i'),
+                          np.array([0,1],dtype='i'))}
+        dim=2; # dimension of space
+        xi=0; yi=1; # indices for first component or second component of dimension
+        eu=0; ev=1; # equation numbers  momentum u, momentum v, 
+        ui=0; vi=1; # variable name ordering
+
+        TransportCoefficients.TC_base.__init__(self,
+                         nc=dim, #number of components  u, v
+                         variableNames=['u','v'], # defines variable reference order [0, 1]
+                         mass = {eu:{ui:'linear'}, # du/dt
+                                 ev:{vi:'linear'}}, # dv/dt
+                         hamiltonian = {eu:{ui:'linear'}, #  rho*(u u_x + v u_y)   convection term
+                                        ev:{vi:'linear'}}, # rho*(u v_x + v v_y)   convection term
+                         diffusion = {eu:{ui:{ui:'constant'}},  # - \mu * \grad u
+                                      ev:{vi:{vi:'constant'}}}, # - \mu * \grad v
+                         potential = {eu:{ui:'u'},
+                                      ev:{vi:'u'}}, # define the potential for the diffusion term to be the solution itself
+                         reaction  = {eu:{ui:'constant'}, # -f1(x) + d/dx p^* + (stability terms) * u
+                                      ev:{vi:'constant'}}, # -f2(x) + d/dy p^* + (stability terms) * v
+                         sparseDiffusionTensors=sdInfo,
+                         useSparseDiffusion = True),
+        self.vectorComponents=[ui,vi]
+        self.f1ofx=f1ofx
+        self.f2ofx=f2ofx
+        self.mu=mu
+        self.densityModelIndex = densityModelIndex
+        self.densityFunction = densityFunction
+        self.densityModelIndex = pressureModelIndex
+        self.densityFunction = pressureFunction
+        self.densityModelIndex = pressureIncrementModelIndex
+        self.densityFunction = pressureIncrementFunction
+        self.c_rho = {}
+        self.c_rho_old = {}
+
+
+    def attachModels(self,modelList):
+        """
+        Attach the model for density
+        """
+        if self.densityModelIndex >= 0:
+            assert self.densityModelIndex < len(modelList), \
+                "density model index out of range 0," + repr(len(modelList))
+            self.densityModel = modelList[self.densityModelIndex]
+            if ('u',0) in self.densityModel.q:
+                rho = self.densityModel.q[('u',0)]
+                self.c_rho[rho.shape] = rho
+                if useStabilityTerms:
+                    rho_old = self.densityModel.q[('u',0)]
+                    grad_rho = self.densityModel.q[('grad(u)',0)]
+                    self.c_rho_old[rho_old.shape] = rho_old
+                    self.c_rho[grad_rho.shape] = grad_rho
+            if ('u',0) in self.densityModel.ebq:
+                rho = self.densityModel.ebq[('u',0)]
+                self.c_rho[rho.shape] = rho
+                if useStabilityTerms:
+                    rho_old = self.densityModel.ebq[('u',0)]
+                    grad_rho = self.densityModel.ebq[('grad(u)',0)]
+                    self.c_rho_old[rho_old.shape] = rho_old
+                    self.c_rho[grad_rho.shape] = grad_rho
+            if ('u',0) in self.densityModel.ebqe:
+                rho = self.densityModel.ebqe[('u',0)]
+                self.c_rho[rho.shape] = rho
+                if useStabilityTerms:
+                    rho_old = self.densityModel.ebqe[('u',0)]
+                    grad_rho = self.densityModel.ebqe[('grad(u)',0)]
+                    self.c_rho_old[rho_old.shape] = rho_old
+                    self.c_rho[grad_rho.shape] = grad_rho
+            if ('u',0) in self.densityModel.ebq_global:
+                rho = self.densityModel.ebq_global[('u',0)]
+                self.c_rho[rho.shape] = rho
+                if useStabilityTerms:
+                    rho_old = self.densityModel.ebq_global[('u',0)]  # to do here figure out how to extract the old rho from solution history
+                    grad_rho = self.densityModel.ebq_global[('grad(u)',0)]
+                    self.c_rho_old[rho_old.shape] = rho_old
+                    self.c_rho[grad_rho.shape] = grad_rho
+                    
+# attach pressure model and pressureIncrement models
+
+
+    def evaluate(self,t,c):
+        """
+        evaluate quadrature point values held in the dictionary c
+        These are labelled according to the 'master equation.' For example,
+
+        c[('a',0,0)] = diffusion coefficient for the 0th equation (first) with respect to the
+                       0th potential (the solution itself)
+                       The value at each quadrature point is a n_d x n_d tensor (n_d=number of space dimensions).
+                       Usually the tensor values are stored as a flat array in compressed sparse row format to save space.
+                       By default, we assume the tensor is full though.
+
+        c[('r',0)]   = reaction term for the 0th equation. This is where we will put the source term
+        """
+        xi=0; yi=1; # indices for first component or second component of dimension
+        eu=0; ev=1; # equation numbers  momentum u, momentum v, divergencefree
+        ui=0; vi=1; # variable name ordering
+        # current velocity and grad velocity
+        u = c[('u',ui)]
+        v = c[('u',vi)]
+        grad_u = c[('grad(u)',ui)]
+        grad_v = c[('grad(u)',vi)]
+        
+        # previous velocity and grad velocity
+        u_old = c[('u',ui)] # figure out how to extract old solutons
+        v_old = c[('u',vi)]
+        grad_u_old = c[('grad(u)',ui)]
+        grad_v_old = c[('grad(u)',vi)]
+        
+        # gradient of pressure term
+        grad_psharp = 0.0*c[('grad(u)',ui)]  # complete this term
+        tau = 1; # complete this term
+        
+        # extract rho, rho_old and grad_rho
+        if self.densityFunction != None:
+            rho = self.densityFunction(c['x'],t)
+            if self.useStabilityTerms:
+                rho_old = 0#  self.densityFunction(c['x'],t) # note that this is incorrect as we should have it at time tprev.
+                grad_rho = self.gradDensityFunction(c['x'],t)
+        else:#use mass shape as key since it is same shape as density
+            rho = self.c_rho[c[('m',0)].shape]
+            if self.useStabilityTerms:
+                rho_old = self.c_rho_old[c[('m',0)].shape]
+                grad_rho = self.c_rho[c[('f',0)].shape] # use flux shape since it is same shape as gradient
+        
+        # solve for stability terms
+        if self.useStabilityTerms:
+            div_vel_old = grad_u_old[...,xi] + grad_v_old[...,yi]
+            div_rho_u_old = grad_rho[...,xi]*u + grad_rho[...,yi]*v + rho*div_vel_old
+                
+        #equation eu = 0  rho*(u_t + u ux + v uy ) + px + div(-mu grad(u)) - f1 = 0
+        c[('m',eu)][:] = rho_old*u  # d/dt ( rho_old * u) = d/dt (m_0)
+        c[('dm',eu,ui)][:] = rho_old  # dm^0_du
+        c[('r',eu)][:] = -self.f1ofx(c['x'][:],t) + grad_psharp[...,xi]
+        c[('dr',eu,ui)][:] = 0.0
+        if self.useStabilityTerms:
+            c[('r',eu)][:] += 0.5*((rho - rho_old)/tau + div_rho_u)*u
+            c[('dr',eu,ui)][:] += 0.5*((rho - rho_old)/tau + div_rho_u)
+        c[('H',eu)][:] = rho*(u_old*grad_u[...,xi] + v_old*grad_u[...,yi])
+        c[('dH',eu,ui)][...,xi] = rho*u_old #  dH d(u_x)
+        c[('dH',eu,ui)][...,yi] = rho*v_old #  dH d(u_y)
+        c[('a',eu,ui)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
+        c[('a',eu,ui)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
+        c[('da',eu,ui,ui)][...,0] = 0.0 # -(da/d ui)_0   # could leave these off since it is 0
+        c[('da',eu,ui,ui)][...,1] = 0.0 # -(da/d ui)_1   # could leave these off since it is 0
+
+        # equation ev = 1  rho*(v_t + u vx + v vy ) + py + div(-mu grad(v)) - f2 = 0
+        c[('m',ev)][:] = rho_old*v  # d/dt ( rho * v) = d/dt (m_1)
+        c[('dm',ev,vi)][:] = rho_old  # dm^1_dv
+        c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_psharp[...,yi]
+        c[('dr',ev,vi)][:] = 0.0
+        if self.useStabilityTerms:
+            c[('r',eu)][:] += 0.5*((rho - rho_old)/tau + div_rho_u)*v
+            c[('dr',eu,ui)][:] += 0.5*((rho - rho_old)/tau + div_rho_u)
+        c[('H',ev)][:] = rho*(u_old*grad_v[...,xi] + v_old*grad_v[...,yi])  # add rho term
+        c[('dH',ev,vi)][...,xi] = rho*u_old #  dH d(v_x)
+        c[('dH',ev,vi)][...,yi] = rho*v_old #  dH d(v_y)
+        c[('a',ev,vi)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
+        c[('a',ev,vi)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
+        c[('da',ev,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
+        c[('da',ev,vi,vi)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
 
 
 
