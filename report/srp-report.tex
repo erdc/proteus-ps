@@ -7,6 +7,7 @@
 \usepackage{verbatim}
 \usepackage{appendix}
 \usepackage{multirow}
+\usepackage[subnum]{cases} % force all numcases to be subnumcases
 \usepackage[section]{placeins}
 
 \graphicspath{{graphics/}{graphics/2dbox_pngs/},{graphics/saltdome_pngs/}{graphics/elder_pngs/}{graphics/saltpool3d_pngs/}{graphics/3dbox_pngs/}{graphics/henry2d_pngs/},{graphics/goswami_clement_pngs/}}
@@ -348,7 +349,7 @@ This time stepping controls the conservation of mass equation since the physical
 %
 \section{BDF2 Constant Time Stepping Algorithm}\label{sec:BDF2ConstantTimeSteppingAlgorithm}
 
-The above BDF1 schemes are proved in \cite{Guermond2011} to be first order accurate in time for the $\mathbf{L}^2(\Omega)$ and $\mathbf{H}^1(\Omega)$ norms of velocity.  However, because we have used a second order extrapolation of pressure
+The above BDF1 schemes are proved in \cite{guermond2011error} to be first order accurate in time for the $\mathbf{L}^2(\Omega)$ and $\mathbf{H}^1(\Omega)$ norms of velocity.  However, because we have used a second order extrapolation of pressure
 \begin{equation}
   p^{\sharp}_h = p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^{k} - p_h^{k-1} \right) \approx p_h^{k+1} + \mathcal{O}\left(\left(\tau^{k+1}\right)^2 \right)
 \end{equation}
@@ -463,9 +464,72 @@ so that
 \section{Numerical Results}\label{sec:NumericalResults}
 
 
+
+\appendix
+\chapter{Various Extensions and Proofs}
+
+\section{Rotational Scheme Still Consistent with Variable Viscosity but Constant Density}
+We verify that the artificial boundary conditions imposed on pressure by the rotational fix under assumptions of constant viscosity and density still hold when viscosity is no longer constant.  Mainly we will show that 
+\begin{equation}
+  \left.\frac{\partial p^{k+1}}{\partial \n}\right|_{\partial\Omega} = \left.\left(f^{k+1} + \nabla\cdot\ut^{k+1}\nabla\mu - \nabla\times\left(\mu\nabla\times \ub^{k+1}  \right)  \right)\cdot \n\right|_{\partial\Omega}
+\end{equation}
+which is a consistent pressure boundary condition.  Compare this to the imposed boundary condition when viscosity is assumed constant
+\begin{equation}
+  \left.\frac{\partial p^{k+1}}{\partial \n}\right|_{\partial\Omega} = \left.\left(f^{k+1} - \mu\nabla\times\nabla\times \ub^{k+1} \right)\cdot \n\right|_{\partial\Omega}
+\end{equation}
+ as discussed in \cite{guermond2004error}.  Thus again we are left with the only distortions from the operator splitting being manifest as the tangential velocity requirement
+\begin{equation}
+  \left.\ub^{k+1}\cdot\n\right|_{\partial\Omega} = 0.
+\end{equation}
+
+%
+%
+\subsection{Proof of consistent boundary conditions}
+The following identities on a smooth vector function $\Ab$ will be of use to us:
+\begin{align}
+  \nabla\times\nabla\times \Ab &= \nabla\left( \nabla\cdot \Ab\right) - \nabla^2 \Ab\label{eqn:curlcurlidentity}\\
+  \nabla\times\left( \mu \nabla\times \Ab \right) &= \mu\nabla\left(\nabla\cdot \Ab\right) - \nabla\cdot\left(\mu \nabla \Ab \right)\label{eqn:curlmucurlidentity}\\
+  \nabla\left( \mu \nabla\cdot \Ab\right) &= \mu\nabla\left(\nabla\cdot \Ab\right) + \left( \nabla\cdot \Ab\right)\nabla\mu\label{eqn:gradmudividentity}
+\end{align}
+
+To proceed with the proof, we start with the initial scheme (any BDF formula for time derivative will work but we give proof in terms of BDF1)
+\begin{numcases}{}
+  \frac{\rho}{\tau}\left( \ut^{k+1} - \ub^{k}\right) + \rho \ut^{k}\cdot\nabla\ut^{k+1} - \nabla\cdot\left(\mu\nabla\ut^{k+1}\right) + \nabla p^{k} = \fb^{k+1},\label{eqn:initialmomentum}\\ 
+  \left.\ut^{k+1}\right|_{\partial\Omega} = 0,\\
+  \frac{\rho}{\tau}\left(\ub^{k+1} - \ut^{k+1}  \right) + \nabla \phi^{k+1} = 0,\label{eqn:initialprojection} \\
+  \left.\ub^{k+1}\cdot\n\right|_{\partial\Omega} = 0,\\
+  \nabla\cdot \ub^{k+1} = 0,\\
+  p^{k+1} = p^{k} + \phi^{k+1} - \mu\nabla\cdot\ut^{k+1}.\label{eqn:initialpressureupdate}
+\end{numcases}
+By applying $\nabla\times\left(\mu\nabla\times \ \cdot\  \right)$ to both sides of (\ref{eqn:initialprojection}) we observe that
+\begin{equation}\label{eqn:curlcurluequalscurlcurlutilde}
+  \nabla\times\left( \mu\nabla\times \ub^{k+1}\right) =   \nabla\times\left( \mu\nabla\times \ut^{k+1}\right)
+\end{equation}
+
+So by plugging equations (\ref{eqn:initialprojection}) and (\ref{eqn:initialpressureupdate}) into (\ref{eqn:initialmomentum}) and using identities (\ref{eqn:curlmucurlidentity}) and (\ref{eqn:gradmudividentity}) (with $\Ab=\ut^{k+1}$) and applying (\ref{eqn:curlcurluequalscurlcurlutilde}), we obtain
+
+\begin{numcases}{}
+  \begin{split}\frac{\rho}{\tau}\left(\ub^{k+1} - \ub^{k}   \right) + \rho\ut^{k}\cdot\nabla\ut^{k+1} + \nabla\times\left( \mu\nabla\times\ub^{k+1}\right)&\\ 
+    - \left(\nabla\cdot\ut^{k+1}\right)\nabla\mu + \nabla p^{k+1} &= \fb^{k+1},\end{split}\label{eqn:momentumcwithurlculequation}\\
+  \left.\ut^{k+1}\right|_{\partial\Omega} = 0,\label{eqn:utildeonboundaryequalszero}\\
+  \left.\ub^{k+1}\cdot\n\right|_{\partial\Omega} = 0,\label{eqn:tangentialuonboundaryequalszero}\\
+  \nabla\cdot\ub^{k+1} = 0.\label{eqn:divuequalszero}
+\end{numcases}
+By dotting (\ref{eqn:momentumcwithurlculequation}) with $\n$ and restricting to boundary and using properties (\ref{eqn:utildeonboundaryequalszero}) and (\ref{eqn:tangentialuonboundaryequalszero}), we get the normal pressure gradient condition
+
+\begin{equation}
+  \left.\frac{\partial p^{k+1}}{\partial \n}\right|_{\partial\Omega} = \left.\left(f^{k+1} + \nabla\cdot\ut^{k+1}\nabla\mu - \nabla\times\left(\mu\nabla\times \ub^{k+1}  \right)  \right)\cdot \n\right|_{\partial\Omega}
+\end{equation}
+
+which is in fact consistent with the momentum equation (\ref{eqn:initialmomentum}).
+
+
+
+
+
 \bibliographystyle{chicago}
 \bibliography{ps.bib}
-\appendix
+% \appendix
 %\input{GWVD_COETR_Consistent_Velocity_Appendix}
 %\input{GWVD_COETR_Velocity_Postprocessing_Appendix}
 %input{GWVD_COETR_variational_multiscale_appendix}
