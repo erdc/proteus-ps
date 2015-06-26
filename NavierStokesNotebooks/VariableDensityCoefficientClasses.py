@@ -346,13 +346,14 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         
         # gradient of pressure term
         grad_psharp = 0.0*c[('grad(u)',ui)]  # complete this term
-        tau = 1; # complete this term
+        dt = self.timeIntegration.dt
+        tLast = self.timeIntegration.tLast 
         
         # extract rho, rho_old and grad_rho
         if self.densityFunction != None:
             rho = self.densityFunction(c['x'],t)
             if self.useStabilityTerms:
-                rho_old = 0#  self.densityFunction(c['x'],t) # note that this is incorrect as we should have it at time tprev.
+                rho_old =  self.densityFunction(c['x'],tLast)
                 grad_rho = self.gradDensityFunction(c['x'],t)
         else:#use mass shape as key since it is same shape as density
             rho = self.c_rho[c[('m',0)].shape]
@@ -371,8 +372,8 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('r',eu)][:] = -self.f1ofx(c['x'][:],t) + grad_psharp[...,xi]
         c[('dr',eu,ui)][:] = 0.0
         if self.useStabilityTerms:
-            c[('r',eu)][:] += 0.5*((rho - rho_old)/tau + div_rho_u)*u
-            c[('dr',eu,ui)][:] += 0.5*((rho - rho_old)/tau + div_rho_u)
+            c[('r',eu)][:] += 0.5*((rho - rho_old)/dt + div_rho_u)*u
+            c[('dr',eu,ui)][:] += 0.5*((rho - rho_old)/dt + div_rho_u)
         c[('H',eu)][:] = rho*(u_old*grad_u[...,xi] + v_old*grad_u[...,yi])
         c[('dH',eu,ui)][...,xi] = rho*u_old #  dH d(u_x)
         c[('dH',eu,ui)][...,yi] = rho*v_old #  dH d(u_y)
