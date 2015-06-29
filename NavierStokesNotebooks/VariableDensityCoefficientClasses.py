@@ -524,7 +524,6 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         self.c_velocity = {}
         self.c_rho = {}
         self.useVelocityComponents = useVelocityComponents
-        self.densityFunction = densityFunction
         self.chiValue = chiValue
 
     def attachModels(self,modelList):
