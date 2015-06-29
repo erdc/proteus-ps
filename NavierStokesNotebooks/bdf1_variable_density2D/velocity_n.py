@@ -12,9 +12,9 @@ femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # u velocity 
 
 from TimeIntegrationPS import NonConservativeBackwardEuler, NonConservativeVBDF
 # numerics.timeIntegration = TimeIntegration.BackwardEuler
-#timeIntegration = NonConservativeBackwardEuler
-timeIntegration = NonConservativeVBDF
-timeOrder = 2
+timeIntegration = NonConservativeBackwardEuler
+# timeIntegration = NonConservativeVBDF
+timeOrder = 1
 
 # stepController  = StepControl.Min_dt_cfl_controller
 # runCFL = 0.5
