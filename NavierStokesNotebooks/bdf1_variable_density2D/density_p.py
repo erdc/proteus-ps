@@ -15,8 +15,8 @@ name = "density_2d"
 coefficients=NavierStokes.MassTransport(velocityFunction=None, #or ctx.velocityFunction to use exact solution (uncoupled transport)
                                         velocityModelIndex=1,  #don't change this unless the order in so-file is changed
                                         divVelocityFunction=False, # or ctx.divVelocityFunction to use exact divergence solution
-                                        useVelocityComponents=False, #set to false to use 'velocity' (possible post-processed)
-                                        useStabilityTerms=False) 
+                                        useVelocityComponents=ctx.useVelocityComponents, #set to false to use 'velocity' (possible post-processed)
+                                        useStabilityTerms=ctx.useStabilityTerms) 
 
 analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.rhotrue)}
 

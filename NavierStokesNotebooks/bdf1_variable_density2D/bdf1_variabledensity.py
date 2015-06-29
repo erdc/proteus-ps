@@ -12,6 +12,8 @@ nd = 2
 # Numerics
 quad_degree = 5  # exact for polynomials of this degree
 
+useStabilityTerms = True
+useVelocityComponents = True
 
 # solutions
 
@@ -51,23 +53,10 @@ ps = sy_sin(xs)*sy_sin(ys)*sy_sin(ts)
 us = -ys*sy_cos(ts)
 vs = xs*sy_cos(ts)
 
-# #gradient terms for H1 norms later
-# dus_dx = simplify(diff(us,xs))
-# dus_dy = diff(us,ys)
-# dvs_dx = diff(vs,xs)
-# dvs_dy = diff(vs,ys)
-# dps_dx = diff(ps,xs)
-# dps_dy = diff(ps,ys)
-
 # manufacture the source terms:
 
 f1s = simplify((rhos*(diff(us,ts) + us*diff(us,xs) + vs*diff(us,ys)) + diff(ps,xs) - diff(mu*us,xs,xs) - diff(mu*us,ys,ys)))
 f2s = simplify((rhos*(diff(vs,ts) + us*diff(vs,xs) + vs*diff(vs,ys)) + diff(ps,ys) - diff(mu*vs,xs,xs) - diff(mu*vs,ys,ys)))
-
-# display(f1s)
-# display(f2s)
-# print "f1(x,y,t) = ", f1s
-# print "f2(x,y,t) = ", f2s
 
 # use lambdify to convert from sympy to python expressions
 pl = lambdify((xs, ys, ts), ps, "numpy")
@@ -84,13 +73,10 @@ dvl_dy = lambdify((xs, ys, ts), simplify(diff(vs,ys)), "numpy")
 dpl_dx = lambdify((xs, ys, ts), simplify(diff(ps,xs)), "numpy")
 dpl_dy = lambdify((xs, ys, ts), simplify(diff(ps,ys)), "numpy")
 
-
 # convert python expressions to the format we need for multidimensional x values
 def rhotrue(x,t):
     return rhol(x[...,0],x[...,1],t)
     
-
-
 def utrue(x,t):
     return ul(x[...,0],x[...,1],t)
 
@@ -167,8 +153,9 @@ class AnalyticSolutionConverter:
     def duOfX(self,x):
         return self.exact_grad_function(x)  
 
-# Domain and mesh
 
+
+# Domain and mesh
 unitCircle = True
 if unitCircle:
     from math import pi, ceil, cos, sin
@@ -223,6 +210,8 @@ if unitCircle:
 
 # numerical tolerances
 ns_nl_atol_res = max(1.0e-8,0.01*he**2)
+
+
 
 # actual time step for FixedStep
 T=10.0

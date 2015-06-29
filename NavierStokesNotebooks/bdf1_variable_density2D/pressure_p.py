@@ -17,7 +17,7 @@ name = "pressure_2d"
 coefficients=NavierStokes.Pressure2D(mu=ctx.mu,
                                      velocityModelIndex=1,
                                      velocityFunction=None, # use ctx.velocityFunction for exact velocity
-                                     useVelocityComponents=True,
+                                     useVelocityComponents=ctx.useVelocityComponents,
                                      pressureIncrementModelIndex=2,
                                      pressureIncrementFunction=None) # use ctx.gradpitrue for exact pressure increment (=0)
 

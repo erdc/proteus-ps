@@ -23,7 +23,7 @@ coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
                                          pressureIncrementModelIndex=2,
                                          pressureGradFunction=None, # set to ctx.gradptrue for exact pressure
                                          pressureModelIndex=3,
-                                         useStabilityTerms=False)
+                                         useStabilityTerms=ctx.useStabilityTerms)
 
 
 analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue,ctx.gradutrue),
