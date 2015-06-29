@@ -22,7 +22,7 @@ simFlagsList[0]['storeTimes']     = ['Last']
 # Velocity
 simFlagsList[1]['errorQuantities']=['u']
 simFlagsList[1]['errorTypes']= ['numericalSolution'] #compute error in soln and glob. mass bal
-simFlagsList[1]['errorNorms']= ['L2'] #compute L2 norm in space or H1 or ...
+simFlagsList[1]['errorNorms']= ['L2','H1'] #compute L2 norm in space or H1 or ...
 simFlagsList[1]['errorTimes']= ['All'] #'All', 'Last'
 simFlagsList[1]['echo']=True
 simFlagsList[1]['dataFile']       = simFlagsList[1]['simulationName'] + '_%3.0e_DT_BDF%1d.db' %(ctx.DT,int(float(ctx.globalTimeOrder)))
@@ -30,16 +30,16 @@ simFlagsList[1]['dataDir']        = os.getcwd()+'/results'
 simFlagsList[1]['storeQuantities']= ['simulationData','errorData'] #include errorData for mass bal
 simFlagsList[1]['storeTimes']     = ['Last']
 
-# Pressure Increment
-simFlagsList[1]['errorQuantities']=['u']
-simFlagsList[1]['errorTypes']= ['numericalSolution'] #compute error in soln and glob. mass bal
-simFlagsList[1]['errorNorms']= ['L2'] #compute L2 norm in space or H1 or ...
-simFlagsList[1]['errorTimes']= ['All'] #'All', 'Last'
-simFlagsList[1]['echo']=True
-simFlagsList[1]['dataFile']       = simFlagsList[1]['simulationName'] + '_%3.0e_DT_BDF%1d.db' %(ctx.DT,int(float(ctx.globalTimeOrder)))
-simFlagsList[1]['dataDir']        = os.getcwd()+'/results'
-simFlagsList[1]['storeQuantities']= ['simulationData','errorData'] #include errorData for mass bal
-simFlagsList[1]['storeTimes']     = ['Last']
+# # Pressure Increment
+# simFlagsList[1]['errorQuantities']=['u']
+# simFlagsList[1]['errorTypes']= ['numericalSolution'] #compute error in soln and glob. mass bal
+# simFlagsList[1]['errorNorms']= ['L2'] #compute L2 norm in space or H1 or ...
+# simFlagsList[1]['errorTimes']= ['All'] #'All', 'Last'
+# simFlagsList[1]['echo']=True
+# simFlagsList[1]['dataFile']       = simFlagsList[1]['simulationName'] + '_%3.0e_DT_BDF%1d.db' %(ctx.DT,int(float(ctx.globalTimeOrder)))
+# simFlagsList[1]['dataDir']        = os.getcwd()+'/results'
+# simFlagsList[1]['storeQuantities']= ['simulationData','errorData'] #include errorData for mass bal
+# simFlagsList[1]['storeTimes']     = ['Last']
 
 # Pressure
 simFlagsList[1]['errorQuantities']=['u']
