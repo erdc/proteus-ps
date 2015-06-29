@@ -24,7 +24,7 @@ DT = ctx.DT
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
 elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_degree)
-#number of nodes in the x and y direction
+
 
 subgridError = SubgridError.Advection_ASGS(coefficients,
                                            ctx.nd,

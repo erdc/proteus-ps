@@ -10,9 +10,9 @@ domain = ctx.domain
 nd = ctx.nd
 name = "pressureincrement_2d"
 
-#the object for evaluating the coefficients   
+#the object for evaluating the coefficients
 
-# from pnList in *_so.py  0 = density,  1 = (u,v), 2 = (pressureincrement),  3 = (pressure)
+# from pnList in *_so.py  0 = density,  1 = (u,v),  2 = (pressureincrement),  3 = (pressure)
 coefficients=NavierStokes.PressureIncrement2D(velocityModelIndex=1,
                                               velocityFunction=None, # use ctx.velocityFunction for exact velocity
                                               useVelocityComponents=ctx.useVelocityComponents,
@@ -21,12 +21,10 @@ coefficients=NavierStokes.PressureIncrement2D(velocityModelIndex=1,
 
 
 analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.pitrue,ctx.gradpitrue)}
-                      
 # analyticalSolutionVelocity = {2:ctx.AnalyticSolutionConverter(ctx.velocityFunctionLocal)}
 
 
 # Define boundary conditions and initial conditions of system
-
 def getNBC_p(x,flag):
     if flag == ctx.boundaryTags['top']:
         return lambda x,t: 0.0*x

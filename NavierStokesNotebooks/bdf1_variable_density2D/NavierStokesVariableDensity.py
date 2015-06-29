@@ -85,34 +85,34 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 vel = self.velocityModel.q[('velocity',2)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
-                    gradu = self.velocityModel.q[('grad(u)',0)]
-                    gradv = self.velocityModel.q[('grad(u)',1)]
-                    self.c_u[gradu.shape] = gradu
-                    self.c_v[gradv.shape] = gradv
+                    grad_u = self.velocityModel.q[('grad(u)',0)]
+                    grad_v = self.velocityModel.q[('grad(u)',1)]
+                    self.c_u[grad_u.shape] = grad_u
+                    self.c_v[grad_v.shape] = grad_v
             if ('velocity',2) in self.velocityModel.ebq:
                 vel = self.velocityModel.ebq[('velocity',2)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
-                    gradu = self.velocityModel.ebq[('grad(u)',0)]
-                    gradv = self.velocityModel.ebq[('grad(u)',1)]
-                    self.c_u[gradu.shape] = gradu
-                    self.c_v[gradv.shape] = gradv
+                    grad_u = self.velocityModel.ebq[('grad(u)',0)]
+                    grad_v = self.velocityModel.ebq[('grad(u)',1)]
+                    self.c_u[grad_u.shape] = grad_u
+                    self.c_v[grad_v.shape] = grad_v
             if ('velocity',2) in self.velocityModel.ebqe:
                 vel = self.velocityModel.ebqe[('velocity',2)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
-                    gradu = self.velocityModel.ebqe[('grad(u)',0)]
-                    gradv = self.velocityModel.ebqe[('grad(u)',1)]
-                    self.c_u[gradu.shape] = gradu
-                    self.c_v[gradv.shape] = gradv
+                    grad_u = self.velocityModel.ebqe[('grad(u)',0)]
+                    grad_v = self.velocityModel.ebqe[('grad(u)',1)]
+                    self.c_u[grad_u.shape] = grad_u
+                    self.c_v[grad_v.shape] = grad_v
             if ('velocity',2) in self.velocityModel.ebq_global:
                 vel = self.velocityModel.ebq_global[('velocity',2)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
-                    gradu = self.velocityModel.ebq_global[('grad(u)',0)]
-                    gradv = self.velocityModel.ebq_global[('grad(u)',1)]
-                    self.c_u[gradu.shape] = gradu
-                    self.c_v[gradv.shape] = gradv
+                    grad_u = self.velocityModel.ebq_global[('grad(u)',0)]
+                    grad_v = self.velocityModel.ebq_global[('grad(u)',1)]
+                    self.c_u[grad_u.shape] = grad_u
+                    self.c_v[grad_v.shape] = grad_v
         elif self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
@@ -123,40 +123,40 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
                 if self.useStabilityTerms:
-                    gradu = self.velocityModel.q[('grad(u)',0)]
-                    gradv = self.velocityModel.q[('grad(u)',1)]
-                    self.c_u[gradu.shape] = gradu
-                    self.c_v[gradv.shape] = gradv
+                    grad_u = self.velocityModel.q[('grad(u)',0)]
+                    grad_v = self.velocityModel.q[('grad(u)',1)]
+                    self.c_u[grad_u.shape] = grad_u
+                    self.c_v[grad_v.shape] = grad_v
             if ('u',0) in self.velocityModel.ebq:
                 u = self.velocityModel.ebq[('u',0)]
                 v = self.velocityModel.ebq[('u',1)]
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
                 if self.useStabilityTerms:
-                    gradu = self.velocityModel.ebq[('grad(u)',0)]
-                    gradv = self.velocityModel.ebq[('grad(u)',1)]
-                    self.c_u[gradu.shape] = gradu
-                    self.c_v[gradv.shape] = gradv
+                    grad_u = self.velocityModel.ebq[('grad(u)',0)]
+                    grad_v = self.velocityModel.ebq[('grad(u)',1)]
+                    self.c_u[grad_u.shape] = grad_u
+                    self.c_v[grad_v.shape] = grad_v
             if ('u',0) in self.velocityModel.ebqe:
                 u = self.velocityModel.ebqe[('u',0)]
                 v = self.velocityModel.ebqe[('u',1)]
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
                 if self.useStabilityTerms:
-                    gradu = self.velocityModel.ebqe[('grad(u)',0)]
-                    gradv = self.velocityModel.ebqe[('grad(u)',1)]
-                    self.c_u[gradu.shape] = gradu
-                    self.c_v[gradv.shape] = gradv
+                    grad_u = self.velocityModel.ebqe[('grad(u)',0)]
+                    grad_v = self.velocityModel.ebqe[('grad(u)',1)]
+                    self.c_u[grad_u.shape] = grad_u
+                    self.c_v[grad_v.shape] = grad_v
             if ('u',0) in self.velocityModel.ebq_global:
                 u = self.velocityModel.ebq_global[('u',0)]
                 v = self.velocityModel.ebq_global[('u',1)]
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
                 if self.useStabilityTerms:
-                    gradu = self.velocityModel.ebq_global[('grad(u)',0)]
-                    gradv = self.velocityModel.ebq_global[('grad(u)',1)]
-                    self.c_u[gradu.shape] = gradu
-                    self.c_v[gradv.shape] = gradv
+                    grad_u = self.velocityModel.ebq_global[('grad(u)',0)]
+                    grad_v = self.velocityModel.ebq_global[('grad(u)',1)]
+                    self.c_u[grad_u.shape] = grad_u
+                    self.c_v[grad_v.shape] = grad_v
     def preStep(self,t,firstStep=False):
         """
         Give the TC object an opportunity to modify itself before the time step.
@@ -177,6 +177,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         """
         Evaluate the coefficients after getting the specified velocity
         """
+        rho = c[('u',0)]
+        
         if self.velocityFunction != None:
             u = self.velocityFunction(c['x'],t)[...,0]
             v = self.velocityFunction(c['x'],t)[...,1]
@@ -186,21 +188,22 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             u = self.c_u[c[('m',0)].shape]
             v = self.c_v[c[('m',0)].shape]
             if self.useStabilityTerms:
-                div_vel = self.c_u[c[('f',0)].shape][0] + self.c_u[c[('f',0)].shape][1]
+                div_vel = self.c_u[c[('f',0)].shape][...,0] + self.c_u[c[('f',0)].shape][...,1]
         else:
             u = self.c_velocity[c[('f',0)].shape][...,0]
             v = self.c_velocity[c[('f',0)].shape][...,1]
             if self.useStabilityTerms:
-                div_vel = self.c_u[c[('f',0)].shape][0] + self.c_u[c[('f',0)].shape][1]
-        c[('m',0)][:] = c[('u',0)]
+                div_vel = self.c_u[c[('f',0)].shape][...,0] + self.c_u[c[('f',0)].shape][...,1]
+        
+        c[('m',0)][:] = rho
         c[('dm',0,0)][:] = 1.0
-        c[('f',0)][...,0] = c[('u',0)]*u
-        c[('f',0)][...,1] = c[('u',0)]*v
+        c[('f',0)][...,0] = rho*u
+        c[('f',0)][...,1] = rho*v
         c[('df',0,0)][...,0] = u
         c[('df',0,0)][...,1] = v
         if useStabilityTerms:
-            c[('r',0)][:]     = -0.5*c[('u',0)]*div_vel
-            c[('dr',0,0)][:]   = -0.5*div_vel
+            c[('r',0)][:]    = -0.5*rho*div_vel
+            c[('dr',0,0)][:] = -0.5*div_vel
 
 
 
@@ -210,19 +213,21 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
     The coefficients of the 2D Navier Stokes momentum equation with variable density.  This coefficient class
     will only represent the momentum equation but not the incompressibility equation and not the conservation of mass.
 
-    For completeness we give them all and note that this class only represents the 2nd and 3rd equation.
     .. math::
        :nowrap:
 
        \begin{equation}
        \begin{cases}
-       \rho_t + \nabla\cdot(\rho\vb) = 0,&\\
-       \rho\left(\frac{\partial \vb}{\partial t} + \vb\cdot\nabla\vb\right) +  \nabla p  - \nabla \cdot \left(\mu \nabla\vb\right) = \fb(x,t),&\\
-       \nabla \cdot \vb  = 0,&
+       p^{\#} = p^{k} + \phi^{k+1}
+       \begin{split}
+       \rho^{k}\frac{\tilde{\mathbf{u}^{k+1}}- \tilde{\mathbf{u}^{k}}}{\tau} + \rho^{k+1}\tilde{\mathbf{u}^{k}}\cdot\nabla\tilde{\mathbf{u}^{k+1}} &\\
+        +  \nabla p^{\#}  - \nabla \cdot \left(\mu \nabla\tilde{\mathbf{u}^{k+1}}\right) &\\
+        +\frac{1}{2}\left( \frac{\rho^{k+1} - \rho^{k}}{\tau} + \nabla\cdot\left(\rho^{k+1}\tilde{\mathbf{u}^{k+1}} \right) \right)\tilde{\mathbf{u}^{k+1}} &= \mathbf{f}(x,t)
+       \end{split}
        \end{cases}
        \end{equation}
 
-    where :math:`\rho>0` is the density, :math:`\mathbf{v}` is the velocity field,  :math:`p` is the pressure and :math:`\mu` is the dynamic
+    where :math:`\rho^{k+1}>0` is the density at time :math:`t^{k+1}`, :math:`\mathbf{u}^{k+1}` is the velocity field,  :math:`p` is the pressure and :math:`\mu` is the dynamic
     viscosity which could depend on density :math:`\rho`.
 
     We solve this equation on a 2D disk :math:`\Omega=\{(x,y) \:|\: x^2+y^2<1\}`
@@ -261,16 +266,16 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         TransportCoefficients.TC_base.__init__(self,
                          nc=dim, #number of components  u, v
                          variableNames=['u','v'], # defines variable reference order [0, 1]
-                         mass = {eu:{ui:'linear'}, # du/dt
+                         mass = {eu:{ui:'linear'},  # du/dt
                                  ev:{vi:'linear'}}, # dv/dt
-                         hamiltonian = {eu:{ui:'linear'}, #  rho*(u u_x + v u_y)   convection term
+                         hamiltonian = {eu:{ui:'linear'},  # rho*(u u_x + v u_y)   convection term
                                         ev:{vi:'linear'}}, # rho*(u v_x + v v_y)   convection term
                          diffusion = {eu:{ui:{ui:'constant'}},  # - \mu * \grad u
                                       ev:{vi:{vi:'constant'}}}, # - \mu * \grad v
                          potential = {eu:{ui:'u'},
                                       ev:{vi:'u'}}, # define the potential for the diffusion term to be the solution itself
-                         reaction  = {eu:{ui:'constant'}, # -f1(x) + d/dx p^* + (stability terms) * u
-                                      ev:{vi:'constant'}}, # -f2(x) + d/dy p^* + (stability terms) * v
+                         reaction  = {eu:{ui:'constant'},  # -f1(x) + d/dx p^\# + (stability terms) * u
+                                      ev:{vi:'constant'}}, # -f2(x) + d/dy p^\# + (stability terms) * v
                          sparseDiffusionTensors=sdInfo,
                          useSparseDiffusion = True),
         self.vectorComponents=[ui,vi]
@@ -441,15 +446,15 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             div_vel_last = grad_u_last[...,xi] + grad_v_last[...,yi]
             div_rho_vel = grad_rho[...,xi]*u + grad_rho[...,yi]*v + rho*div_vel_last
                 
-        #equation eu = 0  rho*(u_t + u ux + v uy ) + px + div(-mu grad(u)) - f1 = 0
-        c[('m',eu)][:] = rho_last*u  # d/dt ( rho_last * u) = d/dt (m_0)
+        #equation eu = 0 rho_last*u_t + rho(u_last ux + v_last uy ) + p^#x + div(-mu grad(u)) - f1 + 0.5*(rho_t + rhox u + rhoy v + rho div([u,v]) )u = 0
+        c[('m',eu)][:] = rho_last*u    # d/dt ( rho_last * u) = d/dt (m_0)
         c[('dm',eu,ui)][:] = rho_last  # dm^0_du
         c[('r',eu)][:] = -self.f1ofx(c['x'][:],t) + grad_psharp[...,xi]
         c[('dr',eu,ui)][:] = 0.0
         if self.useStabilityTerms:
-            c[('r',eu)][:] += 0.5*((rho - rho_last)/dt + div_rho_vel)*u
-            c[('dr',eu,ui)][:] += 0.5*((rho - rho_last)/dt + div_rho_vel)
-        c[('H',eu)][:] = rho*(u_last*grad_u[...,xi] + v_last*grad_u[...,yi])
+            c[('r',eu)][:] += 0.5*( (rho - rho_last)/dt + div_rho_vel )*u
+            c[('dr',eu,ui)][:] += 0.5*( (rho - rho_last)/dt + div_rho_vel )
+        c[('H',eu)][:] = rho*( u_last*grad_u[...,xi] + v_last*grad_u[...,yi] )
         c[('dH',eu,ui)][...,xi] = rho*u_last #  dH d(u_x)
         c[('dH',eu,ui)][...,yi] = rho*v_last #  dH d(u_y)
         c[('a',eu,ui)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
@@ -457,15 +462,15 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('da',eu,ui,ui)][...,0] = 0.0 # -(da/d ui)_0   # could leave these off since it is 0
         c[('da',eu,ui,ui)][...,1] = 0.0 # -(da/d ui)_1   # could leave these off since it is 0
 
-        # equation ev = 1  rho*(v_t + u vx + v vy ) + py + div(-mu grad(v)) - f2 = 0
-        c[('m',ev)][:] = rho_last*v  # d/dt ( rho * v) = d/dt (m_1)
+        #equation ev = 1 rho_last*v_t + rho(u_last vx + v_last vy ) + p^#y + div(-mu grad(v)) - f2 + 0.5*(rho_t + rhox u + rhoy v + rho div([u,v]) )v = 0
+        c[('m',ev)][:] = rho_last*v    # d/dt ( rho_last * v) = d/dt (m_1)
         c[('dm',ev,vi)][:] = rho_last  # dm^1_dv
         c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_psharp[...,yi]
         c[('dr',ev,vi)][:] = 0.0
         if self.useStabilityTerms:
-            c[('r',eu)][:] += 0.5*((rho - rho_last)/tau + div_rho_vel)*v
-            c[('dr',eu,ui)][:] += 0.5*((rho - rho_last)/tau + div_rho_vel)
-        c[('H',ev)][:] = rho*(u_last*grad_v[...,xi] + v_last*grad_v[...,yi])  # add rho term
+            c[('r',eu)][:] += 0.5*( (rho - rho_last)/tau + div_rho_vel )*v
+            c[('dr',eu,ui)][:] += 0.5*( (rho - rho_last)/tau + div_rho_vel )
+        c[('H',ev)][:] = rho*( u_last*grad_v[...,xi] + v_last*grad_v[...,yi] ) # add rho term
         c[('dH',ev,vi)][...,xi] = rho*u_last #  dH d(v_x)
         c[('dH',ev,vi)][...,yi] = rho*v_last #  dH d(v_y)
         c[('a',ev,vi)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
@@ -512,9 +517,9 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         TransportCoefficients.TC_base.__init__(self,
                                                nc = 1,
                                                variableNames = ['phi'],
-                                               diffusion = {0:{0:{0:'constant'}}}, # -  \grad phi
+                                               diffusion = {0:{0:{0:'constant'}}}, # - \grad phi
                                                potential = {0:{0:'u'}}, # define the potential for the diffusion term to be the solution itself
-                                               advection = {0:{0:'constant'}}, # div  (chi/dt velocity)
+                                               advection = {0:{0:'constant'}}, # div (chi/dt velocity)
                                                sparseDiffusionTensors=sdInfo,
                                                useSparseDiffusion = True)
                                                # reaction = {0:{0:'linear'}} ) # chi / dt div velocity
@@ -623,6 +628,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """        
         # time management
         dt = self.timeIntegration.dt
+        dtinv = 1.0/dt
         
         # find minimal density value set it to be chi
         chi = 0.0
@@ -643,8 +649,8 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             v = self.c_velocity[c[('f',0)].shape][...,1]
         
         # set coefficients
-        c[('f',0)][...,0] = chi/dt*u
-        c[('f',0)][...,1] = chi/dt*v
+        c[('f',0)][...,0] = chi*dtInv*u
+        c[('f',0)][...,1] = chi*dtInv*v
         c[('df',0,0)][...,0] = 0.0
         c[('df',0,0)][...,1] = 0.0
         c[('a',ev,vi)][...,0] = 1.0 # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
@@ -690,7 +696,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         TransportCoefficients.TC_base.__init__(self,
                                                nc = 1,
                                                variableNames = ['p'],
-                                               reaction = {0:{0:'linear'}}, # p - p_last - phi
+                                               reaction = {0:{0:'linear'}}, #  = p - p_last - phi
                                                advection = {0:{0:'constant'}})#, # div  (\mu velocity)
         self.mu = mu
         self.velocityModelIndex = velocityModelIndex
@@ -799,10 +805,8 @@ class Pressure2D(TransportCoefficients.TC_base):
         Evaluate the coefficients after getting the specified velocity and density
         """        
         
-        # current pressure
+        # current and previous pressure values
         p = c[('u',0)]
-        
-        # extract previous pressure value
         p_last = c[('u_last',0)] 
         
         # extract pressure increment

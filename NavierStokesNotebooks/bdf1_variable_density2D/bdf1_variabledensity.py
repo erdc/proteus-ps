@@ -212,7 +212,6 @@ if unitCircle:
 ns_nl_atol_res = max(1.0e-8,0.01*he**2)
 
 
-
 # actual time step for FixedStep
 T=10.0
 DT = 0.1
