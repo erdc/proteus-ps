@@ -4,11 +4,11 @@ from proteus.default_p import *
 from proteus import Context
 ctx = Context.get()
 
-import NavierStokes
+import NavierStokesVariableDensity as NavierStokes
 
 domain = ctx.domain
 nd = ctx.nd
-name = "navier_stokes_2d"
+name = "velocity_2d"
 
 
 #the object for evaluating the coefficients   
@@ -33,14 +33,6 @@ analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue,ctx.gradutrue),
 
 
 # Define boundary conditions and initial conditions of system
-
-def getDBC_p(x,flag):
-    if flag == ctx.boundaryTags['top']:
-        return lambda x,t: ctx.ptrue(x,t)
-    elif flag == ctx.boundaryTags['bottom']:
-        return lambda x,t: ctx.ptrue(x,t)
-    else:
-        return None
 
 def getDBC_u(x,flag):
     if flag == ctx.boundaryTags['top']:
@@ -69,13 +61,6 @@ def getZeroFlux(x,flag):
     else:
         return None
 
-class getIBC_p:
-    def __init__(self):
-        self.ptrue=ctx.ptrue
-        pass
-    def uOfXT(self,x,t):
-        return self.ptrue(x,t)
-
 class getIBC_u:
     def __init__(self):
         self.utrue=ctx.utrue
@@ -91,16 +76,14 @@ class getIBC_v:
         return self.vtrue(x,t)
 
 initialConditions = {0:getIBC_u(),
-                     1:getIBC_v(),
-                     2:getIBC_p()}
+                     1:getIBC_v()}
 
 dirichletConditions = {0:getDBC_u,
-                       1:getDBC_v,
-                       2:getDBC_p }
+                       1:getDBC_v }
 
-advectiveFluxBoundaryConditions = {2:getNone}
+# advectiveFluxBoundaryConditions = {2:getNone}
 
 diffusiveFluxBoundaryConditions = {0:{0:getZeroFlux},
                                    1:{1:getZeroFlux}}
 
-fluxBoundaryConditions = {0:'noFlow',1:'noFlow',2:'noFlow'}
+fluxBoundaryConditions = {0:'noFlow',1:'noFlow'}

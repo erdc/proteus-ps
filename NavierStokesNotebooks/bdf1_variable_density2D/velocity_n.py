@@ -1,14 +1,13 @@
 from proteus import *
 from proteus.default_n import *
-from mom_p import *
+from velocity_p import *
 
 
 triangleOptions = ctx.triangleOptions
 
 
-femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # u velocity space
-             1:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # v velocity space
-             2:FemTools.C0_AffineLinearOnSimplexWithNodalBasis} #p pressure space
+femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # u velocity space  = P2
+             1:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis} # v velocity space  = P2
 
 from TimeIntegrationPS import NonConservativeBackwardEuler, NonConservativeVBDF
 # numerics.timeIntegration = TimeIntegration.BackwardEuler
@@ -62,6 +61,6 @@ periodicDirichletConditions=None
 # post processing 
 
 #all of these  should work
-#conservativeFlux = {2:'point-eval'}
+conservativeFlux = {2:'point-eval'}
 #conservativeFlux = {2:'pwl-bdm'}
-conservativeFlux = {2:'pwl-bdm-opt'}
+# conservativeFlux = {2:'pwl-bdm-opt'}

@@ -23,7 +23,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
     def __init__(self,velocityModelIndex=-1,
                  velocityFunction=None,
                  divVelocityFunction=None,
-                 useVelocityComponents=False,
+                 useVelocityComponents=True,
                  useStabilityTerms=False):
         """Construct a coefficients object
 
@@ -489,7 +489,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
     def __init__(self,
                  velocityModelIndex=-1,
                  velocityFunction=None,
-                 useVelocityComponents=False,
+                 useVelocityComponents=True,
                  densityModelIndex=-1,
                  chiValue=None):
         """Construct a coefficients object
@@ -667,7 +667,7 @@ class Pressure2D(TransportCoefficients.TC_base):
                  mu=1.0,
                  velocityModelIndex=-1,
                  velocityFunction=None,
-                 useVelocityComponents=False,
+                 useVelocityComponents=True,
                  pressureIncrementModelIndex=-1,
                  pressureIncrementFunction=None): 
         """Construct a coefficients object

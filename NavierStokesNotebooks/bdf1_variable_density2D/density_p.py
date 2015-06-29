@@ -4,11 +4,11 @@ from proteus.default_p import *
 from proteus import Context
 ctx = Context.get()
 
-import NavierStokes
+import NavierStokesVariableDensity as NavierStokes
 
 domain = ctx.domain
 nd = ctx.nd
-name = "density"
+name = "density_2d"
 
 
 # from pnList in *_so.py  0 = density,  1 = (u,v), 2 = (pressureincrement),  3 = (pressure)

@@ -148,7 +148,7 @@ def gradptrue(x,t):
     return np.array([dpdxtrue(x,t), dpdytrue(x,t)])
 
 def gradpitrue(x,t): # pressure increment
-    return np.array(0.0*[dpdxtrue(x,t), dpdytrue(x,t)])
+    return 0.0*np.array([dpdxtrue(x,t), dpdytrue(x,t)])
 
 class AnalyticSolutionConverter:
     """
@@ -231,7 +231,7 @@ nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]
 
 # dummy variable for time integration order outputting ( not used anywhere buit in output file names )
-globalTimeOrder = 2
+globalTimeOrder = 1
 
 # Time stepping for output
 # T=10.0

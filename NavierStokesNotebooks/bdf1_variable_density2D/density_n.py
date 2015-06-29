@@ -1,12 +1,12 @@
 from proteus import *
 from proteus.default_n import *
-from rho_p import *
+from density_p import *
 
 
 triangleOptions = ctx.triangleOptions
 
 
-femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis}#density space
+femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis} # density space = P2
 
 # timeIntegration = TimeIntegration.BackwardEuler
 # timeIntegration = TimeIntegration.BackwardEuler_cfl
