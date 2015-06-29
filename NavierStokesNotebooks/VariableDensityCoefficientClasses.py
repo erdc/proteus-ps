@@ -49,7 +49,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                                                variableNames = ['rho'],
                                                mass = {0:{0:'linear'}},
                                                advection = {0:{0:'linear'}},
-                                               reaction = {0:{0:'linear'}} if useStabilityTerms else {{}} ) # for the stability term
+                                               reaction = {0:{0:'linear'}} if useStabilityTerms else {} ) # for the stability term
         self.velocityModelIndex = velocityModelIndex
         self.velocityFunction = velocityFunction
         self.divVelocityFunction = divVelocityFunction
@@ -157,7 +157,18 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     gradv = self.velocityModel.ebq_global[('grad(u)',1)]
                     self.c_u[gradu.shape] = gradu
                     self.c_v[gradv.shape] = gradv
-
+    def preStep(self,t,firstStep=False):
+        """
+        Give the TC object an opportunity to modify itself before the time step.
+        """
+        # self.m_lastlast = self.m_last
+        self.model.q[('u_last',0)] = self.model.q[('u',0)]
+        self.model.ebq[('u_last',0)] = self.model.ebq[('u',0)]
+        self.model.ebqe[('u_last',0)] = self.model.ebqe[('u',0)]
+        self.model.ebq_global[('u_last',0)] = self.model.ebq_global[('u',0)]
+        # self.q[('grad(u)_last',0)] = self.model.q[('grad(u)',0)]
+        copyInstructions = {}
+        return copyInstructions
     def evaluate(self,t,c):
         """
         Evaluate the coefficients after getting the specified velocity
@@ -269,7 +280,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         self.densityModelIndex = pressureIncrementModelIndex
         self.densityFunction = pressureIncrementFunction
         self.c_rho = {}
-        self.c_rho_old = {}
+        self.c_rho_last = {}
 
 
     def attachModels(self,modelList):
@@ -284,38 +295,49 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 rho = self.densityModel.q[('u',0)]
                 self.c_rho[rho.shape] = rho
                 if useStabilityTerms:
-                    rho_old = self.densityModel.q[('u',0)]
+                    rho_last = self.densityModel.q_m_last
                     grad_rho = self.densityModel.q[('grad(u)',0)]
-                    self.c_rho_old[rho_old.shape] = rho_old
+                    self.c_rho_last[rho_last.shape] = rho_last
                     self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebq:
                 rho = self.densityModel.ebq[('u',0)]
                 self.c_rho[rho.shape] = rho
                 if useStabilityTerms:
-                    rho_old = self.densityModel.ebq[('u',0)]
+                    rho_last = self.densityModel.ebq_m_last
                     grad_rho = self.densityModel.ebq[('grad(u)',0)]
-                    self.c_rho_old[rho_old.shape] = rho_old
+                    self.c_rho_last[rho_last.shape] = rho_last
                     self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebqe:
                 rho = self.densityModel.ebqe[('u',0)]
                 self.c_rho[rho.shape] = rho
                 if useStabilityTerms:
-                    rho_old = self.densityModel.ebqe[('u',0)]
+                    rho_last = self.densityModel.ebqe_m_last
                     grad_rho = self.densityModel.ebqe[('grad(u)',0)]
-                    self.c_rho_old[rho_old.shape] = rho_old
+                    self.c_rho_last[rho_last.shape] = rho_last
                     self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebq_global:
                 rho = self.densityModel.ebq_global[('u',0)]
                 self.c_rho[rho.shape] = rho
                 if useStabilityTerms:
-                    rho_old = self.densityModel.ebq_global[('u',0)]  # to do here figure out how to extract the old rho from solution history
+                    rho_last = self.densityModel.ebq_global_m_last
                     grad_rho = self.densityModel.ebq_global[('grad(u)',0)]
-                    self.c_rho_old[rho_old.shape] = rho_old
+                    self.c_rho_last[rho_last.shape] = rho_last
                     self.c_rho[grad_rho.shape] = grad_rho
                     
 # attach pressure model and pressureIncrement models
 
-
+    def preStep(self,t,firstStep=False):
+        """
+        Give the TC object an opportunity to modify itself before the time step.
+        """
+        for ci in range(self.nc):
+            self.model.q[('u_last',ci)] = self.model.q[('u',ci)]
+            self.model.ebq[('u_last',ci)] = self.model.ebq[('u',ci)]
+            self.model.ebqe[('u_last',ci)] = self.model.ebqe[('u',ci)]
+            self.model.ebq_global[('u_last',ci)] = self.model.ebq_global[('u',ci)]
+            self.model.q[('grad(u)_last',ci)] = self.model.q[('grad(u)',ci)]
+        copyInstructions = {}
+        return copyInstructions
     def evaluate(self,t,c):
         """
         evaluate quadrature point values held in the dictionary c
@@ -339,60 +361,60 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         grad_v = c[('grad(u)',vi)]
         
         # previous velocity and grad velocity
-        u_old = c[('u',ui)] # figure out how to extract old solutons
-        v_old = c[('u',vi)]
-        grad_u_old = c[('grad(u)',ui)]
-        grad_v_old = c[('grad(u)',vi)]
+        u_last = c[('u_last',ui)] # figure out how to extract old solutons
+        v_last = c[('u_last',vi)]
+        grad_u_last = c[('grad(u)_last',ui)]
+        grad_v_last = c[('grad(u)_last',vi)]
         
         # gradient of pressure term
         grad_psharp = 0.0*c[('grad(u)',ui)]  # complete this term
         dt = self.timeIntegration.dt
         tLast = self.timeIntegration.tLast 
         
-        # extract rho, rho_old and grad_rho
+        # extract rho, rho_last and grad_rho
         if self.densityFunction != None:
             rho = self.densityFunction(c['x'],t)
             if self.useStabilityTerms:
-                rho_old =  self.densityFunction(c['x'],tLast)
+                rho_last =  self.densityFunction(c['x'],tLast)
                 grad_rho = self.gradDensityFunction(c['x'],t)
         else:#use mass shape as key since it is same shape as density
             rho = self.c_rho[c[('m',0)].shape]
             if self.useStabilityTerms:
-                rho_old = self.c_rho_old[c[('m',0)].shape]
+                rho_last = self.c_rho_last[c[('m',0)].shape]
                 grad_rho = self.c_rho[c[('f',0)].shape] # use flux shape since it is same shape as gradient
         
         # solve for stability terms
         if self.useStabilityTerms:
-            div_vel_old = grad_u_old[...,xi] + grad_v_old[...,yi]
-            div_rho_u_old = grad_rho[...,xi]*u + grad_rho[...,yi]*v + rho*div_vel_old
+            div_vel_last = grad_u_last[...,xi] + grad_v_last[...,yi]
+            div_rho_u_last = grad_rho[...,xi]*u + grad_rho[...,yi]*v + rho*div_vel_last
                 
         #equation eu = 0  rho*(u_t + u ux + v uy ) + px + div(-mu grad(u)) - f1 = 0
-        c[('m',eu)][:] = rho_old*u  # d/dt ( rho_old * u) = d/dt (m_0)
-        c[('dm',eu,ui)][:] = rho_old  # dm^0_du
+        c[('m',eu)][:] = rho_last*u  # d/dt ( rho_last * u) = d/dt (m_0)
+        c[('dm',eu,ui)][:] = rho_last  # dm^0_du
         c[('r',eu)][:] = -self.f1ofx(c['x'][:],t) + grad_psharp[...,xi]
         c[('dr',eu,ui)][:] = 0.0
         if self.useStabilityTerms:
-            c[('r',eu)][:] += 0.5*((rho - rho_old)/dt + div_rho_u)*u
-            c[('dr',eu,ui)][:] += 0.5*((rho - rho_old)/dt + div_rho_u)
-        c[('H',eu)][:] = rho*(u_old*grad_u[...,xi] + v_old*grad_u[...,yi])
-        c[('dH',eu,ui)][...,xi] = rho*u_old #  dH d(u_x)
-        c[('dH',eu,ui)][...,yi] = rho*v_old #  dH d(u_y)
+            c[('r',eu)][:] += 0.5*((rho - rho_last)/dt + div_rho_u)*u
+            c[('dr',eu,ui)][:] += 0.5*((rho - rho_last)/dt + div_rho_u)
+        c[('H',eu)][:] = rho*(u_last*grad_u[...,xi] + v_last*grad_u[...,yi])
+        c[('dH',eu,ui)][...,xi] = rho*u_last #  dH d(u_x)
+        c[('dH',eu,ui)][...,yi] = rho*v_last #  dH d(u_y)
         c[('a',eu,ui)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
         c[('a',eu,ui)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
         c[('da',eu,ui,ui)][...,0] = 0.0 # -(da/d ui)_0   # could leave these off since it is 0
         c[('da',eu,ui,ui)][...,1] = 0.0 # -(da/d ui)_1   # could leave these off since it is 0
 
         # equation ev = 1  rho*(v_t + u vx + v vy ) + py + div(-mu grad(v)) - f2 = 0
-        c[('m',ev)][:] = rho_old*v  # d/dt ( rho * v) = d/dt (m_1)
-        c[('dm',ev,vi)][:] = rho_old  # dm^1_dv
+        c[('m',ev)][:] = rho_last*v  # d/dt ( rho * v) = d/dt (m_1)
+        c[('dm',ev,vi)][:] = rho_last  # dm^1_dv
         c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_psharp[...,yi]
         c[('dr',ev,vi)][:] = 0.0
         if self.useStabilityTerms:
-            c[('r',eu)][:] += 0.5*((rho - rho_old)/tau + div_rho_u)*v
-            c[('dr',eu,ui)][:] += 0.5*((rho - rho_old)/tau + div_rho_u)
-        c[('H',ev)][:] = rho*(u_old*grad_v[...,xi] + v_old*grad_v[...,yi])  # add rho term
-        c[('dH',ev,vi)][...,xi] = rho*u_old #  dH d(v_x)
-        c[('dH',ev,vi)][...,yi] = rho*v_old #  dH d(v_y)
+            c[('r',eu)][:] += 0.5*((rho - rho_last)/tau + div_rho_u)*v
+            c[('dr',eu,ui)][:] += 0.5*((rho - rho_last)/tau + div_rho_u)
+        c[('H',ev)][:] = rho*(u_last*grad_v[...,xi] + v_last*grad_v[...,yi])  # add rho term
+        c[('dH',ev,vi)][...,xi] = rho*u_last #  dH d(v_x)
+        c[('dH',ev,vi)][...,yi] = rho*v_last #  dH d(v_y)
         c[('a',ev,vi)][...,0] = self.mu # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
         c[('a',ev,vi)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
         c[('da',ev,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
