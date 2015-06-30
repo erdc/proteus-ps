@@ -60,3 +60,6 @@ tolFac = 0.0
 nl_atol_res = ctx.ns_nl_atol_res
 
 periodicDirichletConditions=None
+
+conservativeFlux=None
+

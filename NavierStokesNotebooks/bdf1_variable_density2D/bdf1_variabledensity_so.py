@@ -18,8 +18,8 @@ name = "bdf1_variabledensity" + "_%3.0e_DT_BDF%1d_p" %(ctx.DT,int(float(ctx.glob
 # systemStepControllerType = Sequential_MinModelStep # uses DT set in _n.py files
 systemStepControllerType = Sequential_FixedStep_Simple # uses time steps in so.tnList
 
-needEBQ_GLOBAL = True
-needEBQ = True
+needEBQ_GLOBAL = False # need to be True for postprocessing ie conservativeFlux != none
+needEBQ = False  # need to be True for postprocessing ie conservativeFlux != none
 
 tnList = ctx.tnList
 
