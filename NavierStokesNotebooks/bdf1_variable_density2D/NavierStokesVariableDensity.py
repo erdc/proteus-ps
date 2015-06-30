@@ -616,6 +616,11 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         Calculate the mean value of phi and adjust to make mean value 0.
         """
+        meanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
+                                               self.model.q[('u',0)],
+                                               self.model.mesh.nElements_owned)
+        self.model.q[('u',0)] -= m_post
+        self.model.ebqe[('u',0)] -= m_post
 
         copyInstructions = {}
         return copyInstructions

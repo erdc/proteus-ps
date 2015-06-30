@@ -41,7 +41,8 @@ from sympy import pi as sy_pi
 xs,ys,ts = symbols('x y t')
 
 # viscosity coefficient
-mu = 1.0
+mu = 1.0 # the viscosity coefficient
+chi = 1.0  # this is the minimal value of rho density.
 
 # Given solution: (Modify here and if needed add more sympy.functions above with
 #                  notation sy_* to distinguish as symbolic functions)
@@ -49,7 +50,6 @@ rs = sy_sqrt(xs*xs + ys*ys)
 thetas = sy_atan2(ys,xs)
 rhos = 2 + rs*sy_cos(thetas-sy_sin(ts))
 
-chi = 1.0  # this is the minimal value of rho.
 
 # rhos = 2 + rs*sy_cos(thetas-sy_sin(ts))
 ps = sy_sin(xs)*sy_sin(ys)*sy_sin(ts)
