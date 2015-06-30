@@ -218,7 +218,7 @@ ns_nl_atol_res = max(1.0e-8,0.01*he**2)
 
 
 # actual time step for FixedStep
-T=10.0
+T=1.0
 DT = 0.1
 nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]

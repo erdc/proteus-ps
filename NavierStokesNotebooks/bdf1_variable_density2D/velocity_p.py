@@ -13,16 +13,16 @@ name = "velocity_2d"
 #the object for evaluating the coefficients   
 
 # from pnList in *_so.py  0 = density,  1 = (u,v), 2 = (pressureincrement),  3 = (pressure)
-coefficients=NavierStokes.NavierStokes2D(f1ofx=ctx.f1true,
-                                         f2ofx=ctx.f2true,
-                                         mu=ctx.mu,
-                                         densityModelIndex=0,
-                                         densityFunction=None, #set to ctx.rhotrue for exact density (uncoupled  flow)
-                                         pressureIncrementModelIndex=2,
-                                         pressureIncrementGradFunction=None, # set to ctx.gradpitrue for exact pressure increment
-                                         pressureModelIndex=3,
-                                         pressureGradFunction=None, # set to ctx.gradptrue for exact pressure
-                                         useStabilityTerms=ctx.useStabilityTerms)
+coefficients=NavierStokes.VelocityTransport2D(f1ofx=ctx.f1true,
+                                              f2ofx=ctx.f2true,
+                                              mu=ctx.mu,
+                                              densityModelIndex=0,
+                                              densityFunction=None, #set to ctx.rhotrue for exact density (uncoupled  flow)
+                                              pressureIncrementModelIndex=2,
+                                              pressureIncrementGradFunction=None, # set to ctx.gradpitrue for exact pressure increment
+                                              pressureModelIndex=3,
+                                              pressureGradFunction=None, # set to ctx.gradptrue for exact pressure
+                                              useStabilityTerms=ctx.useStabilityTerms)
 
 
 analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue,ctx.gradutrue),

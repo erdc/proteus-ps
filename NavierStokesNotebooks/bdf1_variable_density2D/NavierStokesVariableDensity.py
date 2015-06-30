@@ -619,9 +619,10 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         meanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
                                                self.model.q[('u',0)],
                                                self.model.mesh.nElements_owned)
-        self.model.q[('u',0)] -= m_post
-        self.model.ebqe[('u',0)] -= m_post
-
+        self.model.q[('u',0)] -= meanvalue
+        self.model.ebqe[('u',0)] -= meanvalue
+        self.model.u.dof -= meanvalue
+        
         copyInstructions = {}
         return copyInstructions
     def evaluate(self,t,c):
