@@ -10,6 +10,9 @@ from proteus.iproteus import TransportCoefficients
 import numpy as np
 from copy import deepcopy, copy # for cacheing _last values of variables
 
+from proteus.Profiling import logEvent as log
+
+
 class DensityTransport2D(TransportCoefficients.TC_base):
     r"""
     The coefficients for conservative mass transport
@@ -20,11 +23,12 @@ class DensityTransport2D(TransportCoefficients.TC_base):
 
        \frac{\partial\rho}{\partial t}+\nabla\cdot\left(\rho\mathbf{v}\right)-rho/2*\nabla\cdot\mathbf{v}=0
     """
-    def __init__(self,velocityModelIndex=-1,
+    def __init__(self,
+                 velocityModelIndex=-1,
                  velocityFunction=None,
                  divVelocityFunction=None,
                  useVelocityComponents=True,
-                 chiValue=None,
+                 chiValue=1.0,
                  pressureIncrementModelIndex=-1,
                  pressureIncrementFunction=None,
                  useStabilityTerms=False):
@@ -80,12 +84,12 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         In pressureincrement_n.py, the following could be set.  we recommend the 'pwl-bdm' as the best
         for this current situation:
         
-        conservativeFlux = {0:'point-eval'}  - will return computed velocities without change 
-                                               (since there is no diffusion in eqn (2) )
+        conservativeFlux = {0:'point-eval'}  - will return computed velocities with diffusive flux 
+                                               projected and evaluated to match conservation law
         conservativeFlux = {0:'pwl-bdm'}     - will return velocities projected onto the bdm space (CG 
                                                Taylor-Hood enriched with DG pw linears on each element)
         conservativeFlux = {0:'pwl-bdm-opt'} - same as pwl-bdm but optimized in a special way to be more 
-                                               effective.  any additional comments ?
+                                               effective.
         """
         if not self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
@@ -191,18 +195,12 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         Evaluate the coefficients after getting the specified velocity
         """
         rho = c[('u',0)]
-        rho_last = c[('u_last',0)]
         
         # If we use pressureIncrementModel.q[('velocity',)] for our velocity, then we must
         # adjust it to be scaled properly by multiplying by dt/chi.  Then it is physical velocity
         # hopefully with divergence free properties.
         dt = self.timeIntegration.dt
-        # chi value for adjusting the ('velocity',0)
-        chi = np.min(rho_last)
-        if self.chiValue != None:
-            assert chiValue <= chi, /
-            "warning: minimum of density = %1.3e is below physical limit chiValue = %1.3e\n" %(chi, chiValue)
-            chi = np.min(self.chiValue, chi)
+        chi = self.chiValue
         
         # extract velocity components
         if self.velocityFunction != None:
@@ -216,7 +214,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             if self.useStabilityTerms:
                 div_vel = self.c_u[c[('f',0)].shape][...,0] + self.c_u[c[('f',0)].shape][...,1]
         else:
-            
             u = dt/chi*self.c_velocity[c[('f',0)].shape][...,0]  # make adjustment to physical values here by mult by dt/chi
             v = dt/chi*self.c_velocity[c[('f',0)].shape][...,1]  # make adjustment to physical values here by mult by dt/chi
             if self.useStabilityTerms:
@@ -275,10 +272,10 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                  mu=1.0,
                  densityModelIndex=-1,
                  densityFunction=None,
-                 pressureModelIndex=-1,
-                 pressureGradFunction=None,
                  pressureIncrementModelIndex=-1,
                  pressureIncrementGradFunction=None,
+                 pressureModelIndex=-1,
+                 pressureGradFunction=None,
                  useStabilityTerms=False):
 
         sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
@@ -433,8 +430,8 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         grad_u = c[('grad(u)',ui)]
         grad_v = c[('grad(u)',vi)]
         
-        # previous velocity and grad velocity
-        u_last = c[('u_last',ui)] # figure out how to extract old solutons
+        # previous velocity and grad velocity      # TODO:  decide whether or not to use post processed velocities here...
+        u_last = c[('u_last',ui)]
         v_last = c[('u_last',vi)]
         grad_u_last = c[('grad(u)_last',ui)]
         grad_v_last = c[('grad(u)_last',vi)]
@@ -507,7 +504,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
 
 
 
-
 class PressureIncrement2D(TransportCoefficients.TC_base):
     r"""
     The coefficients for pressure increment solution
@@ -516,13 +512,13 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
 
     .. math::
 
-       -\Delta \phi^{k+1} + \chi/dt \nabla\cdot\ub^{k+1}=0
+       \nabla\cdot( -\nabla \phi^{k+1} - \chi/dt\mathbf{u}^{k+1} ) = 0
     """
     def __init__(self,
                  velocityModelIndex=-1,
                  velocityFunction=None,
                  densityModelIndex=-1,
-                 chiValue=None):
+                 chiValue=1.0):
         """Construct a coefficients object
 
         :param velocityModelIndex: The index into the proteus model list
@@ -548,7 +544,6 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                                                advection = {0:{0:'constant'}}, # div (chi/dt velocity)
                                                sparseDiffusionTensors=sdInfo,
                                                useSparseDiffusion = True)
-                                               # reaction = {0:{0:'linear'}} ) # chi / dt div velocity
         self.velocityModelIndex = velocityModelIndex
         self.velocityFunction = velocityFunction
         self.c_u = {}
@@ -603,7 +598,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                 self.c_rho[rho.shape] = rho
     def preStep(self,t,firstStep=False):
         """
-        Give the TC object an opportunity to modify itself before the time step.
+        Move the current values to values_last to keep cached set of values for bdf1 algorithm
         """
         for ci in range(self.nc):
             # self.model.q[('u_last',ci)] = deepcopy(self.model.q[('u',ci)])
@@ -617,6 +612,13 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             # self.model.ebq_global[('grad(u)_last',ci)] = deepcopy(self.model.ebq_global[('grad(u)',ci)])
         copyInstructions = {}
         return copyInstructions
+    def postStep(self,t,firstStep=False):
+        """
+        Calculate the mean value of phi and adjust to make mean value 0.
+        """
+
+        copyInstructions = {}
+        return copyInstructions
     def evaluate(self,t,c):
         """
         Evaluate the coefficients after getting the specified velocity and density
@@ -626,30 +628,23 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         dtinv = 1.0/dt
         
         # find minimal density value set it to be chi
-        # chi = 0.0
-        # if self.chiValue != None:
-        #     chi = self.chiValue
-        # else:
-        #     chi = np.min(self.c_rho[c[('m',0)].shape])
+        if densityModelindex>0:
+            rho = self.c_rho[c[('m',0)].shape] 
+        else:
+            rho = [self.chiValue] # just give it the self.chiValue so that test passes as we assume user has given correct chiValue in this case.
+            
+        chi = np.min(rho)
+        if self.chiValue <= chi:  # raise warning but do not stop
+            log("*** warning: minimum of density = %1.3e is below physical limit chiValue = %1.3e. ***" %(chi, chiValue),  level=1)
+        chi = self.chiValue
         
-        # find minimal density value set it to be chi
-        chi = np.min(self.c_rho[c[('m',0)].shape])
-        if self.chiValue != None:
-            assert chiValue <= chi, /
-            "warning: minimum of density = %1.3e is below physical limit chiValue = %1.3e\n" %(chi, chiValue)
-            chi = np.min(self.chiValue, chi)
-        
-        
-        # extract velocity components
+        # extract velocity components   ** notice that the ('velocity',0) filed corresponds to this model so is not available **
         if self.velocityFunction != None:
             u = self.velocityFunction(c['x'],t)[...,0]
             v = self.velocityFunction(c['x'],t)[...,1]
-        elif self.useVelocityComponents:
+        else:
             u = self.c_u[c[('m',0)].shape]
             v = self.c_v[c[('m',0)].shape]
-        else:
-            u = self.c_velocity[c[('f',0)].shape][...,0]
-            v = self.c_velocity[c[('f',0)].shape][...,1]
         
         # set coefficients
         c[('f',0)][...,0] = chi*dtInv*u
@@ -671,7 +666,7 @@ class Pressure2D(TransportCoefficients.TC_base):
 
     .. math::
 
-       p^{k+1} - p^{k} - phi^{k+1} + \mu \div u^{k+1} = 0
+       p^{k+1} - p^{k} - phi^{k+1} + \nabla\cdot(\mu \mathbf{u}^{k+1}) = 0
     """
     def __init__(self,
                  mu=1.0,
@@ -680,8 +675,7 @@ class Pressure2D(TransportCoefficients.TC_base):
                  useVelocityComponents=True,
                  pressureIncrementModelIndex=-1,
                  pressureIncrementFunction=None,
-                 densityModelIndex=-1,
-                 densityFunction=None): 
+                 chiValue=1.0): 
         """Construct a coefficients object
 
         :param velocityModelIndex: The index into the proteus model list
@@ -710,13 +704,11 @@ class Pressure2D(TransportCoefficients.TC_base):
         self.useVelocityComponents = useVelocityComponents
         self.pressureIncrementModelIndex = pressureIncrementModelIndex
         self.pressureIncrementFunction = pressureIncrementFunction
-        self.densityModelIndex=densityModelIndex
-        self.densityfunction=densityFunction
+        self.chiValue = chiValue
         self.c_u = {}
         self.c_v = {}
         self.c_velocity = {}
         self.c_phi = {}
-        self.c_rho = {}
 
 
     def attachModels(self,modelList):
@@ -798,22 +790,6 @@ class Pressure2D(TransportCoefficients.TC_base):
             if ('u',0) in self.pressureIncrementModel.ebq_global:
                 phi = self.pressureIncrementModel.ebq_global[('u',0)]
                 self.c_phi[phi.shape] = phi
-        if self.densityModelIndex >= 0:
-            assert self.densityModelIndex < len(modelList), \
-                "density model index out of range 0," + repr(len(modelList))
-            self.densityModel = modelList[self.densityModelIndex]
-            if ('u',0) in self.densityModel.q:
-                rho = self.densityModel.q[('u',0)]
-                self.c_rho[rho.shape] = rho
-            if ('u',0) in self.densityModel.ebq:
-                rho = self.densityModel.ebq[('u',0)]
-                self.c_rho[rho.shape] = rho
-            if ('u',0) in self.densityModel.ebqe:
-                rho = self.densityModel.ebqe[('u',0)]
-                self.c_rho[rho.shape] = rho
-            if ('u',0) in self.densityModel.ebq_global:
-                rho = self.densityModel.ebq_global[('u',0)]
-                self.c_rho[rho.shape] = rho
     def preStep(self,t,firstStep=False):
         """
         Give the TC object an opportunity to modify itself before the time step.
@@ -845,16 +821,11 @@ class Pressure2D(TransportCoefficients.TC_base):
         else:
             phi = self.c_phi[c[('m',0)].shape]
             
-        # extract density and dt,then set chi for adjsut ('velocity',0) to be scaled properly
+        # extract density and dt,then set chi for adjust ('velocity',0) to be scaled properly
         rho = self.c_rho[c[('m',0)].shape]
         dt = self.timeIntegration.dt
-        chi = np.min(rho)
-        if self.chiValue != None:
-            assert chiValue <= chi, /
-            "warning: minimum of density = %1.3e is below physical limit chiValue = %1.3e\n" %(chi, chiValue)
-            chi = np.min(self.chiValue, chi)
+        chi = self.chiValue
         
-
         # extract velocity components
         if self.velocityFunction != None:
             u = self.velocityFunction(c['x'],t)[...,0]

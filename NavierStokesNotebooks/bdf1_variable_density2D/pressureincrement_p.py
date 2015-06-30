@@ -15,10 +15,8 @@ name = "pressureincrement_2d"
 # from pnList in *_so.py  0 = density,  1 = (u,v),  2 = (pressureincrement),  3 = (pressure)
 coefficients=NavierStokes.PressureIncrement2D(velocityModelIndex=1,
                                               velocityFunction=None, # use ctx.velocityFunction for exact velocity
-                                              useVelocityComponents=ctx.useVelocityComponents,
                                               densityModelIndex=0,
-                                              chiValue=None)
-
+                                              chiValue=ctx.chi)
 
 analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.pitrue,ctx.gradpitrue)}
 # analyticalSolutionVelocity = {2:ctx.AnalyticSolutionConverter(ctx.velocityFunctionLocal)}
