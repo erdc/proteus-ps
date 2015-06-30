@@ -24,6 +24,9 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                  velocityFunction=None,
                  divVelocityFunction=None,
                  useVelocityComponents=True,
+                 chiValue=None,
+                 pressureIncrementModelIndex=-1,
+                 pressureIncrementFunction=None,
                  useStabilityTerms=False):
         """Construct a coefficients object
 
@@ -53,60 +56,70 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         self.velocityModelIndex = velocityModelIndex
         self.velocityFunction = velocityFunction
         self.divVelocityFunction = divVelocityFunction
+        self.useVelocityComponents = useVelocityComponents
         self.c_u = {}
         self.c_v = {}
         self.c_velocity = {}
-        self.useVelocityComponents = useVelocityComponents
+        self.chiValue = chiValue
+        self.pressureIncrementModelIndex=pressureIncrementModelIndex
+        self.pressureIncrementFunction=pressureIncrementFunction
         self.useStabilityTerms = useStabilityTerms
 
     def attachModels(self,modelList):
         """
         Attach the model for velocity
         
-        Note that we must use ('velocity',2) since we want the velocity post processor to associate itself
-        with the divergence free property which is our third (2) equation.  Then ('velocity',2) will extract
-        the velocity components from the post processor and pass those along.  There are at least three possible 
-        post processors for divergence free equation of velocity set in mom_n.py:
+        We are implementing the post processing in the pressureIncrement model which is 
+        essentially the divergence free velocity equation.  The velocity
+        is then extracted from the pressureIncrement Model as ('velocity',0).  In order to
+        get a physical velocity, we must then scale it by the constants dt/chi  since the pressure 
+        equation is  -div(  grad\phi - chi/dt [u v] ) = 0  so that the flux F has local integrals matching chi/dt [u v]
+        and hopefully has locally divergence free velocity matching chi/dt [u v].  Thus the scaling by dt/chi
+        to get physical velocity.  
         
-        conservativeFlux = {2:'point-eval'}  - will return computed velocities without change 
+        In pressureincrement_n.py, the following could be set.  we recommend the 'pwl-bdm' as the best
+        for this current situation:
+        
+        conservativeFlux = {0:'point-eval'}  - will return computed velocities without change 
                                                (since there is no diffusion in eqn (2) )
-        conservativeFlux = {2:'pwl-bdm'}     - will return velocities projected onto the bdm space (CG 
+        conservativeFlux = {0:'pwl-bdm'}     - will return velocities projected onto the bdm space (CG 
                                                Taylor-Hood enriched with DG pw linears on each element)
-        conservativeFlux = {2:'pwl-bdm-opt'} - same as pwl-bdm but optimized in a special way to be more 
+        conservativeFlux = {0:'pwl-bdm-opt'} - same as pwl-bdm but optimized in a special way to be more 
                                                effective.  any additional comments ?
-        
-        Notice that again we are applying the conservativeFlux post processing to the divergence free equation (2).
         """
         if not self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
+            assert self.pressureIncrementModelIndex < len(modelList), \
+                "pressureIncrement model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
-            if ('velocity',2) in self.velocityModel.q:
-                vel = self.velocityModel.q[('velocity',2)]
+            self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
+            if ('velocity',0) in self.pressureIncrementModel.q:
+                vel = self.pressureIncrementModel.q[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.q[('grad(u)',0)]
                     grad_v = self.velocityModel.q[('grad(u)',1)]
                     self.c_u[grad_u.shape] = grad_u
                     self.c_v[grad_v.shape] = grad_v
-            if ('velocity',2) in self.velocityModel.ebq:
-                vel = self.velocityModel.ebq[('velocity',2)]
+            if ('velocity',0) in self.pressureIncrementModel.ebq:
+                vel = self.pressureIncrementModel.ebq[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.ebq[('grad(u)',0)]
                     grad_v = self.velocityModel.ebq[('grad(u)',1)]
                     self.c_u[grad_u.shape] = grad_u
                     self.c_v[grad_v.shape] = grad_v
-            if ('velocity',2) in self.velocityModel.ebqe:
-                vel = self.velocityModel.ebqe[('velocity',2)]
+            if ('velocity',0) in self.pressureIncrementModel.ebqe:
+                vel = self.pressureIncrementModel.ebqe[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.ebqe[('grad(u)',0)]
                     grad_v = self.velocityModel.ebqe[('grad(u)',1)]
                     self.c_u[grad_u.shape] = grad_u
                     self.c_v[grad_v.shape] = grad_v
-            if ('velocity',2) in self.velocityModel.ebq_global:
-                vel = self.velocityModel.ebq_global[('velocity',2)]
+            if ('velocity',0) in self.pressureIncrementModel.ebq_global:
+                vel = self.pressureIncrementModel.ebq_global[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.ebq_global[('grad(u)',0)]
@@ -178,7 +191,20 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         Evaluate the coefficients after getting the specified velocity
         """
         rho = c[('u',0)]
+        rho_last = c[('u_last',0)]
         
+        # If we use pressureIncrementModel.q[('velocity',)] for our velocity, then we must
+        # adjust it to be scaled properly by multiplying by dt/chi.  Then it is physical velocity
+        # hopefully with divergence free properties.
+        dt = self.timeIntegration.dt
+        # chi value for adjusting the ('velocity',0)
+        chi = np.min(rho_last)
+        if self.chiValue != None:
+            assert chiValue <= chi, /
+            "warning: minimum of density = %1.3e is below physical limit chiValue = %1.3e\n" %(chi, chiValue)
+            chi = np.min(self.chiValue, chi)
+        
+        # extract velocity components
         if self.velocityFunction != None:
             u = self.velocityFunction(c['x'],t)[...,0]
             v = self.velocityFunction(c['x'],t)[...,1]
@@ -190,8 +216,9 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             if self.useStabilityTerms:
                 div_vel = self.c_u[c[('f',0)].shape][...,0] + self.c_u[c[('f',0)].shape][...,1]
         else:
-            u = self.c_velocity[c[('f',0)].shape][...,0]
-            v = self.c_velocity[c[('f',0)].shape][...,1]
+            
+            u = dt/chi*self.c_velocity[c[('f',0)].shape][...,0]  # make adjustment to physical values here by mult by dt/chi
+            v = dt/chi*self.c_velocity[c[('f',0)].shape][...,1]  # make adjustment to physical values here by mult by dt/chi
             if self.useStabilityTerms:
                 div_vel = self.c_u[c[('f',0)].shape][...,0] + self.c_u[c[('f',0)].shape][...,1]
         
@@ -278,7 +305,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                                       ev:{vi:'constant'}}, # -f2(x) + d/dy p^\# + (stability terms) * v
                          sparseDiffusionTensors=sdInfo,
                          useSparseDiffusion = True),
-        self.vectorComponents=[ui,vi]
+        self.vectorComponents=[ui,vi]  # for plotting and hdf5 output only 
         self.f1ofx=f1ofx
         self.f2ofx=f2ofx
         self.mu=mu
@@ -494,7 +521,6 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
     def __init__(self,
                  velocityModelIndex=-1,
                  velocityFunction=None,
-                 useVelocityComponents=True,
                  densityModelIndex=-1,
                  chiValue=None):
         """Construct a coefficients object
@@ -529,44 +555,13 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         self.c_v = {}
         self.c_velocity = {}
         self.c_rho = {}
-        self.useVelocityComponents = useVelocityComponents
         self.chiValue = chiValue
 
     def attachModels(self,modelList):
         """
-        Attach the model for velocity
-        
-        Note that we must use ('velocity',2) since we want the velocity post processor to associate itself
-        with the divergence free property which is our third (2) equation.  Then ('velocity',2) will extract
-        the velocity components from the post processor and pass those along.  There are at least three possible 
-        post processors for divergence free equation of velocity set in mom_n.py:
-        
-        conservativeFlux = {2:'point-eval'}  - will return computed velocities without change 
-                                               (since there is no diffusion in eqn (2) )
-        conservativeFlux = {2:'pwl-bdm'}     - will return velocities projected onto the bdm space (CG 
-                                               Taylor-Hood enriched with DG pw linears on each element)
-        conservativeFlux = {2:'pwl-bdm-opt'} - same as pwl-bdm but optimized in a special way to be more 
-                                               effective.  any additional comments ?
-        
-        Notice that again we are applying the conservativeFlux post processing to the divergence free equation (2).
+        Attach the model for velocity and density
         """
-        if not self.useVelocityComponents and self.velocityModelIndex >= 0:
-            assert self.velocityModelIndex < len(modelList), \
-                "velocity model index out of range 0," + repr(len(modelList))
-            self.velocityModel = modelList[self.velocityModelIndex]
-            if ('velocity',2) in self.velocityModel.q:
-                vel = self.velocityModel.q[('velocity',2)]
-                self.c_velocity[vel.shape] = vel
-            if ('velocity',2) in self.velocityModel.ebq:
-                vel = self.velocityModel.ebq[('velocity',2)]
-                self.c_velocity[vel.shape] = vel
-            if ('velocity',2) in self.velocityModel.ebqe:
-                vel = self.velocityModel.ebqe[('velocity',2)]
-                self.c_velocity[vel.shape] = vel
-            if ('velocity',2) in self.velocityModel.ebq_global:
-                vel = self.velocityModel.ebq_global[('velocity',2)]
-                self.c_velocity[vel.shape] = vel
-        elif self.useVelocityComponents and self.velocityModelIndex >= 0:
+        if self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
@@ -631,12 +626,20 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         dtinv = 1.0/dt
         
         # find minimal density value set it to be chi
-        chi = 0.0
+        # chi = 0.0
+        # if self.chiValue != None:
+        #     chi = self.chiValue
+        # else:
+        #     chi = np.min(self.c_rho[c[('m',0)].shape])
+        
+        # find minimal density value set it to be chi
+        chi = np.min(self.c_rho[c[('m',0)].shape])
         if self.chiValue != None:
-            chi = self.chiValue
-        else:
-            chi = np.min(self.c_rho[c[('m',0)].shape])
-            
+            assert chiValue <= chi, /
+            "warning: minimum of density = %1.3e is below physical limit chiValue = %1.3e\n" %(chi, chiValue)
+            chi = np.min(self.chiValue, chi)
+        
+        
         # extract velocity components
         if self.velocityFunction != None:
             u = self.velocityFunction(c['x'],t)[...,0]
@@ -653,10 +656,11 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         c[('f',0)][...,1] = chi*dtInv*v
         c[('df',0,0)][...,0] = 0.0
         c[('df',0,0)][...,1] = 0.0
-        c[('a',ev,vi)][...,0] = 1.0 # -mu*\grad v :   tensor  [ mu  0;  0  mu] ordered [0 1; 2 3]  in our
-        c[('a',ev,vi)][...,1] = 1.0 # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
-        c[('da',ev,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
-        c[('da',ev,vi,vi)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
+        c[('a',0,0)][...,0] = 1.0 # -\grad v :   tensor  [ 1.0  0;  0  1.0] ordered [0 1; 2 3]  in our
+        c[('a',0,0)][...,1] = 1.0 # -\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
+        c[('da',0,0,0)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
+        c[('da',0,0,0)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
+
 
 
 class Pressure2D(TransportCoefficients.TC_base):
@@ -675,7 +679,9 @@ class Pressure2D(TransportCoefficients.TC_base):
                  velocityFunction=None,
                  useVelocityComponents=True,
                  pressureIncrementModelIndex=-1,
-                 pressureIncrementFunction=None): 
+                 pressureIncrementFunction=None,
+                 densityModelIndex=-1,
+                 densityFunction=None): 
         """Construct a coefficients object
 
         :param velocityModelIndex: The index into the proteus model list
@@ -704,45 +710,53 @@ class Pressure2D(TransportCoefficients.TC_base):
         self.useVelocityComponents = useVelocityComponents
         self.pressureIncrementModelIndex = pressureIncrementModelIndex
         self.pressureIncrementFunction = pressureIncrementFunction
+        self.densityModelIndex=densityModelIndex
+        self.densityfunction=densityFunction
         self.c_u = {}
         self.c_v = {}
         self.c_velocity = {}
         self.c_phi = {}
+        self.c_rho = {}
 
 
     def attachModels(self,modelList):
         """
         Attach the model for velocity
         
-        Note that we must use ('velocity',2) since we want the velocity post processor to associate itself
-        with the divergence free property which is our third (2) equation.  Then ('velocity',2) will extract
-        the velocity components from the post processor and pass those along.  There are at least three possible 
-        post processors for divergence free equation of velocity set in mom_n.py:
+        We are implementing the post processing in the pressureIncrement model which is 
+        essentially the divergence free velocity equation.  The velocity
+        is then extracted from the pressureIncrement Model as ('velocity',0).  In order to
+        get a physical velocity, we must then scale it by the constants dt/chi  since the pressure 
+        equation is  -div(  grad\phi - chi/dt [u v] ) = 0  so that the flux F has local integrals matching chi/dt [u v]
+        and hopefully has locally divergence free velocity matching chi/dt [u v].  Thus the scaling by dt/chi
+        to get physical velocity.  
         
-        conservativeFlux = {2:'point-eval'}  - will return computed velocities without change 
+        In pressureincrement_n.py, the following could be set.  we recommend the 'pwl-bdm' as the best
+        for this current situation:
+        
+        conservativeFlux = {0:'point-eval'}  - will return computed velocities without change 
                                                (since there is no diffusion in eqn (2) )
-        conservativeFlux = {2:'pwl-bdm'}     - will return velocities projected onto the bdm space (CG 
+        conservativeFlux = {0:'pwl-bdm'}     - will return velocities projected onto the bdm space (CG 
                                                Taylor-Hood enriched with DG pw linears on each element)
-        conservativeFlux = {2:'pwl-bdm-opt'} - same as pwl-bdm but optimized in a special way to be more 
+        conservativeFlux = {0:'pwl-bdm-opt'} - same as pwl-bdm but optimized in a special way to be more 
                                                effective.  any additional comments ?
         
-        Notice that again we are applying the conservativeFlux post processing to the divergence free equation (2).
         """
-        if not self.useVelocityComponents and self.velocityModelIndex >= 0:
-            assert self.velocityModelIndex < len(modelList), \
-                "velocity model index out of range 0," + repr(len(modelList))
-            self.velocityModel = modelList[self.velocityModelIndex]
-            if ('velocity',2) in self.velocityModel.q:
-                vel = self.velocityModel.q[('velocity',2)]
+        if not self.useVelocityComponents and self.pressureIncrementModelIndex >= 0:
+            assert self.pressureIncrementModelIndex < len(modelList), \
+                "pressure increment model index out of range 0," + repr(len(modelList))
+            self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
+            if ('velocity',0) in self.pressureIncrementModel.q:
+                vel = self.pressureIncrementModel.q[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
-            if ('velocity',2) in self.velocityModel.ebq:
-                vel = self.velocityModel.ebq[('velocity',2)]
+            if ('velocity',0) in self.pressureIncrementModel.ebq:
+                vel = self.pressureIncrementModel.ebq[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
-            if ('velocity',2) in self.velocityModel.ebqe:
-                vel = self.velocityModel.ebqe[('velocity',2)]
+            if ('velocity',0) in self.pressureIncrementModel.ebqe:
+                vel = self.pressureIncrementModel.ebqe[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
-            if ('velocity',2) in self.velocityModel.ebq_global:
-                vel = self.velocityModel.ebq_global[('velocity',2)]
+            if ('velocity',0) in self.pressureIncrementModel.ebq_global:
+                vel = self.pressureIncrementModel.ebq_global[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
         elif self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
@@ -784,6 +798,22 @@ class Pressure2D(TransportCoefficients.TC_base):
             if ('u',0) in self.pressureIncrementModel.ebq_global:
                 phi = self.pressureIncrementModel.ebq_global[('u',0)]
                 self.c_phi[phi.shape] = phi
+        if self.densityModelIndex >= 0:
+            assert self.densityModelIndex < len(modelList), \
+                "density model index out of range 0," + repr(len(modelList))
+            self.densityModel = modelList[self.densityModelIndex]
+            if ('u',0) in self.densityModel.q:
+                rho = self.densityModel.q[('u',0)]
+                self.c_rho[rho.shape] = rho
+            if ('u',0) in self.densityModel.ebq:
+                rho = self.densityModel.ebq[('u',0)]
+                self.c_rho[rho.shape] = rho
+            if ('u',0) in self.densityModel.ebqe:
+                rho = self.densityModel.ebqe[('u',0)]
+                self.c_rho[rho.shape] = rho
+            if ('u',0) in self.densityModel.ebq_global:
+                rho = self.densityModel.ebq_global[('u',0)]
+                self.c_rho[rho.shape] = rho
     def preStep(self,t,firstStep=False):
         """
         Give the TC object an opportunity to modify itself before the time step.
@@ -815,6 +845,16 @@ class Pressure2D(TransportCoefficients.TC_base):
         else:
             phi = self.c_phi[c[('m',0)].shape]
             
+        # extract density and dt,then set chi for adjsut ('velocity',0) to be scaled properly
+        rho = self.c_rho[c[('m',0)].shape]
+        dt = self.timeIntegration.dt
+        chi = np.min(rho)
+        if self.chiValue != None:
+            assert chiValue <= chi, /
+            "warning: minimum of density = %1.3e is below physical limit chiValue = %1.3e\n" %(chi, chiValue)
+            chi = np.min(self.chiValue, chi)
+        
+
         # extract velocity components
         if self.velocityFunction != None:
             u = self.velocityFunction(c['x'],t)[...,0]
@@ -823,8 +863,8 @@ class Pressure2D(TransportCoefficients.TC_base):
             u = self.c_u[c[('m',0)].shape]
             v = self.c_v[c[('m',0)].shape]
         else:
-            u = self.c_velocity[c[('f',0)].shape][...,0]
-            v = self.c_velocity[c[('f',0)].shape][...,1]
+            u = dt/chi*self.c_velocity[c[('f',0)].shape][...,0] # adjust post processed velocity to be physical units by mult by dt/chi
+            v = dt/chi*self.c_velocity[c[('f',0)].shape][...,1] # adjust post processed velocity to be physical units by mult by dt/chi
         
         # set coefficients
         c[('f',0)][...,0] = self.mu*u

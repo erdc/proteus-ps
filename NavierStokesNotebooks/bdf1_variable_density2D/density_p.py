@@ -25,7 +25,8 @@ analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.rhotrue)}
 
 def getDBC_rho(x,flag):
    if flag in [ctx.boundaryTags['bottom'],
-               ctx.boundaryTags['top']]:
+               ctx.boundaryTags['top'],
+               ctx.boundaryTags['fixed']]:
        return lambda x,t: ctx.rhotrue(x,t)
 
 def getNone(x,flag):

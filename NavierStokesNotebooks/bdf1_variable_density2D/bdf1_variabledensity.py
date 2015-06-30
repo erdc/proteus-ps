@@ -48,6 +48,9 @@ mu = 1.0
 rs = sy_sqrt(xs*xs + ys*ys)
 thetas = sy_atan2(ys,xs)
 rhos = 2 + rs*sy_cos(thetas-sy_sin(ts))
+
+chi = 1.0  # this is the minimal value of rho.
+
 # rhos = 2 + rs*sy_cos(thetas-sy_sin(ts))
 ps = sy_sin(xs)*sy_sin(ys)*sy_sin(ts)
 us = -ys*sy_cos(ts)
@@ -175,7 +178,7 @@ if unitCircle:
     segmentFlags = []
 
     # boundary tags and dictionary
-    boundaries=['left','right','bottom','top','front','back']
+    boundaries=['left','right','bottom','top','front','back','fixed']  # fixed is for if we need to fix a single dof for solving a poisson problem with natural boundary conditions, where we need to fix a sngle dof to pin them down and then adjust to have average 0 in postStep()
     boundaryTags=dict([(key,i+1) for (i,key) in enumerate(boundaries)])
 
     # set domain with top and bottom
@@ -184,6 +187,8 @@ if unitCircle:
         vertices.append([center_x+radius*cos(theta),center_y+radius*sin(theta)])
         if i in [nvertices-1,0,1]:
             vertexFlags.append(boundaryTags['top'])
+        elif i in [int(floor((nvertices-1)/2))]:  # set one variable on boundary to be fixed,  might as well be nvertices/2
+            vertexFlags.append(boundaryTags['fixed'])
         else:
             vertexFlags.append(boundaryTags['bottom'])
         segments.append([i,(i+1)%nvertices])

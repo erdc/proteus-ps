@@ -25,11 +25,17 @@ analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.pitrue,ctx.gradpitrue)
 
 
 # Define boundary conditions and initial conditions of system
-def getNBC_p(x,flag):
-    if flag == ctx.boundaryTags['top']:
-        return lambda x,t: 0.0*x
-    elif flag == ctx.boundaryTags['bottom']:
-        return lambda x,t: 0.0*x
+# def getDBC_p(x,flag):
+#     if flag in [ctx.boundaryTags['bottom'],
+#                 ctx.boundaryTags['top'],
+#                 ctx.boundaryTags['fixed']]:
+#        return lambda x,t: ctx.pitrue(x,t)
+#     else:
+#         return None
+        
+def getDBC_p(x,flag):
+    if flag in [ctx.boundaryTags['fixed']]:  # fix the 'fixed' dof to be 0 for this poisson with natural bc equations and leave all others unset
+       return lambda x,t: 0.0 
     else:
         return None
 
@@ -37,9 +43,9 @@ def getNone(x,flag):
     return None
 
 def getZeroFlux(x,flag):
-    if flag == ctx.boundaryTags['top']:
-        return lambda x,t: 0.0
-    elif flag == ctx.boundaryTags['bottom']:
+    if flag in [ctx.boundaryTags['bottom'],
+                ctx.boundaryTags['top'],
+                ctx.boundaryTags['fixed']]:
         return lambda x,t: 0.0
     else:
         return None
@@ -53,7 +59,7 @@ class getIBC_p:
 
 initialConditions = {0:getIBC_p()}
 
-# dirichletConditions = {0:getDBC_p }
+dirichletConditions = {0:getDBC_p }
 
 # advectiveFluxBoundaryConditions = {0:getNone} # check this?
 

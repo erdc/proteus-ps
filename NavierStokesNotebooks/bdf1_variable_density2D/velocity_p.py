@@ -35,17 +35,17 @@ analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue,ctx.gradutrue),
 # Define boundary conditions and initial conditions of system
 
 def getDBC_u(x,flag):
-    if flag == ctx.boundaryTags['top']:
-        return lambda x,t: ctx.utrue(x,t)
-    elif flag == ctx.boundaryTags['bottom']:
-        return lambda x,t: ctx.utrue(x,t)
+    if flag in [ctx.boundaryTags['bottom'],
+                ctx.boundaryTags['top'],
+                ctx.boundaryTags['fixed']]:
+       return lambda x,t: ctx.utrue(x,t)
     else:
         return None
 
 def getDBC_v(x,flag):
-    if flag == ctx.boundaryTags['top']:
-        return lambda x,t: ctx.vtrue(x,t)
-    elif flag == ctx.boundaryTags['bottom']:
+    if flag in [ctx.boundaryTags['bottom'],
+                ctx.boundaryTags['top'],
+                ctx.boundaryTags['fixed']]:
         return lambda x,t: ctx.vtrue(x,t)
     else:
         return None
@@ -54,9 +54,9 @@ def getNone(x,flag):
     return None
 
 def getZeroFlux(x,flag):
-    if flag == ctx.boundaryTags['top']:
-        return lambda x,t: 0.0
-    elif flag == ctx.boundaryTags['bottom']:
+    if flag in [ctx.boundaryTags['bottom'],
+                ctx.boundaryTags['top'],
+                ctx.boundaryTags['fixed']]:
         return lambda x,t: 0.0
     else:
         return None

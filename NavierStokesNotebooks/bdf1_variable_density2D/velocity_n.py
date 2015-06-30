@@ -61,7 +61,5 @@ periodicDirichletConditions=None
 
 # post processing 
 
-#all of these  should work
-conservativeFlux = {2:'point-eval'}
-#conservativeFlux = {2:'pwl-bdm'}
-# conservativeFlux = {2:'pwl-bdm-opt'}
+conservativeFlux=None
+

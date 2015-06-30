@@ -37,8 +37,8 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 
 
 #matrix type
-#numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
-numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior #weak boundary conditions (upwind)
+numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
+# numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior #weak boundary conditions (upwind)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
@@ -59,3 +59,11 @@ tolFac = 0.0
 nl_atol_res = ctx.ns_nl_atol_res
 
 periodicDirichletConditions=None
+
+# post processing 
+
+conservativeFlux=None
+#all of these  should work
+#conservativeFlux = {2:'point-eval'}
+# conservativeFlux = {2:'pwl-bdm'}
+# conservativeFlux = {2:'pwl-bdm-opt'}
