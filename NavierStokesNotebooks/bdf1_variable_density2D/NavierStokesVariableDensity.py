@@ -64,6 +64,9 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         self.c_u = {}
         self.c_v = {}
         self.c_velocity = {}
+        self.c_grad_u = {}
+        self.c_grad_v = {}
+        self.c_grad_velocity = {}
         self.chiValue = chiValue
         self.pressureIncrementModelIndex=pressureIncrementModelIndex
         self.pressureIncrementFunction=pressureIncrementFunction
@@ -106,32 +109,32 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.q[('grad(u)',0)]
                     grad_v = self.velocityModel.q[('grad(u)',1)]
-                    self.c_u[grad_u.shape] = grad_u
-                    self.c_v[grad_v.shape] = grad_v
+                    self.c_grad_u[grad_u.shape] = grad_u
+                    self.c_grad_v[grad_v.shape] = grad_v
             if ('velocity',0) in self.pressureIncrementModel.ebq:
                 vel = self.pressureIncrementModel.ebq[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.ebq[('grad(u)',0)]
                     grad_v = self.velocityModel.ebq[('grad(u)',1)]
-                    self.c_u[grad_u.shape] = grad_u
-                    self.c_v[grad_v.shape] = grad_v
+                    self.c_grad_u[grad_u.shape] = grad_u
+                    self.c_grad_v[grad_v.shape] = grad_v
             if ('velocity',0) in self.pressureIncrementModel.ebqe:
                 vel = self.pressureIncrementModel.ebqe[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.ebqe[('grad(u)',0)]
                     grad_v = self.velocityModel.ebqe[('grad(u)',1)]
-                    self.c_u[grad_u.shape] = grad_u
-                    self.c_v[grad_v.shape] = grad_v
+                    self.c_grad_u[grad_u.shape] = grad_u
+                    self.c_grad_v[grad_v.shape] = grad_v
             if ('velocity',0) in self.pressureIncrementModel.ebq_global:
                 vel = self.pressureIncrementModel.ebq_global[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.ebq_global[('grad(u)',0)]
                     grad_v = self.velocityModel.ebq_global[('grad(u)',1)]
-                    self.c_u[grad_u.shape] = grad_u
-                    self.c_v[grad_v.shape] = grad_v
+                    self.c_grad_u[grad_u.shape] = grad_u
+                    self.c_grad_v[grad_v.shape] = grad_v
         elif self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
@@ -144,8 +147,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.q[('grad(u)',0)]
                     grad_v = self.velocityModel.q[('grad(u)',1)]
-                    self.c_u[grad_u.shape] = grad_u
-                    self.c_v[grad_v.shape] = grad_v
+                    self.c_grad_u[grad_u.shape] = grad_u
+                    self.c_grad_v[grad_v.shape] = grad_v
             if ('u',0) in self.velocityModel.ebq:
                 u = self.velocityModel.ebq[('u',0)]
                 v = self.velocityModel.ebq[('u',1)]
@@ -154,8 +157,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.ebq[('grad(u)',0)]
                     grad_v = self.velocityModel.ebq[('grad(u)',1)]
-                    self.c_u[grad_u.shape] = grad_u
-                    self.c_v[grad_v.shape] = grad_v
+                    self.c_grad_u[grad_u.shape] = grad_u
+                    self.c_grad_v[grad_v.shape] = grad_v
             if ('u',0) in self.velocityModel.ebqe:
                 u = self.velocityModel.ebqe[('u',0)]
                 v = self.velocityModel.ebqe[('u',1)]
@@ -164,8 +167,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.ebqe[('grad(u)',0)]
                     grad_v = self.velocityModel.ebqe[('grad(u)',1)]
-                    self.c_u[grad_u.shape] = grad_u
-                    self.c_v[grad_v.shape] = grad_v
+                    self.c_grad_u[grad_u.shape] = grad_u
+                    self.c_grad_v[grad_v.shape] = grad_v
             if ('u',0) in self.velocityModel.ebq_global:
                 u = self.velocityModel.ebq_global[('u',0)]
                 v = self.velocityModel.ebq_global[('u',1)]
@@ -174,8 +177,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 if self.useStabilityTerms:
                     grad_u = self.velocityModel.ebq_global[('grad(u)',0)]
                     grad_v = self.velocityModel.ebq_global[('grad(u)',1)]
-                    self.c_u[grad_u.shape] = grad_u
-                    self.c_v[grad_v.shape] = grad_v
+                    self.c_grad_u[grad_u.shape] = grad_u
+                    self.c_grad_v[grad_v.shape] = grad_v
     def initializeMesh(self,mesh):
         """
         Give the TC object access to the mesh for any mesh-dependent information.
@@ -248,12 +251,12 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             u = self.c_u[c[('m',0)].shape]
             v = self.c_v[c[('m',0)].shape]
             if self.useStabilityTerms:
-                div_vel = self.c_u[c[('f',0)].shape][...,0] + self.c_u[c[('f',0)].shape][...,1]#rename to c_grad_u
+                div_vel = self.c_grad_u[c[('f',0)].shape][...,0] + self.c_grad_v[c[('f',0)].shape][...,1]
         else:
             u = dt/chi*self.c_velocity[c[('f',0)].shape][...,0]  # make adjustment to physical values here by mult by dt/chi
             v = dt/chi*self.c_velocity[c[('f',0)].shape][...,1]  # make adjustment to physical values here by mult by dt/chi
             if self.useStabilityTerms:
-                div_vel = self.c_u[c[('f',0)].shape][...,0] + self.c_u[c[('f',0)].shape][...,1]#I think this would need to be c_grad_u - cek
+                div_vel = self.c_grad_u[c[('f',0)].shape][...,0] + self.c_grad_v[c[('f',0)].shape][...,1]
 
         c[('m',0)][:] = rho
         c[('dm',0,0)][:] = 1.0

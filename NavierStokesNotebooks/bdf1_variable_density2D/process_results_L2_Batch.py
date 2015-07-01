@@ -3,7 +3,7 @@
 import sys # to read in command line arguments
 import os  # to check if file exists
 import shelve # to open and read the database file
-
+import copy
 import numpy as np
 
 # read in file names and test if they can be found.  if so
@@ -32,7 +32,7 @@ baseshelf['errorData'] = {}
 
 # open shelves
 shelfset = {}
-database = {key : baseshelf for key in range(num_filenames)}
+database = {key : copy.deepcopy(baseshelf) for key in range(num_filenames)}
 for i in range(num_filenames):
     shelfset[i] = shelve.open(filenames[i])
     try:
@@ -50,13 +50,11 @@ for i in range(num_filenames):
 
 rho_L2Error = np.array([0] + database[0]['errorData'][0][0]['error_u_L2'])
 u_L2Error = np.array([0] + database[1]['errorData'][0][0]['error_u_L2'])
-import pdb
-pdb.set_trace()
 v_L2Error = np.array([0] + database[1]['errorData'][1][0]['error_u_L2'])
 p_L2Error = np.array([0] + database[2]['errorData'][0][0]['error_u_L2'])
 gradu_L2Error = np.array([0] + database[1]['errorData'][0][0]['error_u_H1'])
 gradv_L2Error = np.array([0] + database[1]['errorData'][1][0]['error_u_H1'])
-gradp_L2Error = np.array([0] + database[2]['errorData'][0][0]['error_u_H1'])
+#gradp_L2Error = np.array([0] + database[2]['errorData'][0][0]['error_u_H1'])
 
 #velpp_L2Error = np.array([0] + database[1]['errorData'][2][0]['error_velocity_L2'])
 
@@ -102,7 +100,7 @@ rho_ell2L2Norm = np.sqrt(rho_ell2L2Norm)
 print "\n\\ell_2 in time norms:"
 print "  ||v||_{\\ell_2-L2}\t= %2.4g" %vel_ell2L2Norm
 print "  ||v||_{\\ell_2-H1}\t= %2.4g" %vel_ell2H1Norm
-print "  ||vpp||_{\\ell_2-L2}\t= %2.4g" %velpp_ell2L2Norm
+#print "  ||vpp||_{\\ell_2-L2}\t= %2.4g" %velpp_ell2L2Norm
 print "  ||p||_{\\ell_2-L2}\t= %2.4g" %p_ell2L2Norm
 print "  ||rho||_{\\ell_2-L2}\t= %2.4g" %rho_ell2L2Norm
 
