@@ -8,16 +8,6 @@ triangleOptions = ctx.triangleOptions
 
 femSpaces = {0:FemTools.C0_AffineLinearOnSimplexWithNodalBasis} # = pressure space = P1 with zero average
 
-# # timeIntegration = TimeIntegration.BackwardEuler
-# # timeIntegration = TimeIntegration.BackwardEuler_cfl
-# # timeIntegration = TimeIntegration.VBDF
-# timeIntegration = TimeIntegration.BackwardEuler
-# timeOrder = 1
-
-# stepController  = StepControl.Min_dt_cfl_controller
-# runCFL= 0.99
-# runCFL= 0.5
-
 stepController=FixedStep
 DT = ctx.DT
 
@@ -25,20 +15,8 @@ DT = ctx.DT
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
 elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_degree)
 
-# subgridError = SubgridError.Advection_ASGS(coefficients,
-#                                            ctx.nd,
-#                                            lag=False)
-
-#numerics.shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(physics.coefficients,
-#                                                                physics.nd,
-#                                                                lag = True,
-#                                                                nStepsToDelay=1)
-#numerics.nny= 41
-
-
-#matrix type
-numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
-# numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior #weak boundary conditions (upwind)
+#numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
+numericalFluxType = NumericalFlux.ConstantAdvection_Diffusion_SIPG_exterior #weak boundary conditions (upwind)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
@@ -60,10 +38,10 @@ nl_atol_res = ctx.ns_nl_atol_res
 
 periodicDirichletConditions=None
 
-# post processing 
+# post processing
 
 conservativeFlux=None
 #all of these  should work
-#conservativeFlux = {2:'point-eval'}
-# conservativeFlux = {2:'pwl-bdm'}
-# conservativeFlux = {2:'pwl-bdm-opt'}
+#conservativeFlux = {0:'point-eval'}
+# conservativeFlux = {0:'pwl-bdm'}
+# conservativeFlux = {0:'pwl-bdm-opt'}

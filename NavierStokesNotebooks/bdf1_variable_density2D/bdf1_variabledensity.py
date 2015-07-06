@@ -79,13 +79,13 @@ dpl_dy = lambdify((xs, ys, ts), simplify(diff(ps,ys)), "numpy")
 # convert python expressions to the format we need for multidimensional x values
 def rhotrue(x,t):
     return rhol(x[...,0],x[...,1],t)
-    
+
 def utrue(x,t):
     return ul(x[...,0],x[...,1],t)
 
 def vtrue(x,t):
     return vl(x[...,0],x[...,1],t)
-    
+
 def pitrue(x,t): # pressure increment
     return 0.0*pl(x[...,0],x[...,1],t)
 
@@ -105,19 +105,19 @@ def velocityFunction(x,t):
 
 def velocityFunctionLocal(x,t):
     return np.array([utrue(x,t),vtrue(x,t)])
-                    
+
 
 # analytic derivatives
 def dudxtrue(x,t):
     return dul_dx(x[...,0],x[...,1],t)
 def dudytrue(x,t):
     return dul_dy(x[...,0],x[...,1],t)
-    
+
 def dvdxtrue(x,t):
     return dvl_dx(x[...,0],x[...,1],t)
 def dvdytrue(x,t):
     return dvl_dy(x[...,0],x[...,1],t)
-    
+
 def dpdxtrue(x,t):
     return dpl_dx(x[...,0],x[...,1],t)
 def dpdytrue(x,t):
@@ -141,7 +141,7 @@ def gradpitrue(x,t): # pressure increment
 
 class AnalyticSolutionConverter:
     """
-    wrapper for function f(x) that satisfies proteus interface for analytical solutions 
+    wrapper for function f(x) that satisfies proteus interface for analytical solutions
     """
     def __init__(self,fx,gradfx=None):
         self.exact_function = fx
@@ -150,11 +150,11 @@ class AnalyticSolutionConverter:
     def uOfXT(self,x,t):
         return self.exact_function(x,t)
     def uOfX(self,x):
-        return self.exact_function(x) 
+        return self.exact_function(x)
     def duOfXT(self,x,t):
         return self.exact_grad_function(x,t)
     def duOfX(self,x):
-        return self.exact_grad_function(x)  
+        return self.exact_grad_function(x)
 
 
 
@@ -178,7 +178,10 @@ if unitCircle:
     segmentFlags = []
 
     # boundary tags and dictionary
-    boundaries=['left','right','bottom','top','front','back','fixed']  # fixed is for if we need to fix a single dof for solving a poisson problem with natural boundary conditions, where we need to fix a sngle dof to pin them down and then adjust to have average 0 in postStep()
+    boundaries=['left','right','bottom','top','front','back','fixed']
+    # fixed is for if we need to fix a single dof for solving a poisson problem
+    # with natural boundary conditions, where we need to fix a sngle dof to pin
+    # them down and then adjust to have average 0 in postStep()
     boundaryTags=dict([(key,i+1) for (i,key) in enumerate(boundaries)])
 
     # set domain with top and bottom
@@ -187,13 +190,15 @@ if unitCircle:
         vertices.append([center_x+radius*cos(theta),center_y+radius*sin(theta)])
         if i in [nvertices-1,0,1]:
             vertexFlags.append(boundaryTags['top'])
-        elif i in [int(floor((nvertices-1)/2))]:  # set one variable on boundary to be fixed,  might as well be nvertices/2
+        elif i == 2:
             vertexFlags.append(boundaryTags['fixed'])
         else:
             vertexFlags.append(boundaryTags['bottom'])
         segments.append([i,(i+1)%nvertices])
         if i in [nsegments-1,0]:
             segmentFlags.append(boundaryTags['top'])
+        elif i == 1:
+            segmentFlags.append(boundaryTags['fixed'])
         else:
             segmentFlags.append(boundaryTags['bottom'])
 
@@ -218,7 +223,7 @@ ns_nl_atol_res = max(1.0e-8,0.01*he**2)
 
 
 # actual time step for FixedStep
-T=1.0
+T=10.0
 DT = 0.1
 nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]
@@ -234,5 +239,3 @@ globalTimeOrder = 1
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
 
 # tnList =  [ i*dt for i in range(nFrames) ]
-
-

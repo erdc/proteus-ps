@@ -19,34 +19,17 @@ coefficients=NavierStokes.PressureIncrement2D(velocityModelIndex=1,
                                               chiValue=ctx.chi)
 
 analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.pitrue,ctx.gradpitrue)}
-# analyticalSolutionVelocity = {2:ctx.AnalyticSolutionConverter(ctx.velocityFunctionLocal)}
 
-
-# Define boundary conditions and initial conditions of system
-# def getDBC_p(x,flag):
-#     if flag in [ctx.boundaryTags['bottom'],
-#                 ctx.boundaryTags['top'],
-#                 ctx.boundaryTags['fixed']]:
-#        return lambda x,t: ctx.pitrue(x,t)
-#     else:
-#         return None
-        
 def getDBC_p(x,flag):
-    if flag in [ctx.boundaryTags['fixed']]:  # fix the 'fixed' dof to be 0 for this poisson with natural bc equations and leave all others unset
-       return lambda x,t: 0.0 
-    else:
-        return None
+    if flag in [ctx.boundaryTags['fixed']]:
+        return lambda x,t: 0.0
 
 def getNone(x,flag):
     return None
 
-def getZeroFlux(x,flag):
-    if flag in [ctx.boundaryTags['bottom'],
-                ctx.boundaryTags['top'],
-                ctx.boundaryTags['fixed']]:
+def getDiffusiveFlux(x,flag):
+    if flag not in [ctx.boundaryTags['fixed']]:
         return lambda x,t: 0.0
-    else:
-        return None
 
 class getIBC_p:
     def __init__(self):
@@ -59,8 +42,6 @@ initialConditions = {0:getIBC_p()}
 
 dirichletConditions = {0:getDBC_p }
 
-# advectiveFluxBoundaryConditions = {0:getNone} # check this?
+advectiveFluxBoundaryConditions = {0:getNone}
 
-diffusiveFluxBoundaryConditions = {0:{0:getZeroFlux}}
-
-fluxBoundaryConditions = {0:'noFlow'}
+diffusiveFluxBoundaryConditions = {0:{0:getDiffusiveFlux}}

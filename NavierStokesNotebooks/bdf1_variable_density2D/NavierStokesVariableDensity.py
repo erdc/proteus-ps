@@ -95,6 +95,9 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                                                effective.
         """
         self.model = modelList[0] # current model
+        self.model.points_quadrature.add(('u_last',0))
+        self.model.points_elementBoundaryQuadrature.add(('u_last',0))
+        self.model.numericalFlux.ebqe[('u_last',0)] = self.model.ebqe[('u_last',0)]
         if not self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
@@ -362,6 +365,13 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         Attach the models for density, pressure increment and pressure
         """
         self.model = modelList[1] # current model
+        for ci in range(self.nc):
+            self.model.points_quadrature.add(('u_last',ci))
+            self.model.vectors_quadrature.add(('grad(u)_last',ci))
+            self.model.numericalFlux.ebqe[('u_last',ci)]=self.model.ebqe[('u_last',ci)]
+            self.model.points_elementBoundaryQuadrature.add(('u_last',ci))
+            self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',ci))
+            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=self.model.ebqe[('grad(u)_last',ci)]
         if self.densityModelIndex >= 0:
             assert self.densityModelIndex < len(modelList), \
                 "density model index out of range 0," + repr(len(modelList))
@@ -369,34 +379,34 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             if ('u',0) in self.densityModel.q:
                 rho = self.densityModel.q[('u',0)]
                 self.c_rho[rho.shape] = rho
+                rho_last = self.densityModel.q[('u_last',0)]
+                self.c_rho_last[rho_last.shape] = rho_last
                 if self.useStabilityTerms:
-                    rho_last = self.densityModel.q[('u_last',0)]
                     grad_rho = self.densityModel.q[('grad(u)',0)]
-                    self.c_rho_last[rho_last.shape] = rho_last
                     self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebq:
                 rho = self.densityModel.ebq[('u',0)]
                 self.c_rho[rho.shape] = rho
+                rho_last = self.densityModel.ebq[('u_last',0)]
+                self.c_rho_last[rho_last.shape] = rho_last
                 if self.useStabilityTerms:
-                    rho_last = self.densityModel.ebq[('u_last',0)]
                     grad_rho = self.densityModel.ebq[('grad(u)',0)]
-                    self.c_rho_last[rho_last.shape] = rho_last
                     self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebqe:
                 rho = self.densityModel.ebqe[('u',0)]
                 self.c_rho[rho.shape] = rho
+                rho_last = self.densityModel.ebqe[('u_last',0)]
+                self.c_rho_last[rho_last.shape] = rho_last
                 if self.useStabilityTerms:
-                    rho_last = self.densityModel.ebqe[('u_last',0)]
                     grad_rho = self.densityModel.ebqe[('grad(u)',0)]
-                    self.c_rho_last[rho_last.shape] = rho_last
                     self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebq_global:
                 rho = self.densityModel.ebq_global[('u',0)]
                 self.c_rho[rho.shape] = rho
+                rho_last = self.densityModel.ebq_global[('u_last',0)]
+                self.c_rho_last[rho_last.shape] = rho_last
                 if self.useStabilityTerms:
-                    rho_last = self.densityModel.ebq_global[('u_last',0)]
                     grad_rho = self.densityModel.ebq_global[('grad(u)',0)]
-                    self.c_rho_last[rho_last.shape] = rho_last
                     self.c_rho[grad_rho.shape] = grad_rho
         if self.pressureIncrementModelIndex >= 0:
             assert self.pressureIncrementModelIndex < len(modelList), \
@@ -517,13 +527,13 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         # extract rho, rho_last and grad_rho
         if self.densityFunction != None:
             rho = self.densityFunction(c['x'],t)
+            rho_last =  self.densityFunction(c['x'],tLast)
             if self.useStabilityTerms:
-                rho_last =  self.densityFunction(c['x'],tLast)
                 grad_rho = self.gradDensityFunction(c['x'],t)
         else:#use mass shape as key since it is same shape as density
             rho = self.c_rho[c[('m',0)].shape]
+            rho_last = self.c_rho_last[c[('m',0)].shape]
             if self.useStabilityTerms:
-                rho_last = self.c_rho_last[c[('m',0)].shape]
                 grad_rho = self.c_rho[c[('grad(u)',0)].shape] # use velocity shape since it is same shape as gradient
 
         if self.pressureGradFunction != None:
@@ -542,7 +552,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         # solve for stability terms
         if self.useStabilityTerms:
             div_vel_last = grad_u_last[...,xi] + grad_v_last[...,yi]
-            div_rho_vel = grad_rho[...,xi]*u + grad_rho[...,yi]*v + rho*div_vel_last
+            div_rho_vel = grad_rho[...,xi]*u_last + grad_rho[...,yi]*v_last + rho*div_vel_last
 
         #equation eu = 0 rho_last*u_t + rho(u_last ux + v_last uy ) + p^#x + div(-mu grad(u)) - f1 + 0.5*(rho_t + rhox u + rhoy v + rho div([u,v]) )u = 0
         c[('m',eu)][:] = rho_last*u    # d/dt ( rho_last * u) = d/dt (m_0)
@@ -566,8 +576,8 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_psharp[...,yi]
         c[('dr',ev,vi)][:] = 0.0
         if self.useStabilityTerms:
-            c[('r',eu)][:] += 0.5*( (rho - rho_last)/dt + div_rho_vel )*v
-            c[('dr',eu,ui)][:] += 0.5*( (rho - rho_last)/dt + div_rho_vel )
+            c[('r',ev)][:] += 0.5*( (rho - rho_last)/dt + div_rho_vel )*v
+            c[('dr',ev,vi)][:] += 0.5*( (rho - rho_last)/dt + div_rho_vel )
         c[('H',ev)][:] = rho*( u_last*grad_v[...,xi] + v_last*grad_v[...,yi] ) # add rho term
         c[('dH',ev,vi)][...,xi] = rho*u_last #  dH d(v_x)
         c[('dH',ev,vi)][...,yi] = rho*v_last #  dH d(v_y)
@@ -606,8 +616,6 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
 
         """
         sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
-                          np.array([0,1],dtype='i')),
-                   (1,1):(np.array([0,1,2],dtype='i'),
                           np.array([0,1],dtype='i'))}
 
         TransportCoefficients.TC_base.__init__(self,
@@ -632,6 +640,9 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         Attach the model for velocity and density
         """
         self.model = modelList[2] # current model
+        self.model.vectors_quadrature.add(('grad(u)_last',0))
+        self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',0))
+        self.model.numericalFlux.ebqe[('grad(u)_last',0)] = self.model.ebqe[('grad(u)_last',0)]
         if self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
@@ -853,6 +864,12 @@ class Pressure2D(TransportCoefficients.TC_base):
 
         """
         self.model = modelList[3] # current model
+        self.model.points_quadrature.add(('u_last',0))
+        self.model.points_elementBoundaryQuadrature.add(('u_last',0))
+        self.model.numericalFlux.ebqe[('u_last',0)] = self.model.ebqe[('u_last',0)]
+        self.model.vectors_quadrature.add(('grad(u)_last',0))
+        self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',0))
+        self.model.numericalFlux.ebqe[('grad(u)_last',0)] = self.model.ebqe[('grad(u)_last',0)]
         if not self.useVelocityComponents and self.pressureIncrementModelIndex >= 0:
             assert self.pressureIncrementModelIndex < len(modelList), \
                 "pressure increment model index out of range 0," + repr(len(modelList))

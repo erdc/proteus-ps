@@ -11,7 +11,7 @@ nd = ctx.nd
 name = "pressure_2d"
 
 
-#the object for evaluating the coefficients   
+#the object for evaluating the coefficients
 # from pnList in *_so.py  0 = density,  1 = (u,v), 2 = (pressureincrement),  3 = (pressure)
 coefficients=NavierStokes.Pressure2D(mu=ctx.mu,
                                      velocityModelIndex=1,
@@ -23,7 +23,7 @@ coefficients=NavierStokes.Pressure2D(mu=ctx.mu,
 
 
 analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.ptrue,ctx.gradptrue)}
-                      
+
 # analyticalSolutionVelocity = {2:ctx.AnalyticSolutionConverter(ctx.velocityFunctionLocal)}
 
 
@@ -60,7 +60,3 @@ initialConditions = {0:getIBC_p()}
 dirichletConditions = {0:getDBC_p }
 
 advectiveFluxBoundaryConditions = {0:getNone} # check this?
-
-# diffusiveFluxBoundaryConditions = {0:{0:getZeroFlux}}
-
-fluxBoundaryConditions = {0:'noFlow'}

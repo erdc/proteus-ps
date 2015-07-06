@@ -30,7 +30,7 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 # subgridError = SubgridError.Advection_ASGS(coefficients,
 #                                            ctx.nd,
 #                                            lag=False)
-                                           
+
 #numerics.shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(physics.coefficients,
 #                                                                physics.nd,
 #                                                                lag = True,
@@ -38,8 +38,8 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 #numerics.nny= 41
 
 #matrix type
-numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
-# numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior #weak boundary conditions (upwind)
+#numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
+numericalFluxType = NumericalFlux.ConstantAdvection_exterior
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
@@ -62,4 +62,3 @@ nl_atol_res = ctx.ns_nl_atol_res
 periodicDirichletConditions=None
 
 conservativeFlux=None
-

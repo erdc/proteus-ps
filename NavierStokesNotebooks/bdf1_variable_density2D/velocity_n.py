@@ -28,10 +28,11 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 
 
 #Matrix type
-numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions)
+#numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions)
 #numericalFluxType = MixedDarcy_exterior
 #numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior
 #numericalFluxType = NumericalFlux.Advection_Diagonal_average
+numericalFluxType = NumericalFlux.HamiltonJacobi_DiagonalLesaintRaviart_Diffusion_SIPG_exterior
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
@@ -59,7 +60,6 @@ nl_atol_res = ctx.ns_nl_atol_res
 
 periodicDirichletConditions=None
 
-# post processing 
+# post processing
 
 conservativeFlux=None
-
