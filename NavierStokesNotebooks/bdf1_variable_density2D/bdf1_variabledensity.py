@@ -223,13 +223,17 @@ ns_nl_atol_res = max(1.0e-8,0.01*he**2)
 
 
 # actual time step for FixedStep
-T=10.0
+T=0.1
 DT = 0.1
 nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]
 
 # dummy variable for time integration order outputting ( not used anywhere buit in output file names )
 globalTimeOrder = 1
+
+# for outputting in file names without '.' and the like
+decimal_length = 6
+DT_string = "{:1.{dec_len}f}".format(DT, dec_len=decimal_length)[2:]
 
 # Time stepping for output
 # T=10.0
