@@ -10,7 +10,7 @@ domain = ctx.domain
 nd = ctx.nd
 name = "velocity_2d"
 
-#the object for evaluating the coefficients   
+#the object for evaluating the coefficients
 
 # from pnList in *_so.py  0 = density,  1 = (u,v), 2 = (pressureincrement),  3 = (pressure)
 coefficients=NavierStokes.VelocityTransport2D(f1ofx=ctx.f1true,
@@ -27,9 +27,6 @@ coefficients=NavierStokes.VelocityTransport2D(f1ofx=ctx.f1true,
 
 analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue,ctx.gradutrue),
                       1:ctx.AnalyticSolutionConverter(ctx.vtrue,ctx.gradvtrue)}
-                      
-# analyticalSolutionVelocity = {2:ctx.AnalyticSolutionConverter(ctx.velocityFunctionLocal)}
-
 
 # Define boundary conditions and initial conditions of system
 
@@ -80,9 +77,5 @@ initialConditions = {0:getIBC_u(),
 dirichletConditions = {0:getDBC_u,
                        1:getDBC_v }
 
-# advectiveFluxBoundaryConditions = {2:getNone}
-
-diffusiveFluxBoundaryConditions = {0:{0:getZeroFlux},
-                                   1:{1:getZeroFlux}}
-
-fluxBoundaryConditions = {0:'noFlow',1:'noFlow'}
+diffusiveFluxBoundaryConditions = {0:{0:getNone},
+                                   1:{1:getNone}}

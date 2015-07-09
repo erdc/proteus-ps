@@ -26,10 +26,11 @@ elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
 elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_degree)
 
 
-subgridError = SubgridError.Advection_ASGS(coefficients,
-                                           ctx.nd,
-                                           lag=False)
-                                           
+if not ctx.useStabilityTerms:
+    subgridError = SubgridError.Advection_ASGS(coefficients,
+                                               ctx.nd,
+                                               lag=False)
+
 #numerics.shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(physics.coefficients,
 #                                                                physics.nd,
 #                                                                lag = True,
@@ -61,4 +62,3 @@ nl_atol_res = ctx.ns_nl_atol_res
 periodicDirichletConditions=None
 
 conservativeFlux=None
-
