@@ -205,7 +205,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
             #cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
-            
             if self.bdf is int(2):
                 cq[('u_lastlast',ci)] = deepcopy(cq[('u',ci)])
                 # #cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)_last',ci)])
@@ -226,7 +225,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
             #cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
-            
             if self.bdf is int(2):
                 cebqe[('u_lastlast',ci)] = deepcopy(cebqe[('u',ci)])
                 # #cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)',ci)])
@@ -294,6 +292,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             if self.useStabilityTerms:
                 div_vel = self.c_grad_u[c[('f',0)].shape][...,0] + self.c_grad_v[c[('f',0)].shape][...,1]
 
+        # note that coefficients formulas are the same for bdf1 and bdf2 for density transport
         c[('m',0)][:] = rho
         c[('dm',0,0)][:] = 1.0
         c[('f',0)][...,0] = rho*u
@@ -303,6 +302,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         if self.useStabilityTerms:
             c[('r',0)][:]    = -0.5*rho*div_vel
             c[('dr',0,0)][:] = -0.5*div_vel
+
 
 
 
@@ -613,17 +613,30 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         else:#use velocity shape as key since it is same shape as gradient of pressure increment
             grad_phi = self.c_phi[c[('grad(u)',0)].shape]
 
-        # gradient of pressure term
-        grad_psharp = grad_p + grad_phi
+        # pull out gradient of phi_last if bdf2 algorithm is being used
+        if not self.firstStep and self.bdf is int(2):
+            if self.pressureIncrementGradFunction != None:
+                grad_phi_last = self.pressureIncrementGradFunction(c['x'],t-dt)
+            else:#use velocity shape as key since it is same shape as gradient of pressure increment
+                grad_phi_last = self.c_phi_last[c[('grad(u)',0)].shape]
+
+        # choose the density to use on the mass term,  bdf1 is rho_last,  bdf2 is current rho
+        if self.firstStep or self.bdf is int(1):
+            rho_sharp = rho_last
+            grad_psharp = grad_p + grad_phi
+        elif self.bdf is int(2):
+            rho_sharp = rho
+            grad_psharp = grad_p # + bdf1/bdf0 * grad_phi + bdf2/bdf0 grad_phi_last
 
         # solve for stability terms
         if self.useStabilityTerms:
             div_vel_last = grad_u_last[...,xi] + grad_v_last[...,yi]
             div_rho_vel = grad_rho[...,xi]*u_last + grad_rho[...,yi]*v_last + rho*div_vel_last
 
-        #equation eu = 0 rho_last*u_t + rho(u_last ux + v_last uy ) + p^#x + div(-mu grad(u)) - f1 + 0.5*(rho_t + rhox u + rhoy v + rho div([u,v]) )u = 0
-        c[('m',eu)][:] = rho_last*u    # d/dt ( rho_last * u) = d/dt (m_0)
-        c[('dm',eu,ui)][:] = rho_last  # dm^0_du
+            
+        #equation eu = 0 rho_sharp*u_t + rho(u_last ux + v_last uy ) + p^#x + div(-mu grad(u)) - f1 + 0.5*(rho_t + rhox u + rhoy v + rho div([u,v]) )u = 0
+        c[('m',eu)][:] = rho_sharp*u    # d/dt ( rho_sharp * u) = d/dt (m_0)
+        c[('dm',eu,ui)][:] = rho_sharp  # dm^0_du
         c[('r',eu)][:] = -self.f1ofx(c['x'][:],t) + grad_psharp[...,xi]
         c[('dr',eu,ui)][:] = 0.0
         if self.useStabilityTerms:
@@ -637,9 +650,9 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('da',eu,ui,ui)][...,0] = 0.0 # -(da/d ui)_0   # could leave these off since it is 0
         c[('da',eu,ui,ui)][...,1] = 0.0 # -(da/d ui)_1   # could leave these off since it is 0
 
-        #equation ev = 1 rho_last*v_t + rho(u_last vx + v_last vy ) + p^#y + div(-mu grad(v)) - f2 + 0.5*(rho_t + rhox u + rhoy v + rho div([u,v]) )v = 0
-        c[('m',ev)][:] = rho_last*v    # d/dt ( rho_last * v) = d/dt (m_1)
-        c[('dm',ev,vi)][:] = rho_last  # dm^1_dv
+        #equation ev = 1 rho_sharp*v_t + rho(u_last vx + v_last vy ) + p^#y + div(-mu grad(v)) - f2 + 0.5*(rho_t + rhox u + rhoy v + rho div([u,v]) )v = 0
+        c[('m',ev)][:] = rho_sharp*u    # d/dt ( rho_sharp * v) = d/dt (m_0)
+        c[('dm',ev,vi)][:] = rho_sharp  # dm^0_dv
         c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_psharp[...,yi]
         c[('dr',ev,vi)][:] = 0.0
         if self.useStabilityTerms:
@@ -652,6 +665,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('a',ev,vi)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
         c[('da',ev,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
         c[('da',ev,vi,vi)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
+            
 
 class PressureIncrement2D(TransportCoefficients.TC_base):
     r"""
@@ -838,6 +852,8 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         self.model.q[('u',0)] -= meanvalue
         self.model.ebqe[('u',0)] -= meanvalue
         self.model.u[0].dof -= meanvalue
+        
+        # add post processing adjustments here if possible.  They have already be solved for by this point.
 
         copyInstructions = {}
         return copyInstructions
@@ -869,14 +885,21 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             v = self.c_v[c[('u',0)].shape]
 
         # set coefficients
-        c[('f',0)][...,0] = chi*dtInv*u
-        c[('f',0)][...,1] = chi*dtInv*v
+        if self.bdf is int(1) or self.firstStep:
+            c[('f',0)][...,0] = chi*dtInv*u
+            c[('f',0)][...,1] = chi*dtInv*v
+        elif self.bdf is int(2):
+            c[('f',0)][...,0] = chi*dtInv*u
+            c[('f',0)][...,1] = chi*dtInv*v
+        else:
+            assert False, "Error: BDF order %d is not supported." % self.bdf
         c[('df',0,0)][...,0] = 0.0
         c[('df',0,0)][...,1] = 0.0
         c[('a',0,0)][...,0] = 1.0 # -\grad v :   tensor  [ 1.0  0;  0  1.0] ordered [0 1; 2 3]  in our
         c[('a',0,0)][...,1] = 1.0 # -\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
         c[('da',0,0,0)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
         c[('da',0,0,0)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
+
 
 
 class Pressure2D(TransportCoefficients.TC_base):
@@ -1109,8 +1132,9 @@ class Pressure2D(TransportCoefficients.TC_base):
         else:
             u = dt/chi*self.c_velocity[c[('f',0)].shape][...,0] # adjust post processed velocity to be physical units by mult by dt/chi
             v = dt/chi*self.c_velocity[c[('f',0)].shape][...,1] # adjust post processed velocity to be physical units by mult by dt/chi
-
-        # set coefficients
+        
+        
+        # note, no difference between bdf1 and bdf2 algorithms for pressure
         #G&S11,p941,remark 5.5
         c[('f',0)][...,0] = self.mu*u
         c[('f',0)][...,1] = self.mu*v
