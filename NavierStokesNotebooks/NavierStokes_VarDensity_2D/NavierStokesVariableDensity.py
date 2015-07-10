@@ -59,7 +59,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                                                mass = {0:{0:'linear'}},
                                                advection = {0:{0:'linear'}},
                                                reaction = {0:{0:'linear'}} if useStabilityTerms else {} ) # for the stability term
-        self.bdf=bdf
+        self.bdf=int(bdf)
         self.currentModelIndex = currentModelIndex
         self.velocityModelIndex = velocityModelIndex
         self.velocityFunction = velocityFunction
@@ -75,7 +75,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         self.c_grad_v = {}
         self.c_grad_velocity = {}
         self.useStabilityTerms = useStabilityTerms
-
+        self.firstStep = True # manipulated in preStep()
+        
     def attachModels(self,modelList):
         """
         Attach the model for velocity
@@ -102,10 +103,10 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         self.model.points_quadrature.add(('u_last',0))
         self.model.points_elementBoundaryQuadrature.add(('u_last',0))
         self.model.numericalFlux.ebqe[('u_last',0)] = self.model.ebqe[('u_last',0)]
-        # if self.bdf == 2 :
-        #     self.model.points_quadrature.add(('u_lastlast',0))
-        #     self.model.points_elementBoundaryQuadrature.add(('u_lastlast',0))
-        #     self.model.numericalFlux.ebqe[('u_lastlast',0)] = self.model.ebqe[('u_lastlast',0)]
+        if self.bdf is int(2):
+            self.model.points_quadrature.add(('u_lastlast',0))
+            self.model.points_elementBoundaryQuadrature.add(('u_lastlast',0))
+            self.model.numericalFlux.ebqe[('u_lastlast',0)] = self.model.ebqe[('u_lastlast',0)]
             
         if not self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
@@ -191,6 +192,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     grad_v = self.velocityModel.ebq_global[('grad(u)',1)]
                     self.c_grad_u[grad_u.shape] = grad_u
                     self.c_grad_v[grad_v.shape] = grad_v
+
     def initializeMesh(self,mesh):
         """
         Give the TC object access to the mesh for any mesh-dependent information.
@@ -201,11 +203,12 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         Give the TC object access to the element quadrature storage
         """
         for ci in range(self.nc):
-            # cq[('u_lastlast',ci)] = deepcopy(cq[('u_last',ci)])
-            # #cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)_last',ci)])
-            
             cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
             #cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
+            
+            if self.bdf is int(2):
+                cq[('u_lastlast',ci)] = deepcopy(cq[('u',ci)])
+                # #cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)_last',ci)])
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
@@ -221,11 +224,13 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         Give the TC object access to the exterior element boundary quadrature storage
         """
         for ci in range(self.nc):
-            # cebqe[('u_lastlast',ci)] = deepcopy(cebqe[('u_last',ci)])
-            # #cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)_last',ci)])
-            
             cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
             #cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+            
+            if self.bdf is int(2):
+                cebqe[('u_lastlast',ci)] = deepcopy(cebqe[('u',ci)])
+                # #cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
         """
         Give the TC object access to the generalized interpolation point storage. These points are used  to project nonlinear potentials (phi).
@@ -235,16 +240,19 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         """
         Give the TC object an opportunity to modify itself before the time step.
         """
+        self.firstStep = firstStep # save for in evaluate
+        
         for ci in range(self.nc):
-            # self.model.q[('u_lastlast',ci)][:] = self.model.q[('u_last',ci)]
-            # # self.model.ebq[('u_lastlast',ci)][:] = self.model.ebq[('u_last',ci)]
-            # self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u_last',ci)]
-            # # self.model.ebq_global[('u_lastlast',ci)][:] = self.model.ebq_global[('u_last',ci)]
-            #
-            # # self.model.q[('grad(u)_lastlast',ci)][:] = self.model.q[('grad(u)_last',ci)]
-            # # self.model.ebq[('grad(u)_lastlast',ci)][:] = self.model.ebq[('grad(u)_last',ci)]
-            # # self.model.ebqe[('grad(u)_lastlast',ci)][:] = self.model.ebqe[('grad(u)_last',ci)]
-            # # self.model.ebq_global[('grad(u)_lastlast',ci)][:] = self.model.ebq_global[('grad(u)_last',ci)]
+            if not self.firstStep and self.bdf is int(2):
+                self.model.q[('u_lastlast',ci)][:] = self.model.q[('u_last',ci)]
+                # self.model.ebq[('u_lastlast',ci)][:] = self.model.ebq[('u_last',ci)]
+                self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u_last',ci)]
+                # self.model.ebq_global[('u_lastlast',ci)][:] = self.model.ebq_global[('u_last',ci)]
+
+                # self.model.q[('grad(u)_lastlast',ci)][:] = self.model.q[('grad(u)_last',ci)]
+                # self.model.ebq[('grad(u)_lastlast',ci)][:] = self.model.ebq[('grad(u)_last',ci)]
+                # self.model.ebqe[('grad(u)_lastlast',ci)][:] = self.model.ebqe[('grad(u)_last',ci)]
+                # self.model.ebq_global[('grad(u)_lastlast',ci)][:] = self.model.ebq_global[('grad(u)_last',ci)]
 
             self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
             # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
@@ -372,7 +380,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                          sparseDiffusionTensors=sdInfo,
                          useSparseDiffusion = True),
         self.vectorComponents=[ui,vi]  # for plotting and hdf5 output only
-        self.bdf=bdf
+        self.bdf=int(bdf)
         self.f1ofx=f1ofx
         self.f2ofx=f2ofx
         self.mu=mu
@@ -388,7 +396,9 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         self.c_rho_last = {} # density of cached values
         self.c_p = {}  # pressure
         self.c_phi = {} # pressure increment phi
-
+        self.firstStep = True # manipulated in preStep()
+        
+        
     def attachModels(self,modelList):
         """
         Attach the models for density, pressure increment and pressure
@@ -401,6 +411,13 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             self.model.points_elementBoundaryQuadrature.add(('u_last',ci))
             self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',ci))
             self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=self.model.ebqe[('grad(u)_last',ci)]
+            if self.bdf is int(2):
+                self.model.points_quadrature.add(('u_lastlast',ci))
+                self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
+                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=self.model.ebqe[('u_lastlast',ci)]
+                self.model.points_elementBoundaryQuadrature.add(('u_lastlast',ci))
+                self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
+                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
         if self.densityModelIndex >= 0:
             assert self.densityModelIndex < len(modelList), \
                 "density model index out of range 0," + repr(len(modelList))
@@ -481,6 +498,10 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
             cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
+            if self.bdf is int(2):
+                cq[('u_lastlast',ci)] = deepcopy(cq[('u',ci)])
+                cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)',ci)])
+    
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
@@ -498,6 +519,9 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
             cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+            if self.bdf is int(2):
+                cebqe[('u_lastlast',ci)] = deepcopy(cebqe[('u',ci)])
+                cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)',ci)])
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
         """
         Give the TC object access to the generalized interpolation point storage. These points are used  to project nonlinear potentials (phi).
@@ -507,7 +531,21 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         """
         Give the TC object an opportunity to modify itself before the time step.
         """
+        self.firstStep = firstStep # save for use in evaluate
+        
         for ci in range(self.nc):
+            if not self.firstStep and self.bdf is int(2):
+                # deep copy so we have a cached value instead of pointer to current values
+                self.model.q[('u_lastlast',ci)][:] = self.model.q[('u_last',ci)]
+                # self.model.ebq[('u_lastlast',ci)][:] = self.model.ebq[('u_last',ci)]
+                self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u_last',ci)]
+                # self.model.ebq_global[('u_lastlast',ci)][:] = self.model.ebq_global[('u_last',ci)]
+
+                self.model.q[('grad(u)_lastlast',ci)][:] = self.model.q[('grad(u)_last',ci)]
+                # self.model.ebq[('grad(u)_lastlast',ci)][:] = self.model.ebq[('grad(u)_last',ci)]
+                self.model.ebqe[('grad(u)_lastlast',ci)][:] = self.model.ebqe[('grad(u)_last',ci)]
+                # self.model.ebq_global[('grad(u)_lastlast',ci)][:] = self.model.ebq_global[('grad(u)_last',ci)]
+                
             # deep copy so we have a cached value instead of pointer to current values
             self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
             # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
@@ -615,8 +653,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('da',ev,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
         c[('da',ev,vi,vi)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
 
-
-
 class PressureIncrement2D(TransportCoefficients.TC_base):
     r"""
     The coefficients for pressure increment solution
@@ -657,7 +693,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                                                advection = {0:{0:'constant'}}, # div (chi/dt velocity)
                                                sparseDiffusionTensors=sdInfo,
                                                useSparseDiffusion = True)
-        self.bdf=bdf
+        self.bdf=int(bdf)
         self.chiValue = chiValue
         self.currentModelIndex = currentModelIndex
         self.velocityModelIndex = velocityModelIndex
@@ -667,7 +703,8 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         self.c_v = {}
         self.c_velocity = {}
         self.c_rho = {}
-
+        self.firstStep = True # manipulated in preStep()
+        
     def attachModels(self,modelList):
         """
         Attach the model for velocity and density
@@ -676,6 +713,10 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         self.model.vectors_quadrature.add(('grad(u)_last',0))
         self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',0))
         self.model.numericalFlux.ebqe[('grad(u)_last',0)] = self.model.ebqe[('grad(u)_last',0)]
+        if self.bdf is int(2):
+            self.model.vectors_quadrature.add(('grad(u)_lastlast',0))
+            self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',0))
+            self.model.numericalFlux.ebqe[('grad(u)_lastlast',0)] = self.model.ebqe[('grad(u)_lastlast',0)]
         if self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
@@ -728,6 +769,9 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             # cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
             cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
+            if self.bdf is int(2):
+                # cq[('u_lastlast',ci)] = deepcopy(cq[('u',ci)])
+                cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)',ci)])
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
@@ -745,6 +789,9 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             # cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
             cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+            if self.bdf is int(2):
+                # cebqe[('u_lastlast',ci)] = deepcopy(cebqe[('u',ci)])
+                cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)',ci)])
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
         """
         Give the TC object access to the generalized interpolation point storage. These points are used  to project nonlinear potentials (phi).
@@ -754,7 +801,20 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         Move the current values to values_last to keep cached set of values for bdf1 algorithm
         """
+        self.firstStep = firstStep # save for use in evaluate()
+        
         for ci in range(self.nc):
+            if not self.firstStep and self.bdf is int(2):
+                # self.model.q[('u_lastlast',ci)][:] = self.model.q[('u_last',ci)]
+                # self.model.ebq[('u_lastlast',ci)][:] = self.model.ebq[('u_last',ci)]
+                # self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u_last',ci)]
+                # self.model.ebq_global[('u_lastlast',ci)][:] = self.model.ebq_global[('u_last',ci)]
+
+                self.model.q[('grad(u)_lastlast',ci)][:] = self.model.q[('grad(u)_last',ci)]
+                # self.model.ebq[('grad(u)_lastlast',ci)][:] = self.model.ebq[('grad(u)_last',ci)]
+                self.model.ebqe[('grad(u)_lastlast',ci)][:] = self.model.ebqe[('grad(u)_last',ci)]
+                # self.model.ebq_global[('grad(u)_lastlast',ci)][:] = self.model.ebq_global[('grad(u)_last',ci)]
+                
             # self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
             # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
             # self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
@@ -819,7 +879,6 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         c[('da',0,0,0)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
 
 
-
 class Pressure2D(TransportCoefficients.TC_base):
     r"""
     The coefficients for pressure solution
@@ -862,7 +921,7 @@ class Pressure2D(TransportCoefficients.TC_base):
                                                variableNames = ['p'],
                                                reaction = {0:{0:'linear'}}, #  = p - p_last - phi
                                                advection = {0:{0:'constant'}})#, # div  (\mu velocity)
-        self.bdf=bdf
+        self.bdf=int(bdf)
         self.mu=mu
         self.currentModelIndex = currentModelIndex
         self.velocityModelIndex = velocityModelIndex
@@ -875,7 +934,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         self.c_v = {}
         self.c_velocity = {}
         self.c_phi = {}
-
+        self.firstStep = True # manipulated in preStep()
 
     def attachModels(self,modelList):
         """
@@ -907,6 +966,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         self.model.vectors_quadrature.add(('grad(u)_last',0))
         self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',0))
         self.model.numericalFlux.ebqe[('grad(u)_last',0)] = self.model.ebqe[('grad(u)_last',0)]
+        # don't need to store pressure_lastlast at all since it is never needed in algorithm
         if not self.useVelocityComponents and self.pressureIncrementModelIndex >= 0:
             assert self.pressureIncrementModelIndex < len(modelList), \
                 "pressure increment model index out of range 0," + repr(len(modelList))
@@ -975,6 +1035,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
             cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
+            # don't need to store pressure_lastlast at all since it is never needed in algorithm
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
@@ -992,6 +1053,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
             cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+            # don't need to store pressure_lastlast at all since it is never needed in algorithm
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
         """
         Give the TC object access to the generalized interpolation point storage. These points are used  to project nonlinear potentials (phi).
@@ -1001,7 +1063,11 @@ class Pressure2D(TransportCoefficients.TC_base):
         """
         Give the TC object an opportunity to modify itself before the time step.
         """
+        self.firstStep = firstStep
+        
         for ci in range(self.nc):
+            # don't need to store pressure_lastlast at all since it is never needed in algorithm
+            
             self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
             # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
             self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
@@ -1053,3 +1119,8 @@ class Pressure2D(TransportCoefficients.TC_base):
         #G&S11,p92, eq 3.10
         c[('r',0)][:] = p - p_last - phi
         c[('dr',0,0)][:] = 1.0
+        
+        
+
+
+
