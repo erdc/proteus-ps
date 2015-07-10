@@ -167,7 +167,7 @@ if unitCircle:
     radius = 1.0
     center_x = 0.0
     center_y = 0.0
-    he = 2.0*pi/150.0  # h size for edges of circle
+    he = 0.5*2.0*pi/150.0  # h size for edges of circle
 
     # no need to modify past here
     nvertices = nsegments = int(ceil(2.0*pi/he))
@@ -237,7 +237,7 @@ DT_string = "{:1.{dec_len}f}".format(DT, dec_len=decimal_length)[2:]
 
 # Time stepping for output
 # T=10.0
-# DT = 0.025
+# DT = 0.1
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]

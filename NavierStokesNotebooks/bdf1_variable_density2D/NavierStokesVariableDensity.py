@@ -13,7 +13,7 @@ from copy import deepcopy, copy # for cacheing _last values of variables
 from proteus.Profiling import logEvent as log
 
 
-class DensityTransport2D(TransportCoefficients.TC_base):
+class DensityTransport2D_BDF1(TransportCoefficients.TC_base):
     r"""
     The coefficients for conservative mass transport
 
@@ -274,7 +274,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
 
 
 
-class VelocityTransport2D(TransportCoefficients.TC_base):
+class VelocityTransport2D_BDF1(TransportCoefficients.TC_base):
     r"""
     The coefficients of the 2D Navier Stokes momentum equation with variable density.  This coefficient class
     will only represent the momentum equation but not the incompressibility equation and not the conservation of mass.
@@ -588,7 +588,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
 
 
 
-class PressureIncrement2D(TransportCoefficients.TC_base):
+class PressureIncrement2D_BDF1(TransportCoefficients.TC_base):
     r"""
     The coefficients for pressure increment solution
 
@@ -787,7 +787,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
 
 
 
-class Pressure2D(TransportCoefficients.TC_base):
+class Pressure2D_BDF1(TransportCoefficients.TC_base):
     r"""
     The coefficients for pressure solution
 
