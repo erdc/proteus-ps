@@ -1,8 +1,8 @@
 from proteus.default_so import *
 from proteus import Context
 
-import bdf1_variabledensity
-Context.setFromModule(bdf1_variabledensity)
+import navierstokes_vardensity
+Context.setFromModule(navierstokes_vardensity)
 ctx = Context.get()
 
 pnList = [("density_p", "density_n"),
@@ -10,8 +10,8 @@ pnList = [("density_p", "density_n"),
           ("pressureincrement_p", "pressureincrement_n"),
           ("pressure_p", "pressure_n")]
 
-# name = "bdf1_variabledensity" + "_%3.0e_DT_BDF%1d_p" %(ctx.DT,int(float(ctx.globalTimeOrder)))
-name = "bdf1_variabledensity" + "_DT_0_%s_BDF%1d_p" %(ctx.DT_string,int(float(ctx.globalTimeOrder)))
+# name = "navierstokes_vardensity" + "_%3.0e_DT_BDF%1d_p" %(ctx.DT,int(float(ctx.globalBDFTimeOrder)))
+name = "navierstokes_vardensity" + "_DT_0_%s_BDF%1d_p" %(ctx.DT_string,int(float(ctx.globalBDFTimeOrder)))
 
 # modelSpinUpList = [1] # for model [1] take a step and then rewind time to time t^0 and proceed as usual
 # systemStepControllerType = Sequential_MinAdaptiveModelStep  # uses minimal time step from each _n model

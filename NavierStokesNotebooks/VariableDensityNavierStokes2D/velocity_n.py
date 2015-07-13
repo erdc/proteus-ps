@@ -10,11 +10,19 @@ femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # u velocity 
              1:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis} # v velocity space  = P2
 
 
+timeOrder = ctx.globalBDFTimeOrder
+
 from TimeIntegrationPS import NonConservativeBackwardEuler, NonConservativeVBDF
-# numerics.timeIntegration = TimeIntegration.BackwardEuler
-timeIntegration = NonConservativeBackwardEuler
+# timeIntegration = NonConservativeBackwardEuler
 # timeIntegration = NonConservativeVBDF
-timeOrder = 1
+if timeOrder == 1:
+    timeIntegration = NonConservativeBackwardEuler
+elif timeOrder == 2:
+    timeIntegration = NonConservativeVBDF
+else:
+    assert False, "BDF order %d for time integration is not supported." % timeOrder
+
+
 
 # stepController  = StepControl.Min_dt_cfl_controller
 # runCFL = 0.5

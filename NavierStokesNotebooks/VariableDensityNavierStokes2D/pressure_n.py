@@ -1,18 +1,13 @@
 from proteus import *
 from proteus.default_n import *
-from density_p import *
+from pressure_p import *
 
 
 triangleOptions = ctx.triangleOptions
 
 
-femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis} # density space = P2
+femSpaces = {0:FemTools.C0_AffineLinearOnSimplexWithNodalBasis} #pressure P1 space
 
-# timeIntegration = TimeIntegration.BackwardEuler
-# timeIntegration = TimeIntegration.BackwardEuler_cfl
-# timeIntegration = TimeIntegration.VBDF
-timeIntegration = TimeIntegration.BackwardEuler
-timeOrder = 1
 
 # stepController  = StepControl.Min_dt_cfl_controller
 # runCFL= 0.99
@@ -24,12 +19,12 @@ DT = ctx.DT
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
 elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_degree)
+#number of nodes in the x and y direction
 
 
-if not ctx.useStabilityTerms:
-    subgridError = SubgridError.Advection_ASGS(coefficients,
-                                               ctx.nd,
-                                               lag=False)
+# subgridError = SubgridError.Advection_ASGS(coefficients,
+#                                            ctx.nd,
+#                                            lag=False)
 
 #numerics.shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(physics.coefficients,
 #                                                                physics.nd,
@@ -39,7 +34,7 @@ if not ctx.useStabilityTerms:
 
 #matrix type
 #numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
-numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior #weak boundary conditions (upwind)
+numericalFluxType = NumericalFlux.ConstantAdvection_exterior
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py

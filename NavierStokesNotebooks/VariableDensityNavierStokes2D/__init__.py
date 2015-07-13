@@ -1,6 +1,6 @@
 __all__ = [
-"bdf1_variabledensity_so",
-"bdf1_variabledensity",	
+"navierstokes_vardensity_so",
+"navierstokes_vardensity",	
 "density_p",
 "density_n",
 "velocity_p",

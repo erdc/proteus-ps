@@ -1,18 +1,25 @@
 from proteus import *
 from proteus.default_n import *
-from pressure_p import *
+from density_p import *
 
 
 triangleOptions = ctx.triangleOptions
 
 
-femSpaces = {0:FemTools.C0_AffineLinearOnSimplexWithNodalBasis} #pressure P1 space
+femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis} # density space = P2
 
-# # timeIntegration = TimeIntegration.BackwardEuler
-# # timeIntegration = TimeIntegration.BackwardEuler_cfl
-# # timeIntegration = TimeIntegration.VBDF
 # timeIntegration = TimeIntegration.BackwardEuler
-# timeOrder = 1
+# timeIntegration = TimeIntegration.BackwardEuler_cfl
+# timeIntegration = TimeIntegration.VBDF
+
+timeOrder = ctx.globalBDFTimeOrder
+
+if timeOrder == 1:
+    timeIntegration = TimeIntegration.BackwardEuler
+elif timeOrder == 2:
+    timeIntegration = TimeIntegration.VBDF
+else:
+    assert False, "BDF order %d for time integration is not supported." % timeOrder
 
 # stepController  = StepControl.Min_dt_cfl_controller
 # runCFL= 0.99
@@ -24,12 +31,12 @@ DT = ctx.DT
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
 elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_degree)
-#number of nodes in the x and y direction
 
 
-# subgridError = SubgridError.Advection_ASGS(coefficients,
-#                                            ctx.nd,
-#                                            lag=False)
+if not ctx.useStabilityTerms:
+    subgridError = SubgridError.Advection_ASGS(coefficients,
+                                               ctx.nd,
+                                               lag=False)
 
 #numerics.shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(physics.coefficients,
 #                                                                physics.nd,
@@ -39,7 +46,7 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 
 #matrix type
 #numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
-numericalFluxType = NumericalFlux.ConstantAdvection_exterior
+numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior #weak boundary conditions (upwind)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
