@@ -107,9 +107,9 @@ if num_filenames > 1:
 
 
 
-    print "\nnumTS   pres_maxL2  rate   pres_l2L2   rate"
+    print "\nnumTS   pres_maxL2  rate    pres_l2L2   rate"
     for i in range(num_filenames):
-        print "%05d   %3.3e  %+1.2f   %3.3e  %+1.2f"  %(numTimeSteps[i],\
+        print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
                                         pres_maxL2Norm[i],rate_pres_maxL2Norm[i],
                                         pres_ell2L2Norm[i],rate_pres_ell2L2Norm[i])
 

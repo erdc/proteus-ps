@@ -21,19 +21,19 @@ python processVelocity.py results/velocity_DT_0_100000_BDF1.db \
                           results/velocity_DT_0_050000_BDF1.db \
                           results/velocity_DT_0_025000_BDF1.db \
                           results/velocity_DT_0_012500_BDF1.db \
-                          results/velocity_DT_0_006125_BDF1.db
+                          results/velocity_DT_0_006250_BDF1.db
 
 python processPressure.py results/pressure_DT_0_100000_BDF1.db \
                           results/pressure_DT_0_050000_BDF1.db \
                           results/pressure_DT_0_025000_BDF1.db \
                           results/pressure_DT_0_012500_BDF1.db \
-                          results/pressure_DT_0_006125_BDF1.db
+                          results/pressure_DT_0_006250_BDF1.db
 
 python processDensity.py results/density_DT_0_100000_BDF1.db \
                         results/density_DT_0_050000_BDF1.db \
                         results/density_DT_0_025000_BDF1.db \
                         results/density_DT_0_012500_BDF1.db \
-                        results/density_DT_0_006125_BDF1.db
+                        results/density_DT_0_006250_BDF1.db
 
 
 
