@@ -345,7 +345,7 @@ Notice that this reduces to the above case when $\tau^{k+1}=\tau^{k} = \tau$.  W
 \end{equation}
 Everything else in the algorithm is kept the same as above.
 
-\subsection{CFL Condition For Variable Step BDF1 Algorithm}
+\subsection{CFL Condition For Variable Step BDF1 Algorithm}\label{sec:CFLBDF1}
 The convergence results have not been proved for the case of variable time stepping but it seems reasonable to expect them to still hold under a standard Courant-Friedrich-Levy (CFL) conditions augmented with a maximally allowed time step, ie
 \begin{equation}
   \tau^{k+1} \leq \min \left\{c \frac{\min_{T\in\mathcal{T}_h}\left(h_{T}/p_T\right)}{\|\ub^{k}\|_{L^{\infty}(\Omega)}}, \tau^{max}\right\}, \hspace{1cm} c<1, \hspace{0.5cm}\tau^{\max} \mbox{ small enough}.
@@ -471,12 +471,12 @@ so that
 %
 %
 %
-\section{Summary of BDF2 Algorithm with Comparison in context of BDF1 algorithm}
+\section{General BDF1 and BDF2 Algorithm with Possible Variable Time Step}\label{sec:GeneralAlgorithm}
 
 \subsection{Time discretizations}
-Let $D_{\beta} g^{k+1} = \beta_0g^{k+1} - \displaystyle\sum_{i=1}^{m} \beta_i g^{k+1-i} \approx \frac{\partial g}{\partial t}(t^{k+1})$ be the m-th order discretization of the first derivative operator.  For example, with uniform time steps we have
+Let $D_{\tau} \left(g^{k+1}\right) = \beta_0g^{k+1} - \displaystyle\sum_{i=1}^{m} \beta_i g^{k+1-i} \approx \frac{\partial g}{\partial t}(t^{k+1})$ be the m-th order discretization of the first derivative operator.  For example, with uniform time steps we have
 \begin{equation}
- D_{\beta} g^{k+1} = \begin{cases}
+ D_{\tau}\left( g^{k+1}\right) = \begin{cases}
  \frac{1}{\tau}g^{k+1} - \frac{1}{\tau} g^{k},  & \mbox{for BDF1}\\
   \frac{3}{2\tau}g^{k+1} - \frac{2}{\tau} g^{k} + \frac{1}{2\tau}g^{k-1}, &\mbox{for BDF2}
   \end{cases}
@@ -502,17 +502,65 @@ and for adaptive time steps
 The adaptive BDF1 and BDF2 algorithms have truncation errors $\mathcal{O}\left(\tau^{k+1}\right)$ or $\mathcal{O}\left(\left(\tau^{k}+\tau^{k+1} \right)\tau^{k+1} \right)$ respectively, where as the uniform algorithms are $\mathcal{O}(\tau)$ and $\mathcal{O}(\tau^{2})$ respectively.
   
 
+
+\subsection{Updated CFL Condition for General Algorithm}
+We modify the CFL condition as described in Section~\ref{sec:CFLBDF1} to use the $\ub_h^{*}$ velocity as defined in the general algorithm in Section~\ref{sec:generalalgorithm}:
+\begin{equation}
+  \tau^{k+1} \leq \min \left\{c \frac{\min_{T\in\mathcal{T}_h}\left(h_{T}/p_T\right)}{\|\ub_h^{*}\|_{L^{\infty}(\Omega)}}, \tau^{max}\right\}, \hspace{1cm} c<1, \hspace{0.5cm}\tau^{\max} << 1.
+\end{equation}
+since that is the velocity that we transport with in the density and velocity updates Equations~(\ref{eqn:generaldensity}) and (\ref{eqn:generalvelocity}).
+
+
 %
 %  
-\subsection{General BDF1-BDF2 algorithm}
+\subsection{General Variable Time Step BDF1-BDF2 algorithm}\label{sec:generalalgorithmdescription}
 
+\begin{enumerate}
+\item Define
+\begin{equation}
+  \ub_h^{*} = \begin{cases}
+                \ub_h^{k}, & \mbox{BDF1} \\
+                \ub_h^{k} + \frac{\tau^{k+1}}{\tau^k}\left( \ub_h^{k} - \ub_h^{k-1}\right), & \mbox{BDF2} 
+               \end{cases}
+ \end{equation}
+then solve for density $\rho_h^{k+1}\in W_h$ that satisfies
+\begin{equation}\label{eqn:generaldensity}
+D_{\tau}\left(\rho_h^{k+1}\right) + \nabla\cdot\left( \rho_h^{k+1}\ub_h^{*} \right) = 0
+\end{equation}
+using any monotone hyperbolic scheme of appropriate order. 
 
+\item Define
+\begin{align}
+  \rho_h^{\sharp} &= \begin{cases}
+                       \rho_h^{k}, & \mbox{BDF1} \\
+                       \rho_h^{k+1}, & \mbox{BDF2} 
+                      \end{cases}\\
+  p_h^{\sharp} &= \begin{cases}
+                  p_h^{k} + \phi^{k}, & \mbox{BDF1}\\ 
+                  p_h^{k} + \frac{\beta_1}{\beta_0}\phi^{k} + \frac{\beta_2}{\beta_0}\phi_h^{k-1}, & \mbox{BDF2} 
+                 \end{cases}
+\end{align}
+and solve for $\ub_h^{k+1}\in\X_h$ that satisfies for all $\vb_h\in\X_h$
+\begin{equation}\label{eqn:generalvelocity}
+  \begin{split}
+    \dprod{\rho_h^{\sharp}D_{\tau}\left(\ub_h^{k+1}\right)}{\vb_h}  + \dprod{\rho_h^{k+1}\ub_h^{*}\cdot\nabla\ub_h^{k+1}}{\vb_h} +\dprod{\nabla p_h^{\sharp}}{\vb_h} &\\
+     + \dprod{\mu\nabla\ub_h^{k+1}}{\nabla\vb_h}  + \dprod{\frac{1}{2}\left[ D_{\tau}\left(\rho_h^{k+1}\right) + \nabla\cdot\left( \rho_h^{k+1}\ub_h^{*} \right)\right] \ub_h^{k+1}}{\vb_h} &= \dprod{\fb^{k+1}}{\vb_h}
+  \end{split}
+\end{equation}
+where the last term on the left hand side is a stability term.  
 
+\item Set $\chi = \min \rho_h^{k+1}$ and solve for $\phi_h^{k+1}\in M_h$ such that for all $r_h\in M_h$,
+\begin{equation}
+ \dprod{\nabla \phi_h^{k+1}}{\nabla r_h} = \beta_0 \chi \dprod{\ub_h^{k+1}}{\nabla r_h}
+\end{equation}
+with $\int_{\Omega}\phi_h^{k+1}d\x = 0$.  Notice that we have incorporated the natural boundary condition $\left.\nabla\phi_h^{k+1}\cdot\n\right|_{\partial\Omega} = 0 $ already in this formulation.  
 
-%
-%
-%
-\section{BDF2 Variable Time Stepping Algorithm}\label{sec:BDF2VariableTimeSteppingAlgorithm}
+\item Solve for $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h$
+\begin{equation}
+  \dprod{p_h^{k+1}}{r_h} = \dprod{p_h^k + \phi_h^{k+1}}{r_h} + \dprod{\mu \ub_h^{k+1}}{\nabla r_h}.
+\end{equation}
+\end{enumerate}
+
 
 
 %
@@ -520,7 +568,125 @@ The adaptive BDF1 and BDF2 algorithms have truncation errors $\mathcal{O}\left(\
 %
 \section{Numerical Results}\label{sec:NumericalResults}
 
+% \begin{table}[h!]
+%   \begin{center}
+%     \caption{Velocity Error Max Norm in Time BDF1}
+%     \begin{tabular}{c|l|c|l|c}
+%       numTS &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{H^1}$ &  Rate\\
+%       \hline
+%       00050 &  8.621e-03 &  -  &  3.676e-02 &  -\\
+%       00100 &  3.688e-03 &  1.23  &  1.579e-02 &  1.22\\
+%       00200 &  1.682e-03 &  1.13  &  7.210e-03 &  1.13\\
+%       00400 &  8.088e-04 &  1.06  &  3.464e-03 &  1.06\\
+%       00816 &  3.911e-04 &  1.02  &  1.674e-03 &  1.02
+%     \end{tabular}
+%   \end{center}
+% \end{table}
+%
+% \begin{table}[h!]
+%   \begin{center}
+%     \caption{Velocity Error $\ell^2$ Norm in Time BDF1}
+%     \begin{tabular}{c|l|c|l|c}
+%       numTS &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate  &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(H^1)}$  &  Rate\\
+%       \hline
+%       00050 &  1.321e-02 &  -  &  5.723e-02 &  -\\
+%       00100 &  5.741e-03 &  1.20  &  2.512e-02 &  1.19\\
+%       00200 &  2.638e-03 &  1.12  &  1.160e-02 &  1.11\\
+%       00400 &  1.273e-03 &  1.05  &  5.600e-03 &  1.05\\
+%       00816 &  6.162e-04 &  1.02  &  2.710e-03 &  1.02
+%     \end{tabular}
+%   \end{center}
+% \end{table}
+%
+% \begin{table}[h!]
+%   \begin{center}
+%     \caption{Density Error Norms BDF1}
+%     \begin{tabular}{l|l|c|l|c}
+%       numTS  & $\displaystyle\max_{k} \left\|\rho^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\left\|\left(\rho_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate\\
+%       \hline
+%       00050  & 1.195e-01 &  -  &  1.929e-01 &  -\\
+%       00100  & 6.095e-02 &  0.97  &  9.778e-02 &  0.98\\
+%       00200  & 3.079e-02 &  0.99  &  4.921e-02 &  0.99\\
+%       00400  & 1.547e-02 &  0.99  &  2.469e-02 &  1.00\\
+%       00816  & 7.601e-03 &  1.00  &  1.212e-02 &  1.00
+%     \end{tabular}
+%   \end{center}
+% \end{table}
+%
+% \begin{table}[h!]
+%   \begin{center}
+%     \caption{Pressure Error Norms BDF1}
+%     \begin{tabular}{l|l|c|l|c}
+%       numTS &  $\displaystyle\max_{k} \left\|p^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\left\|\left(p_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate\\
+%       \hline
+%       00050 &  8.914e-02  &  -  & 1.262e-01 &  -\\
+%       00100 &  9.600e-02  & -0.11  & 1.285e-01 & -0.00\\
+%       00200 &  1.071e-01  & -0.16  & 1.578e-01 & -0.30\\
+%       00400 &  1.184e-01  & -0.14  & 1.845e-01 & -0.23\\
+%       00816 &  1.280e-01  & -0.11  & 2.040e-01 & -0.14
+%     \end{tabular}
+%   \end{center}
+% \end{table}
 
+\begin{table}[h!]
+  \begin{center}
+    \caption{Velocity Error Max Norm in Time BDF1}
+    \begin{tabular}{c|c|l|c|l|c}
+      dt & numTS &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{H^1}$ &  Rate\\
+      \hline
+      0.1     & 00050 &  8.621e-03 &  -  &  3.676e-02 &  -\\
+      0.05    & 00100 &  3.688e-03 &  1.23  &  1.579e-02 &  1.22\\
+      0.025   & 00200 &  1.682e-03 &  1.13  &  7.210e-03 &  1.13\\
+      0.0125  & 00400 &  8.088e-04 &  1.06  &  3.464e-03 &  1.06\\
+      0.006125 & 00816 &  3.911e-04 &  1.02  &  1.674e-03 &  1.02
+    \end{tabular}
+  \end{center}
+\end{table}
+
+\begin{table}[h!]
+  \begin{center}
+    \caption{Velocity Error $\ell^2$ Norm in Time BDF1}
+    \begin{tabular}{c|c|l|c|l|c}
+      dt & numTS &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate  &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(H^1)}$  &  Rate\\
+      \hline
+      0.1     & 00050 &  1.321e-02 &  -  &  5.723e-02 &  -\\
+      0.05    & 00100 &  5.741e-03 &  1.20  &  2.512e-02 &  1.19\\
+      0.025   & 00200 &  2.638e-03 &  1.12  &  1.160e-02 &  1.11\\
+      0.0125  & 00400 &  1.273e-03 &  1.05  &  5.600e-03 &  1.05\\
+      0.006125 & 00816 &  6.162e-04 &  1.02  &  2.710e-03 &  1.02
+    \end{tabular}
+  \end{center}
+\end{table}
+
+\begin{table}[h!]
+  \begin{center}
+    \caption{Density Error Norms BDF1}
+    \begin{tabular}{c|c|l|c|l|c}
+      dt & numTS  & $\displaystyle\max_{k} \left\|\rho^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\left\|\left(\rho_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate\\
+      \hline
+      0.1     & 00050  & 1.195e-01 &  -  &  1.929e-01 &  -\\
+      0.05    & 00100  & 6.095e-02 &  0.97  &  9.778e-02 &  0.98\\
+      0.025   & 00200  & 3.079e-02 &  0.99  &  4.921e-02 &  0.99\\
+      0.0125  & 00400  & 1.547e-02 &  0.99  &  2.469e-02 &  1.00\\
+      0.006125 & 00816  & 7.601e-03 &  1.00  &  1.212e-02 &  1.00
+    \end{tabular}
+  \end{center}
+\end{table}
+
+\begin{table}[h!]
+  \begin{center}
+    \caption{Pressure Error Norms BDF1}
+    \begin{tabular}{c|c|l|c|l|c}
+      dt & numTS &  $\displaystyle\max_{k} \left\|p^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\left\|\left(p_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate\\
+      \hline
+      0.1     & 00050 &  8.914e-02  &  -  & 1.262e-01 &  -\\
+      0.05    & 00100 &  9.600e-02  & -0.11  & 1.285e-01 & -0.00\\
+      0.025   & 00200 &  1.071e-01  & -0.16  & 1.578e-01 & -0.30\\
+      0.0125  & 00400 &  1.184e-01  & -0.14  & 1.845e-01 & -0.23\\
+      0.006125 & 00816 &  1.280e-01  & -0.11  & 2.040e-01 & -0.14
+    \end{tabular}
+  \end{center}
+\end{table}
 
 \appendix
 \chapter{Various Extensions and Proofs}
