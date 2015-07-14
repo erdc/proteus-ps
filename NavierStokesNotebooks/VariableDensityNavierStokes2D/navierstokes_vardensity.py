@@ -19,7 +19,7 @@ globalBDFTimeOrder = 1 # 1 or 2 for time integration algorithms
 
 # actual time step for FixedStep
 T = 0.1
-DT = 0.1
+DT = 0.05
 nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]
 
@@ -180,7 +180,7 @@ if unitCircle:
     radius = 1.0
     center_x = 0.0
     center_y = 0.0
-    he = 0.5*2.0*pi/150.0  # h size for edges of circle
+    he = 0.75*2.0*pi/150.0  # h size for edges of circle
 
     # no need to modify past here
     nvertices = nsegments = int(ceil(2.0*pi/he))
