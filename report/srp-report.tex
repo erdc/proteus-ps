@@ -498,6 +498,10 @@ and for adaptive time steps
 \begin{equation}
    \beta_0 = \frac{2\tau^{k+1}+\tau^{k}}{\tau^{k+1}\left(\tau^{k} + \tau^{k+1}\right)}, \: \beta_1 = \frac{\tau^{k} + \tau^{k+1}}{\tau^{k}\tau^{k+1}}, \: \beta_2 = -\frac{\tau^{k+1}}{\tau^{k}\left(\tau^{k}+\tau^{k+1}\right)}.
 \end{equation}
+or if $r=\tau^{k+1}/\tau^{k}$ then
+\begin{equation}
+   \beta_0 = \frac{1+2r}{(1+r)\tau^{k+1}}, \hspace{1cm} \beta_1 = \frac{1+r}{\tau^{k+1}}, \hspace{1cm} \beta_2 = -\frac{r^2}{(1+r)\tau^{k+1}}.
+\end{equation}
 
 The adaptive BDF1 and BDF2 algorithms have truncation errors $\mathcal{O}\left(\tau^{k+1}\right)$ or $\mathcal{O}\left(\left(\tau^{k}+\tau^{k+1} \right)\tau^{k+1} \right)$ respectively, where as the uniform algorithms are $\mathcal{O}(\tau)$ and $\mathcal{O}(\tau^{2})$ respectively.
   
