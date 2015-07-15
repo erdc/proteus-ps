@@ -166,7 +166,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     grad_v = self.velocityModel.q[('grad(u)',1)]
                     self.c_grad_u[grad_u.shape] = grad_u
                     self.c_grad_v[grad_v.shape] = grad_v
-
                 if self.bdf is int(2):
                     u_last = self.velocityModel.q[('u_last',0)]
                     v_last = self.velocityModel.q[('u_last',1)]
@@ -187,7 +186,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     grad_v = self.velocityModel.ebq[('grad(u)',1)]
                     self.c_grad_u[grad_u.shape] = grad_u
                     self.c_grad_v[grad_v.shape] = grad_v
-
                 if self.bdf is int(2):
                     u_last = self.velocityModel.ebq[('u_last',0)]
                     v_last = self.velocityModel.ebq[('u_last',1)]
@@ -208,7 +206,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     grad_v = self.velocityModel.ebqe[('grad(u)',1)]
                     self.c_grad_u[grad_u.shape] = grad_u
                     self.c_grad_v[grad_v.shape] = grad_v
-
                 if self.bdf is int(2):
                     u_last = self.velocityModel.ebqe[('u_last',0)]
                     v_last = self.velocityModel.ebqe[('u_last',1)]
@@ -229,7 +226,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     grad_v = self.velocityModel.ebq_global[('grad(u)',1)]
                     self.c_grad_u[grad_u.shape] = grad_u
                     self.c_grad_v[grad_v.shape] = grad_v
-
                 if self.bdf is int(2):
                     u_last = self.velocityModel.ebq_global[('u_last',0)]
                     v_last = self.velocityModel.ebq_global[('u_last',1)]
@@ -323,7 +319,16 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         if self.bdf is int(2):
             dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
 
-        chi = self.chiValue
+        # extract scaling terms for post processed velocity (see pressureIncrement model for description)
+        if not self.useVelocityComponents:
+            chi = self.chiValue
+            # beta_0 coefficient scalar
+            if self.bdf is int(1) or self.firstStep:
+                b0 = 1.0/dt
+            elif self.bdf is int(2):
+                b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
+            Invb0chi = 1.0/(chi*b0)
+
 
         # extract current velocity components
         if self.velocityFunction != None:
@@ -337,8 +342,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             if self.useStabilityTerms:
                 div_vel = self.c_grad_u[c[('f',0)].shape][...,0] + self.c_grad_v[c[('f',0)].shape][...,1]
         else:
-            u = dt/chi*self.c_velocity[c[('f',0)].shape][...,0]  # make adjustment to physical values here by mult by dt/chi
-            v = dt/chi*self.c_velocity[c[('f',0)].shape][...,1]  # make adjustment to physical values here by mult by dt/chi
+            u = Invb0chi*self.c_velocity[c[('f',0)].shape][...,0]  # make adjustment to physical values here by mult by dt/chi
+            v = Invb0chi*self.c_velocity[c[('f',0)].shape][...,1]  # make adjustment to physical values here by mult by dt/chi
             if self.useStabilityTerms:
                 div_vel = self.c_grad_u[c[('f',0)].shape][...,0] + self.c_grad_v[c[('f',0)].shape][...,1]
 
@@ -546,7 +551,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 "pressure increment model index out of range 0," + repr(len(modelList))
             self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
             if ('u',0) in self.pressureIncrementModel.q:
-                grad_phi_last = self.pressureIncrementModel.q[('grad(u)',0)]  #grad(u) here is at time t^{k}  so is _last now
+                grad_phi_last = self.pressureIncrementModel.q[('grad(u)',0)]  #grad(u) here is at time t^{k} so is _last now
                 self.c_phi_last[grad_phi_last.shape] = grad_phi_last
                 if self.bdf is int(2):
                     grad_phi_lastlast = self.pressureIncrementModel.q[('grad(u)_last',0)]  # grad(u)_last here is at time t^{k-1} so is _lastlast now
@@ -574,7 +579,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 "pressure model index out of range 0," + repr(len(modelList))
             self.pressureModel = modelList[self.pressureModelIndex]
             if ('u',0) in self.pressureModel.q:
-                grad_p_last = self.pressureModel.q[('grad(u)',0)] #grad(u) here is at time t^{k}  so is _last in this context
+                grad_p_last = self.pressureModel.q[('grad(u)',0)] #grad(u) here is at time t^{k} so is _last in this context
                 self.c_p_last[grad_p_last.shape] = grad_p_last
             if ('u',0) in self.pressureModel.ebq:
                 grad_p_last = self.pressureModel.ebq[('grad(u)',0)]
@@ -723,7 +728,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         # extract grad_p_last  p^{k}
         if self.pressureGradFunction != None:
             grad_p_last = self.pressureGradFunction(c['x'],tLast)
-        else:#use velocity shape as key since it is same shape as gradient of pressure
+        else:#use grad of component u shape as key since it is same shape as gradient of pressure
             grad_p_last = self.c_p_last[c[('grad(u)',0)].shape]
 
         # extract grad_phi_last phi^{k}
@@ -744,11 +749,11 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         # as well as the other various element (not velocity) that differ between bdf1 and bdf2
         if self.bdf is int(1) or self.firstStep:
             rho_sharp = rho_last
-            drho_dt = (rho - rho_last)/dt # bdf1 time derivative
+            rho_t = (rho - rho_last)/dt # bdf1 time derivative
             grad_psharp = grad_p_last + grad_phi_last
         elif self.bdf is int(2):
             rho_sharp = rho
-            drho_dt = b0*rho - b1*rho_last - b2*rho_lastlast #bdf2 time derivative  (see above for descriptions and definitions of b0 b1 and b2)
+            rho_t = b0*rho - b1*rho_last - b2*rho_lastlast #bdf2 time derivative  (see above for descriptions and definitions of b0 b1 and b2)
             grad_psharp = grad_p_last + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
 
         # extrapolation of velocity
@@ -776,14 +781,16 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 div_rho_vel_star = grad_rho[...,xi]*u_star + grad_rho[...,yi]*v_star + rho*div_vel_star
 
 
-        #equation eu = 0 rho_sharp*u_t + rho(u_last ux + v_last uy ) + p^#x + div(-mu grad(u)) - f1 + 0.5*(rho_t + rhox u + rhoy v + rho div([u,v]) )u = 0
+        #equation eu = 0
+        # rho_sharp*u_t + rho(u_star u_x + v_star u_y ) + p_sharp_x - f1 + div(-mu grad(u))
+        #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )u = 0
         c[('m',eu)][:] = rho_sharp*u    # d/dt ( rho_sharp * u) = d/dt (m_0)
         c[('dm',eu,ui)][:] = rho_sharp  # dm^0_du
         c[('r',eu)][:] = -self.f1ofx(c['x'][:],t) + grad_psharp[...,xi]
         c[('dr',eu,ui)][:] = 0.0
         if self.useStabilityTerms:
-            c[('r',eu)][:] += 0.5*( drho_dt + div_rho_vel_star )*u
-            c[('dr',eu,ui)][:] += 0.5*( drho_dt + div_rho_vel_star )
+            c[('r',eu)][:] += 0.5*( rho_t + div_rho_vel_star )*u
+            c[('dr',eu,ui)][:] += 0.5*( rho_t + div_rho_vel_star )
         c[('H',eu)][:] = rho*( u_star*grad_u[...,xi] + v_star*grad_u[...,yi] )
         c[('dH',eu,ui)][...,xi] = rho*u_star #  dH d(u_x)
         c[('dH',eu,ui)][...,yi] = rho*v_star #  dH d(u_y)
@@ -792,14 +799,16 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('da',eu,ui,ui)][...,0] = 0.0 # -(da/d ui)_0   # could leave these off since it is 0
         c[('da',eu,ui,ui)][...,1] = 0.0 # -(da/d ui)_1   # could leave these off since it is 0
 
-        #equation ev = 1 rho_sharp*v_t + rho(u_last vx + v_last vy ) + p^#y + div(-mu grad(v)) - f2 + 0.5*(rho_t + rhox u + rhoy v + rho div([u,v]) )v = 0
+        #equation ev = 1
+        # rho_sharp*v_t + rho(u_star v_x + v_star v_y ) + p_sharp_y - f2 + div(-mu grad(v))
+        #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )v = 0
         c[('m',ev)][:] = rho_sharp*u    # d/dt ( rho_sharp * v) = d/dt (m_0)
         c[('dm',ev,vi)][:] = rho_sharp  # dm^0_dv
         c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_psharp[...,yi]
         c[('dr',ev,vi)][:] = 0.0
         if self.useStabilityTerms:
-            c[('r',ev)][:] += 0.5*( drho_dt + div_rho_vel_star )*v
-            c[('dr',ev,vi)][:] += 0.5*( drho_dt + div_rho_vel_star )
+            c[('r',ev)][:] += 0.5*( rho_t + div_rho_vel_star )*v
+            c[('dr',ev,vi)][:] += 0.5*( rho_t + div_rho_vel_star )
         c[('H',ev)][:] = rho*( u_star*grad_v[...,xi] + v_star*grad_v[...,yi] ) # add rho term
         c[('dH',ev,vi)][...,xi] = rho*u_star #  dH d(v_x)
         c[('dH',ev,vi)][...,yi] = rho*v_star #  dH d(v_y)
@@ -866,13 +875,14 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         Attach the model for velocity and density
         """
         self.model = modelList[self.currentModelIndex] # current model
-        self.model.vectors_quadrature.add(('grad(u)_last',0))
-        self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',0))
-        self.model.numericalFlux.ebqe[('grad(u)_last',0)] = self.model.ebqe[('grad(u)_last',0)]
+        # will need grad_phi and grad_phi_last for bdf2 algorithm in velocity model
+        # representing times t^{k} and t^{k-1} respectively.  Since velocity is before
+        # pressure increment, we haven't had a chance to move the phi's to be consistent
+        # notation on the new time step so we must handle this inconsistency here.
         if self.bdf is int(2):
-            self.model.vectors_quadrature.add(('grad(u)_lastlast',0))
-            self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',0))
-            self.model.numericalFlux.ebqe[('grad(u)_lastlast',0)] = self.model.ebqe[('grad(u)_lastlast',0)]
+            self.model.vectors_quadrature.add(('grad(u)_last',0))
+            self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',0))
+            self.model.numericalFlux.ebqe[('grad(u)_last',0)] = self.model.ebqe[('grad(u)_last',0)]
         if self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
@@ -922,32 +932,32 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         Give the TC object access to the element quadrature storage
         """
-        for ci in range(self.nc):
-            # cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
-            cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
-            if self.bdf is int(2):
-                # cq[('u_lastlast',ci)] = deepcopy(cq[('u',ci)])
-                cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)',ci)])
+        if self.bdf is int(2):
+            for ci in range(self.nc):
+                # cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
+                cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
+
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
         """
-        # for ci in range(self.nc):
-        #     cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
-        #     cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
-        #     cebq_global[('u_last',ci)] = deepcopy(cebq_global[('u',ci)])
-        #     cebq_global[('grad(u)_last',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
+        # if self.bdf is int(2):
+        #     for ci in range(self.nc):
+        #         cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
+        #         cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
+        #         cebq_global[('u_last',ci)] = deepcopy(cebq_global[('u',ci)])
+        #         cebq_global[('grad(u)_last',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
         pass
     def initializeGlobalExteriorElementBoundaryQuadrature(self,t,cebqe):
         """
         Give the TC object access to the exterior element boundary quadrature storage
         """
-        for ci in range(self.nc):
-            # cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
-            cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
-            if self.bdf is int(2):
-                # cebqe[('u_lastlast',ci)] = deepcopy(cebqe[('u',ci)])
-                cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+        if self.bdf is int(2):
+            for ci in range(self.nc):
+                # cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
+                cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+
+
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
         """
         Give the TC object access to the generalized interpolation point storage. These points are used  to project nonlinear potentials (phi).
@@ -958,7 +968,6 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         Move the current values to values_last to keep cached set of values for bdf1 algorithm
         """
         self.firstStep = firstStep # save for use in evaluate()
-
 
         for ci in range(self.nc):
             # The only time we need phi^{k} and phi^{k-1} are when we are on step {k+1} in
@@ -1011,7 +1020,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         if self.bdf is int(1) or self.firstStep:
             b0 = 1.0/dt
         elif self.bdf is int(2):
-            b0 = self.model.timeIntegration.alpha_bdf
+            b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
 
         # find minimal density value set it to be chi
         if self.densityModelIndex>0:
@@ -1019,6 +1028,11 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         else:
             rho = [self.chiValue] # just give it the self.chiValue so that test passes as we assume user has given correct chiValue in this case.
 
+
+        # Extract minimum of density and compare to given chiValue.
+        # Ideally, the density model is maximum preserving and will not drop values
+        # below this but if it does we want to know.  Even still we will
+        # use the user given value of chi.
         chi = np.min(rho)
         if self.chiValue < chi:  # raise warning but do not stop
             log("*** warning: minimum of density = %1.3e is below physical limit chiValue = %1.3e. ***" %(chi, self.chiValue),  level=1)
@@ -1032,8 +1046,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             u = self.c_u[c[('u',0)].shape]
             v = self.c_v[c[('u',0)].shape]
 
-        # set coefficients
-
+        # set coefficients  -div (grad phi) + chi b0 div (u) = 0
         c[('f',0)][...,0] = chi*b0*u
         c[('f',0)][...,1] = chi*b0*v
         c[('df',0,0)][...,0] = 0.0
@@ -1109,9 +1122,9 @@ class Pressure2D(TransportCoefficients.TC_base):
         We are implementing the post processing in the pressureIncrement model which is
         essentially the divergence free velocity equation.  The velocity
         is then extracted from the pressureIncrement Model as ('velocity',0).  In order to
-        get a physical velocity, we must then scale it by the constants dt/chi  since the pressure
-        equation is  -div(  grad\phi - chi/dt [u v] ) = 0  so that the flux F has local integrals matching chi/dt [u v]
-        and hopefully has locally divergence free velocity matching chi/dt [u v].  Thus the scaling by dt/chi
+        get a physical velocity, we must then scale it by the constants dt \beta_0 since the pressure
+        equation is  -div(  grad\phi - chi \beta_0 [u v] ) = 0  so that the flux F has local integrals matching chi \beta_0 [u v]
+        and hopefully has locally divergence free velocity matching chi\beta_0 [u v].  Thus the scaling by 1/(\beta_0 chi)
         to get physical velocity.
 
         In pressureincrement_n.py, the following could be set.  we recommend the 'pwl-bdm' as the best
@@ -1128,11 +1141,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         self.model = modelList[self.currentModelIndex] # current model
         self.model.points_quadrature.add(('u_last',0))
         self.model.points_elementBoundaryQuadrature.add(('u_last',0))
-        self.model.numericalFlux.ebqe[('u_last',0)] = self.model.ebqe[('u_last',0)]
-        self.model.vectors_quadrature.add(('grad(u)_last',0))
-        self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',0))
-        self.model.numericalFlux.ebqe[('grad(u)_last',0)] = self.model.ebqe[('grad(u)_last',0)]
-        # don't need to store pressure_lastlast at all since it is never needed in algorithm
+        self.model.numericalFlux.ebqe[('u_last',0)] = self.model.ebqe[('u_last',0)]  # why do we need this line? srp july 15, 2015
         if not self.useVelocityComponents and self.pressureIncrementModelIndex >= 0:
             assert self.pressureIncrementModelIndex < len(modelList), \
                 "pressure increment model index out of range 0," + repr(len(modelList))
@@ -1200,8 +1209,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         """
         for ci in range(self.nc):
             cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
-            cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
-            # don't need to store pressure_lastlast at all since it is never needed in algorithm
+            # cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
@@ -1218,8 +1226,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         """
         for ci in range(self.nc):
             cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
-            cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
-            # don't need to store pressure_lastlast at all since it is never needed in algorithm
+            # cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
         """
         Give the TC object access to the generalized interpolation point storage. These points are used  to project nonlinear potentials (phi).
@@ -1239,10 +1246,10 @@ class Pressure2D(TransportCoefficients.TC_base):
             self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
             # self.model.ebq_global[('u_last',ci)][:] = self.model.ebq_global[('u',ci)]
 
-            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-            # self.model.ebq[('grad(u)_last',ci)][:] = self.model.ebq[('grad(u)',ci)]
-            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
-            # self.model.ebq_global[('grad(u)_last',ci)][:] = self.model.ebq_global[('grad(u)',ci)]
+            # don't need grad(u)_last either since it will never be used.
+            # when we do need grad_pressure^k, we are on velocity model on the next time
+            # step so that 'grad(u)' is grad_pressure^k.
+
 
         copyInstructions = {}
         return copyInstructions
@@ -1261,9 +1268,16 @@ class Pressure2D(TransportCoefficients.TC_base):
         else:
             phi = self.c_phi[c[('u',0)].shape]
 
-        # extract density and dt,then set chi for adjust ('velocity',0) to be scaled properly
-        dt = self.model.timeIntegration.dt
-        chi = self.chiValue
+        # extract scaling terms for post processed velocity (see pressureIncrement model for description)
+        if not self.useVelocityComponents:
+            dt = self.model.timeIntegration.dt
+            chi = self.chiValue
+            # beta_0 coefficient scalar
+            if self.bdf is int(1) or self.firstStep:
+                b0 = 1.0/dt
+            elif self.bdf is int(2):
+                b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
+            Invb0chi = 1.0/(chi*b0)
 
         # extract velocity components
         if self.velocityFunction != None:
@@ -1273,11 +1287,10 @@ class Pressure2D(TransportCoefficients.TC_base):
             u = self.c_u[c[('u',0)].shape]
             v = self.c_v[c[('u',0)].shape]
         else:
-            u = dt/chi*self.c_velocity[c[('f',0)].shape][...,0] # adjust post processed velocity to be physical units by mult by dt/chi
-            v = dt/chi*self.c_velocity[c[('f',0)].shape][...,1] # adjust post processed velocity to be physical units by mult by dt/chi
+            u = Invb0chi*self.c_velocity[c[('f',0)].shape][...,0] # adjust post processed velocity to be physical units by mult by dt/chi
+            v = Invb0chi*self.c_velocity[c[('f',0)].shape][...,1] # adjust post processed velocity to be physical units by mult by dt/chi
 
-
-        # note, no difference between bdf1 and bdf2 algorithms for pressure
+        # set coefficients   p - p_last - phi + div (mu u) = 0
         #G&S11,p941,remark 5.5
         c[('f',0)][...,0] = self.mu*u
         c[('f',0)][...,1] = self.mu*v
