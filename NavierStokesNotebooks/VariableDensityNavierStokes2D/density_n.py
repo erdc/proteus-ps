@@ -11,11 +11,11 @@ femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis} # density spa
 # timeIntegration = TimeIntegration.BackwardEuler
 # timeIntegration = TimeIntegration.BackwardEuler_cfl
 # timeIntegration = TimeIntegration.VBDF
-
 timeOrder = ctx.globalBDFTimeOrder
 
 if timeOrder == 1:
     timeIntegration = TimeIntegration.BackwardEuler
+    # timeIntegration = TimeIntegration.BackwardEuler_cfl
 elif timeOrder == 2:
     timeIntegration = TimeIntegration.VBDF
 else:

@@ -9,7 +9,6 @@ triangleOptions = ctx.triangleOptions
 femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # u velocity space  = P2
              1:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis} # v velocity space  = P2
 
-
 timeOrder = ctx.globalBDFTimeOrder
 
 from TimeIntegrationPS import NonConservativeBackwardEuler, NonConservativeVBDF
@@ -21,7 +20,6 @@ elif timeOrder == 2:
     timeIntegration = NonConservativeVBDF
 else:
     assert False, "BDF order %d for time integration is not supported." % timeOrder
-
 
 
 # stepController  = StepControl.Min_dt_cfl_controller
