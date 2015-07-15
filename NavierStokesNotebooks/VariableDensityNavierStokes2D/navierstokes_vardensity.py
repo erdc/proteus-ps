@@ -15,11 +15,11 @@ quad_degree = 5  # exact for polynomials of this degree
 useStabilityTerms = True
 useVelocityComponents = True
 
-globalBDFTimeOrder = 1 # 1 or 2 for time integration algorithms
+globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 
 # actual time step for FixedStep
-T = 0.1
-DT = 0.05
+T = 10.0
+DT = 0.00625
 nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]
 
@@ -239,7 +239,7 @@ ns_nl_atol_res = max(1.0e-8,0.01*he**2)
 
 # Time stepping for output
 # T=10.0
-# DT = 0.1
+# DT = 0.00625
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]

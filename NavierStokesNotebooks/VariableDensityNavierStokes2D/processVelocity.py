@@ -6,6 +6,17 @@ import shelve # to open and read the database file
 
 import numpy as np
 
+import matplotlib.pyplot as plt
+from matplotlib import rc
+rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+## for Palatino and other serif fonts use:
+#rc('font',**{'family':'serif','serif':['Palatino']})
+rc('text', usetex=True)
+
+# create plots for time series of errors
+fig_L2, ax_L2 = plt.subplots(nrows=1, ncols=1)
+fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
+
 # read in file names and test if they can be found.  if so
 # then add them to our list of filenames to be processed
 filenames = {}
@@ -54,6 +65,7 @@ vel_maxH1Norm = [None]*num_filenames
 vel_ell2L2Norm = [None]*num_filenames
 vel_ell2H1Norm = [None]*num_filenames
 
+# do analysis of errors
 for i in range(num_filenames):
     numTimeSteps[i] = len(database[i]['timeValues'])-1 # subtract 1 to get the number of steps not the number of time values
     dt[i] = database[i]['timeValues'][1] - database[i]['timeValues'][0]
@@ -93,6 +105,23 @@ for i in range(num_filenames):
     print "\\ell_2 in time norms for database %1d with numTimeSteps = %05d:" %(i,numTimeSteps[i])
     print "  ||v||_{\\ell_2-L2}\t= %2.4g" %vel_ell2L2Norm[i]
     print "  ||v||_{\\ell_2-H1}\t= %2.4g" %vel_ell2H1Norm[i]
+
+    # plot time series of errors
+    ax_L2.plot(tnList, vel_L2Error,label='dt=%1.5f' %dt[i])
+    ax_H1.plot(tnList, vel_H1Error,label='dt=%1.5f' %dt[i])
+
+# format plots
+ax_L2.set_xlabel('Time')
+ax_L2.set_ylabel(r'$e_h(t)$')
+ax_L2.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+fig_L2.savefig('plotVelocityErrorL2.png', bbox_inches='tight')
+plt.close(fig_L2)
+
+ax_H1.set_xlabel('Time')
+ax_H1.set_ylabel(r'$e_h(t)$')
+ax_H1.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+fig_H1.savefig('plotVelocityErrorH1.png', bbox_inches='tight')
+plt.close(fig_H1)
 
 
 

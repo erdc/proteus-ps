@@ -15,26 +15,47 @@ parun navierstokes_vardensity_so.py -l5 -v -G -b L2_batch.py -D bdf2_dt_0_10000_
 
 
 #  running the processing from VariableDensityNavierStokes2D/  folder when results
-# are stored in results/  folder.  This will produce the error reports and tables.
+# are stored in results_BDF1/  folder.  This will produce the error reports and tables.
 
-python processVelocity.py results/velocity_DT_0_100000_BDF1.db \
-                          results/velocity_DT_0_050000_BDF1.db \
-                          results/velocity_DT_0_025000_BDF1.db \
-                          results/velocity_DT_0_012500_BDF1.db \
-                          results/velocity_DT_0_006250_BDF1.db
+python processVelocity.py results_BDF1/velocity_DT_0_100000_BDF1.db \
+                          results_BDF1/velocity_DT_0_050000_BDF1.db \
+                          results_BDF1/velocity_DT_0_025000_BDF1.db \
+                          results_BDF1/velocity_DT_0_012500_BDF1.db \
+                          results_BDF1/velocity_DT_0_006250_BDF1.db
 
-python processPressure.py results/pressure_DT_0_100000_BDF1.db \
-                          results/pressure_DT_0_050000_BDF1.db \
-                          results/pressure_DT_0_025000_BDF1.db \
-                          results/pressure_DT_0_012500_BDF1.db \
-                          results/pressure_DT_0_006250_BDF1.db
+python processPressure.py results_BDF1/pressure_DT_0_100000_BDF1.db \
+                          results_BDF1/pressure_DT_0_050000_BDF1.db \
+                          results_BDF1/pressure_DT_0_025000_BDF1.db \
+                          results_BDF1/pressure_DT_0_012500_BDF1.db \
+                          results_BDF1/pressure_DT_0_006250_BDF1.db
 
-python processDensity.py results/density_DT_0_100000_BDF1.db \
-                        results/density_DT_0_050000_BDF1.db \
-                        results/density_DT_0_025000_BDF1.db \
-                        results/density_DT_0_012500_BDF1.db \
-                        results/density_DT_0_006250_BDF1.db
+python processDensity.py results_BDF1/density_DT_0_100000_BDF1.db \
+                        results_BDF1/density_DT_0_050000_BDF1.db \
+                        results_BDF1/density_DT_0_025000_BDF1.db \
+                        results_BDF1/density_DT_0_012500_BDF1.db \
+                        results_BDF1/density_DT_0_006250_BDF1.db
 
+mv -f *.png results_BDF1/
+
+python processVelocity.py results_BDF2/velocity_DT_0_100000_BDF2.db \
+                          results_BDF2/velocity_DT_0_050000_BDF2.db \
+                          results_BDF2/velocity_DT_0_025000_BDF2.db \
+                          results_BDF2/velocity_DT_0_012500_BDF2.db \
+                          results_BDF2/velocity_DT_0_006250_BDF2.db
+
+python processPressure.py results_BDF2/pressure_DT_0_100000_BDF2.db \
+                          results_BDF2/pressure_DT_0_050000_BDF2.db \
+                          results_BDF2/pressure_DT_0_025000_BDF2.db \
+                          results_BDF2/pressure_DT_0_012500_BDF2.db \
+                          results_BDF2/pressure_DT_0_006250_BDF2.db
+
+python processDensity.py results_BDF2/density_DT_0_100000_BDF2.db \
+                        results_BDF2/density_DT_0_050000_BDF2.db \
+                        results_BDF2/density_DT_0_025000_BDF2.db \
+                        results_BDF2/density_DT_0_012500_BDF2.db \
+                        results_BDF2/density_DT_0_006250_BDF2.db
+
+mv -f *.png results_BDF2/
 
 
 # mpi computing
