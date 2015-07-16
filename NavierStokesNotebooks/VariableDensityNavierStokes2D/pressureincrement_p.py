@@ -19,19 +19,24 @@ coefficients=NavierStokes.PressureIncrement2D(bdf=ctx.globalBDFTimeOrder,
                                               velocityModelIndex=1,
                                               velocityFunction=None, # use ctx.velocityFunction for exact velocity
                                               currentModelIndex=2)
-                                              
+
 analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.pitrue,ctx.gradpitrue)}
 
 def getDBC_p(x,flag):
-    if flag in [ctx.boundaryTags['fixed']]:
+    if flag in [ctx.boundaryTags['bottom'],
+                ctx.boundaryTags['top'],
+                ctx.boundaryTags['fixed']]:
         return lambda x,t: 0.0
+#    if flag in [ctx.boundaryTags['fixed']]:
+#        return lambda x,t: 0.0
 
 def getNone(x,flag):
     return None
 
 def getDiffusiveFlux(x,flag):
-    if flag not in [ctx.boundaryTags['fixed']]:
-        return lambda x,t: 0.0
+    return None
+#    if flag not in [ctx.boundaryTags['fixed']]:
+#        return lambda x,t: 0.0
 
 class getIBC_p:
     def __init__(self):

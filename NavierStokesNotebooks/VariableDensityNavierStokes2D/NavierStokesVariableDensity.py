@@ -834,6 +834,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                  velocityModelIndex=-1,
                  velocityFunction=None,
                  densityModelIndex=-1,
+                 zeroMean=False,
                  chiValue=1.0):
         """Construct a coefficients object
 
@@ -869,6 +870,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         self.c_velocity = {}
         self.c_rho = {}
         self.firstStep = True # manipulated in preStep()
+        self.zeroMean = zeroMean
 
     def attachModels(self,modelList):
         """
@@ -998,12 +1000,13 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         Calculate the mean value of phi and adjust to make mean value 0.
         """
         import proteus.Norms as Norms
-        meanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
-                                               self.model.q[('u',0)],
-                                               self.model.mesh.nElements_owned)
-        self.model.q[('u',0)] -= meanvalue
-        self.model.ebqe[('u',0)] -= meanvalue
-        self.model.u[0].dof -= meanvalue
+        if self.zeroMean:
+            meanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
+                                                   self.model.q[('u',0)],
+                                                   self.model.mesh.nElements_owned)
+            self.model.q[('u',0)] -= meanvalue
+            self.model.ebqe[('u',0)] -= meanvalue
+            self.model.u[0].dof -= meanvalue
 
         # add post processing adjustments here if possible.  They have already be solved for by this point.
 
