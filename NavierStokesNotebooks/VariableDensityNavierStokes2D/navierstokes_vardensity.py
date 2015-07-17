@@ -5,6 +5,12 @@ from proteus.default_n import *
 from proteus.Profiling import logEvent
 import numpy as np
 
+from proteus import Context
+opts = Context.Options([
+    ("parallel", False, "Run in parallel mode"),
+    ("analytical", False, "Archive the analytical solution")
+])
+
 
 #  Discretization
 nd = 2
@@ -232,7 +238,15 @@ if unitCircle:
 
 
 # numerical tolerances
-ns_nl_atol_res = max(1.0e-8,0.01*he**2)
+density_atol_res = max(1.0e-8,0.01*he**2)
+velocity_atol_res = max(1.0e-8,0.01*he**2)
+phi_atol_res = max(1.0e-8,0.01*he**2)
+pressure_atol_res = max(1.0e-8,0.01*he**2)
+
+
+parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node
+nLayersOfOverlapForParallel = 0
+
 
 
 
