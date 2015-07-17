@@ -58,6 +58,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                                                variableNames = ['rho'],
                                                mass = {0:{0:'linear'}},
                                                advection = {0:{0:'linear'}},
+                                               #hamiltonian = {0:{0:'linear'}},
                                                reaction = {0:{0:'linear'}} if useStabilityTerms else {} ) # for the stability term
         self.bdf=int(bdf)
         self.currentModelIndex = currentModelIndex
@@ -311,8 +312,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         Evaluate the coefficients after getting the specified velocity
         """
         rho = c[('u',0)]
-        if self.bdf is int(2) and not self.firstStep:
-            grad_rho = c[('grad(u)',0)]
+        # if self.bdf is int(2) and not self.firstStep:
+        #     grad_rho = c[('grad(u)',0)]
 
         # If we use pressureIncrementModel.q[('velocity',)] for our velocity, then we must
         # adjust it to be scaled properly by multiplying by dt/chi.  Then it is physical velocity
@@ -374,17 +375,17 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         #  bdf2:  rho_t + vel_star \cdot grad_rho - 0.5 rho div( vel_star ) = 0
         c[('m',0)][:] = rho
         c[('dm',0,0)][:] = 1.0
-        if self.bdf is int(1) or self.firstStep:
-            c[('f',0)][...,0] = rho*u_star
-            c[('f',0)][...,1] = rho*v_star
-            c[('df',0,0)][...,0] = u_star
-            c[('df',0,0)][...,1] = v_star
-        elif self.bdf is int(2):
-            c[('H',0)][:] = u_star*grad_rho[...,0] + v_star*grad_rho[...,1]
-            c[('dH',0,0)][...,0] = u_star #  dH d(u_x)
-            c[('dH',0,0)][...,1] = v_star #  dH d(u_y)
-        else:
-            assert False, "Error: self.bdf = %f is not supported" %self.bdf
+        # if self.bdf is int(1) or self.firstStep:
+        c[('f',0)][...,0] = rho*u_star
+        c[('f',0)][...,1] = rho*v_star
+        c[('df',0,0)][...,0] = u_star
+        c[('df',0,0)][...,1] = v_star
+        # elif self.bdf is int(2):
+        #     c[('H',0)][:] = u_star*grad_rho[...,0] + v_star*grad_rho[...,1]
+        #     c[('dH',0,0)][...,0] = u_star #  dH d(u_x)
+        #     c[('dH',0,0)][...,1] = v_star #  dH d(u_y)
+        # else:
+        #     assert False, "Error: self.bdf = %f is not supported" %self.bdf
         if self.useStabilityTerms:
             c[('r',0)][:]    = -0.5*rho*div_vel_star
             c[('dr',0,0)][:] = -0.5*div_vel_star
