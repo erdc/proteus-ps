@@ -85,7 +85,7 @@ for i in range(num_filenames):
 
     # calculate the \ell_2 time E space norm
     pres_ell2L2Norm[i] = 0
-    pres_ell2H1Norm[i] = 0
+    # pres_ell2H1Norm[i] = 0
     tnList = database[i]['timeValues']
     for j,t in enumerate(tnList):
         if j == 0: continue  # skip first step
