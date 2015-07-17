@@ -1,0 +1,383 @@
+\documentclass{beamer}
+\usepackage{beamerinnerthemecircles, beamerouterthemeshadow}
+\usepackage{amsmath, amsfonts, amscd, epsfig, amssymb, amsthm}
+
+\include{includebeamer}
+
+\mode<presentation> {
+    \usetheme{Frankfurt} %Bergen, Berkely, Berlin, Boadilla, CambridgeUS, Darmstadt,
+                          %Frankfurt, Goettingen, Singapore, Warsaw
+    \usecolortheme{default} %beetle, seahorse, wolverine, dolphin, beaver
+}
+
+\title[Navier-Stokes]{Variable Density Incompressible Navier-Stokes Fractional Time-Stepping Algorithms}
+
+\author[Patty]{Spencer Patty}
+
+\institute[TAMU Math]{Hydrologic Systems Branch, CHL, ERDC\\Department of Mathematics, Texas A\&M
+University }
+
+\date[June 2015]{June 25, 2015}
+
+\usefonttheme[onlymath]{serif}
+
+
+%\pgfdeclareimage[height=1cm]{university-logo}{byu_logo}
+%\logo{\pgfuseimage{university-logo}}
+
+% If you want to display your table of contents at every Section/Subsection:
+%\AtBeginSection[] {
+%\begin{frame}<beamer>{Table of Contents}
+%\tableofcontents[currentsection,currentsubsection]
+%\end{frame}
+%}
+
+\begin{document}
+
+\maketitle
+
+\frame{\tableofcontents}
+
+\section[Intro]{Introduction to the Navier-Stokes Equations}
+
+% 1
+\begin{frame}
+  \frametitle{Why Navier-Stokes?}
+  \begin{block}{Motion of Fluids}
+      The Navier-Stokes equations are a set of nonlinear partial differential equations that model flow of liquids or gases.
+    \end{block}
+      \begin{columns}
+          \begin{column}{5cm} % width = 5cm
+              \begin{itemize}
+                  \item<2-> Weather modelling
+                  \item<2-> Air currents in atmosphere
+                  \item<2-> Flow or waves in rivers, oceans, shallow water, etc.
+                  \item<2-> Fire/ Smoke propation and flow
+                  \item<2-> Aircraft design
+              \end{itemize}
+          \end{column}
+          \begin{column}{5cm} % width = 5cm
+              \begin{itemize}
+                  \item<2-> Low Mach number gases flow
+                  \item<2-> Water flow in a pipe
+                  \item<2-> Blood flow in circulatory systems
+                  \item<2-> Movie animations
+                  \item<2-> Air/Water interactions
+                  \item<2-> Cell motility (ex: white blood cell in liquid matrix)
+              \end{itemize}
+          \end{column}
+      \end{columns}
+\end{frame}
+
+
+%2
+\begin{frame}
+  \frametitle{Navier-Stokes Equations (sans Energy Equations)}
+  \begin{itemize}
+  \item<1->\begin{block}{Conservation of Mass}
+    \begin{equation*}
+      \rho_t + \nabla\cdot\left( \rho \ub \right) = 0
+    \end{equation*}
+  \end{block}
+  We can expand the divergence and regroup to use \textbf{material derivative} $\left(\frac{D}{Dt} = \frac{\partial}{\partial t} + \ub\cdot\nabla\right)$.  Thus,
+  \begin{equation*}
+    \frac{D \rho}{D t} + \rho\nabla\cdot \ub = 0
+  \end{equation*}
+  \item<2->\begin{block}{Conservation of Momentum}
+    \begin{equation*}
+      \frac{\partial}{\partial t}\left( \rho \ub \right) + \nabla\cdot\left( \rho \ub\otimes\ub \right) = \nabla\cdot\left( \tau - p\mathbb{I}\right) + \rho \gb + \fb
+    \end{equation*}
+  \end{block}
+    $\tau$ is the \textbf{stress tensor} which can be quite complicated.  However, often we can use $\tau = \mu \left(\nabla \ub + \nabla\ub^{T}\right) = 2\mu\nabla^S\ub$ or more simplified $\tau = \mu\nabla\ub$. 
+    
+  \end{itemize}
+\end{frame}
+
+%3
+\begin{frame}
+  \frametitle{Incompressible Navier-Stokes}
+  \begin{itemize}
+    \item<1->
+  \begin{block}{Compressibility}
+    Compressible fluid = changes in pressure or temperature results in changes in density.
+    \begin{equation*}
+      \mbox{incompressible fluid} \: \Leftrightarrow \: \frac{D\rho}{Dt} = 0 \: \Leftrightarrow \: \nabla\cdot \ub = 0
+    \end{equation*}
+  \end{block}
+  Thus we often say $\nabla\cdot\ub=0$ is the incompressibility constraint.
+  \item<2-> Recalling $\ub\otimes\ub = \ub\ub^{T}$, $\nabla\cdot(p\mathbb{I}) = \nabla p$, and using $\tau = \mu\nabla\ub$, the previous equations reduce to
+  \begin{block}{Non-Conservative Incompressible Navier-Stokes}
+   \begin{equation*}
+     \begin{cases}
+       \rho_t + \nabla\cdot\left(\rho \ub \right) = 0 &\\
+       \rho\left( \ub_t + \ub\cdot\nabla\ub \right) + \nabla p - \nabla\cdot\left( \mu\nabla\ub \right) = \rho\gb + \fb & \\
+       \nabla\cdot \ub = 0 &
+     \end{cases}
+   \end{equation*}
+  \end{block}
+  \end{itemize}
+\end{frame}
+
+
+%
+%
+%
+\section[Projection]{Constant Density Projection Schemes}
+
+%4
+\begin{frame}
+  \frametitle{Chorin-Temam Pressure Correction Algorithm (constant $\rho$)}
+  Compute $(\ut^{k+1}, \ub^{k+1}, p^{k+1})$ by solving two steps
+  \begin{block}{}
+    \begin{align*}
+    &\rho\left( \frac{\ut^{k+1} - \ub^{k}}{\tau}  + \ut^{k}\cdot\nabla\ut^{k+1}\right) - \mu\Delta \ut^{k+1} = \fb^{k+1},  \hspace{0.5cm} \left.\ut^{k+1}\right|_{\partial\Omega}=0\\
+    &\begin{cases}
+      \frac{\rho}{\tau}\left( \ub^{k+1} - \ut^{k+1}\right) + \nabla p^{k+1}= 0\\
+      \nabla\cdot \ub^{k+1} = 0,\hspace{1cm}  \left.\ub^{k+1}\cdot\n\right|_{\partial\Omega} = 0 
+    \end{cases}
+    \end{align*}
+  \end{block}
+  First viscous effects,  then incompressibility.  Notice that the second equation gives $\ut^{k+1}$ in terms of a divergence free part and a gradient part (curl free)
+  \begin{equation}
+    \ut^{k+1} = \ub^{k+1} + \frac{\tau}{\rho} \nabla p^{k+1}
+  \end{equation}
+  so $\ub^{k+1} = P_H \ut^{k+1}$ is the projection into the divergence free space $H=\{ \vb\in L^2 \:|\: \nabla\cdot\vb = 0,  \left.\vb\cdot\n\right|_{\partial\Omega}=0 \}$.
+  
+\end{frame}
+
+
+%5
+\begin{frame}
+  \frametitle{Incremental Pressure Correction Algorithm (constant $\rho$)}
+  Compute $(\ut^{k+1}, \ub^{k+1}, p^{k+1})$ by solving two steps
+  \begin{block}{}
+    \begin{align*}
+    &\rho\left( \frac{\ut^{k+1} - \ub^{k}}{\tau}  + \ut^{k}\cdot\nabla\ut^{k+1}\right) - \mu\Delta \ut^{k+1} + \nabla p^{k} = \fb^{k+1},  \hspace{0.1cm} \left.\ut^{k+1}\right|_{\partial\Omega}=0\\
+    &\begin{cases}
+      \frac{\rho}{\tau}\left( \ub^{k+1} - \ut^{k+1}\right) + \nabla \left(p^{k+1}-p^{k}\right)= 0\\
+      \nabla\cdot \ub^{k+1} = 0,\hspace{1cm}  \left.\ub^{k+1}\cdot\n\right|_{\partial\Omega} = 0 
+    \end{cases}
+    \end{align*}
+  \end{block}
+  This does a little better job than before.  We still have projection property $\ub^{k+1} = P_H \ut^{k+1}$.  Notice that the second equation implies \[\left.\nabla p^{k+1}\cdot\n\right|_{\partial\Omega} = \left.\nabla p^{k}\cdot\n\right|_{\partial\Omega} = \dots \left.\nabla p^{0}\cdot\n\right|_{\partial\Omega},\]
+  an artificial neumann bc that limits accuracy of pressure.
+\end{frame}
+
+%
+%
+%
+\section[Penalty]{Penalty Methods Point of View for Variable Density}
+
+%6
+\begin{frame}
+  \frametitle{Perturbed system (constant $\rho$)}
+  It is possible to solve for incremental pressure-correction algorithm in terms of only the non-solenoidal velocity $\tilde{\ub}^{k}$ and pressure $p^{k}$ in the form
+  \begin{equation*}
+    \begin{cases}
+      \rho\left(\frac{\tilde{\ub}^{k+1} - \tilde{\ub}^{k}}{\tau} + \tilde{\ub}^{k}\cdot\nabla\tilde{\ub}^{k+1} \right) - \mu\Delta\tilde{\ub}^{k+1} + \nabla\left(p^{k} +\phi^{k}  \right) = \fb^{k+1}\\
+      \nabla\cdot\tilde{\ub}^{k+1} - \frac{\tau}{\rho}\Delta\phi^{n+1} = 0, \hspace{1cm}\left.\partial_{\n} \phi\right|_{\partial\Omega} = 0\\
+      p^{k+1} = p^{k} + \phi^{k+1}
+    \end{cases}
+  \end{equation*}
+  This can be seen as a discrete version of the following system % (formally $\mathcal{O}(\veps^2)$) perturbation of constant density navier-stokes equation
+  \begin{block}{}
+  \begin{equation*}
+    \begin{cases}
+      \rho\left(\ub_t + \ub\cdot\nabla\ub  \right) + \nabla p -\mu\Delta\ub = \fb, & \left.\ub\right|_{\partial\Omega} = 0\\
+      \nabla\cdot\ub - \frac{\veps}{\rho}\Delta \phi = 0, & \left.\partial_{\n} \phi\right|_{\partial\Omega} = 0\\
+      \veps p_t = \phi
+    \end{cases}
+    \end{equation*}
+  \end{block}
+  where we have replaced difference quotients with time derivatives and substituted $\veps = \tau$ for the remaining $\tau$'s.
+\end{frame}
+
+%
+%
+%
+\section[Variable Density]{Variable Density BDF1 Algorithm}
+
+%7
+\begin{frame}
+  \frametitle{BDF1 Rotational Incremental Algorithm}
+  \begin{itemize}
+    \item<1-> We use penalty perspective to deal with variable density and modify algoirthms accordingly.
+    \item <1-> Given 
+    \[(\rho^{k}, \ub^{k}, p^{k})\in \Proj^2\times\left(\Proj^2\right)^d\times\Proj^1,\]  
+    we solve progressively for 
+    \begin{equation*}
+      (\rho^{k+1}, \ub^{k+1}, p^{k+1})\in \Proj^2\times\left(\Proj^2\right)^d\times\Proj^1,
+    \end{equation*}
+    one at a time using all the currently available information. 
+    
+    There are three stages to the algorithm: 
+    \begin{enumerate}
+      \item Density update
+      \item Velocity update
+      \item Pressure update.
+    \end{enumerate}
+     
+    \item<2-> This is called a \textbf{split} operator algorithm since we have split the fully coupled interdependence into a sequential set of operations with only backward dependence.
+    \end{itemize}
+\end{frame}
+
+%8
+\begin{frame}
+  \frametitle{BDF1 Density Update:}
+  \begin{equation*}\boxed{
+    \rho_t + \nabla\cdot\left(\rho\ub\right) = 0}
+  \end{equation*}
+  \vfill
+  Find $\rho_h^{k+1}\in \Proj^2$ that satisfies the weak form of the following equation
+  \begin{block}{}
+    \begin{equation*}
+      \frac{\rho^{k+1} - \rho^k}{\tau} + \nabla\cdot\left(\rho^{k+1}\ub^{k} \right) - \frac{\rho^{k+1}}{2}\nabla\cdot\ub^{k} = 0.
+    \end{equation*}
+  \end{block}
+  Use any maximum preserving hyperbolic solver to do so.
+\end{frame}
+      
+%9
+ \begin{frame}
+   \frametitle{BDF1 Velocity Update:}
+    \begin{equation*}\boxed{
+      \rho\left(\ub_t + \ub\cdot\nabla\ub\right) + \nabla p - \nabla\left(\mu \nabla\ub\right) = f}
+    \end{equation*}
+    \vfill
+    Find $\ub^{k+1}_h\in\left(\Proj^2\right)^d$ such that for all $\vb_h \in \left(\Proj^2\right)^d$ we have,
+    \begin{block}{}
+    \begin{equation*}
+      \begin{split}
+        \dprod{\rho_h^{k} \frac{\ub_h^{k+1}-\ub_h^{k} }{\tau} }{\vb_h} + \dprod{ \rho_h^{k+1}\ub_h^{k}\cdot\nabla\ub_h^{k+1} }{\vb_h} \\
+         + \frac{1}{2}\dprod{ \left(\frac{\rho_h^{k+1} - \rho_h^{k}}{\tau} + \nabla\cdot\left(\rho_h^{k+1}\ub_h^{k}\right)  \right )\ub_h^{k+1} }{\vb_h} &\\
+         +\dprod{\nabla \left(2p_h^{k} - p_h^{k-1}\right)}{\vb_h}+ \mu\dprod{ \nabla \ub_h^{k+1} }{\nabla\vb_h} &= \dprod{\fb^{k+1}}{\vb_h}.
+      \end{split}
+    \end{equation*}
+    \end{block}
+  \end{frame}
+  
+  %10
+  \begin{frame}
+    \frametitle{BDF1 Pressure Update: (with Rotational Term)}
+    \begin{equation*}\boxed{
+      \begin{cases}
+      -\Delta \phi = -\frac{\chi}{\tau}\nabla\cdot\ub,\hspace{0.5cm} \left.\partial_{\n}\phi\right|_{\partial\Omega} = 0\\
+      p^{k+1} = p^{k} + \phi - \mu\nabla\cdot\ub
+      \end{cases}}
+    \end{equation*}
+    \vfill
+    Find the pressure correction $\phi_h^{k+1}\in \Proj^1$ such that for all $r_h\in \Proj^1$,
+    \begin{block}{}
+    \begin{equation*}
+      \dprod{\nabla\phi_h^{k+1}}{\nabla r_h} = \frac{\chi}{\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}
+    \end{equation*}
+    \end{block}
+    where $\chi = \displaystyle\min_{\x\in\overline{\Omega}}\rho_0(\x)$.\newline
+
+    Find the pressure $p_h^{k+1}\in \Proj^1$ such that for all $r_h\in \Proj^1$
+    \begin{block}{}
+    \begin{equation*}
+      \dprod{p_h^{k+1}}{r_h} = \dprod{\phi_h^{k+1} + p_h^{k}}{r_h} + \mu\dprod{\ub_h^{k+1}}{\nabla r_h}.
+    \end{equation*}
+    \end{block}
+  \end{frame}
+
+%
+%
+%
+\section[Convergence]{Convergence Rates}
+
+%11
+\begin{frame}
+  \frametitle{Convergence Rates Incremental BDF1} 
+  Let $(\ub_h^k, p_h^{k})\in \left(\mathbb{P}^2\right)^{d}\times\mathbb{P}^1$.  \newline
+  
+  Suppose initial pressure is uniformly bounded in $H^1$ and the initial approximation of velocity is discretely divergence free,
+  \begin{equation*}
+    \|p_h^0\|_{H^1(\Omega)} \leq c \hspace{0.5cm} \mbox{and} \hspace{0.5cm} \dprod{\ub_h^0}{\nabla r_h} = 0 \hspace{0.25cm} \forall r_h\in \Proj^1
+  \end{equation*}
+    Then, Guermond and Salgado (2011) proved
+  \begin{block}{Theorem (Incremental Non Rotational BDF1 Algorithm)}
+    \begin{align*}
+      \left\|\left(\ub\right)_{\tau} - \left(\ub_h\right)_{\tau}\right\|_{\ell^{\infty}\left(L^2(\Omega)\right)} &\leq c\left( \tau + h^2\right)\\
+      \left\|\left(\ub\right)_{\tau} - \left(\ub_h\right)_{\tau}\right\|_{\ell^{2}\left(H^1(\Omega)\right)} &\leq c\left(\tau + h \right)\\
+      \left\|\left(p\right)_{\tau} - \left(p_h\right)_{\tau}\right\|_{\ell^{2}\left(L^2(\Omega)\right)} &\leq c\left(\tau + h \right)
+    \end{align*}
+  \end{block}
+  
+\end{frame}
+
+%12
+\begin{frame}
+  \frametitle{Convergence Rates Incremental Rotational BDF2} 
+  Under the same properties above, by replacing time derivatives with second order approximation and using
+  \begin{equation*}
+    \ub^{*}_h = \ub_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( \ub_h^{k} - \ub_h^{k-1} \right)
+  \end{equation*}
+  for advection term, we conjecture
+  \begin{block}{Conjecture (Incremental Rotational BDF2 Algorithm)}
+    \begin{align*}
+      \left\|\left(\ub\right)_{\tau} - \left(\ub_h\right)_{\tau}\right\|_{\ell^{\infty}\left(L^2(\Omega)\right)} &\leq c\left( \tau^2 + h^2\right)\\
+      \left\|\left(\ub\right)_{\tau} - \left(\ub_h\right)_{\tau}\right\|_{\ell^{2}\left(H^1(\Omega)\right)} &\leq c\left(\tau^{3/2} + h \right)\\
+      \left\|\left(p\right)_{\tau} - \left(p_h\right)_{\tau}\right\|_{\ell^{2}\left(L^2(\Omega)\right)} &\leq c\left(\tau^{3/2} + h \right)
+    \end{align*}
+  \end{block}
+  
+\end{frame}
+
+%13
+\begin{frame}[c]
+    \begin{center}
+      \huge Questions?
+    \end{center}
+\end{frame}
+
+%
+% \begin{frame}
+%     \frametitle{Overview of Numerical Methods}
+%     \begin{itemize}
+%         \item<1->Finite Difference
+%         \item<2-> Finite Element
+%         \item<3->Level Set Methods
+%     \end{itemize}
+% \end{frame}
+%
+% \begin{frame}
+%     \frametitle{What is a Finite Difference?}
+%     \begin{columns}
+%         \begin{column}{5cm} % width = 5cm
+%             \begin{itemize}
+%                 \item Hello
+%                 \item World
+%             \end{itemize}
+%         \end{column}
+%         \begin{column}{5cm} % width = 5cm
+%             \begin{itemize}
+%                 \item Hola
+%                 \item Mundo
+%             \end{itemize}
+%         \end{column}
+%     \end{columns}
+% \end{frame}
+%
+% \begin{frame}
+%     \frametitle{This is content}
+%     \begin{itemize}
+%         \item<1,2>Test 1
+%         \item<2>Test 2
+%         \item<3>Test 3
+%     \end{itemize}
+% \end{frame}
+%
+% \begin{frame}
+%     \frametitle{This is content subsection}
+%     \begin{block}{Blocktitle}
+%         This is a block.
+%     \end{block}
+%     \begin{theorem}
+%         If $f:[a,b] \to \R$ is continuous then $f$ attains a
+%         minimum and maximum value on $[a,b]$.
+%     \end{theorem}
+% \end{frame}
+
+\end{document}
