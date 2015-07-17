@@ -26,9 +26,9 @@ coefficients=NavierStokes.VelocityTransport2D(bdf=ctx.globalBDFTimeOrder,
                                               pressureGradFunction=None, # set to ctx.gradptrue for exact pressure
                                               useStabilityTerms=ctx.useStabilityTerms)
 
-
-analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue,ctx.gradutrue),
-                      1:ctx.AnalyticSolutionConverter(ctx.vtrue,ctx.gradvtrue)}
+if ctx.opts.analytical:
+    analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue,ctx.gradutrue),
+                          1:ctx.AnalyticSolutionConverter(ctx.vtrue,ctx.gradvtrue)}
 
 # Define boundary conditions and initial conditions of system
 

@@ -21,6 +21,6 @@ systemStepControllerType = Sequential_FixedStep_Simple # uses time steps in so.t
 
 needEBQ_GLOBAL = False # need to be True for postprocessing ie conservativeFlux != none
 needEBQ = False  # need to be True for postprocessing ie conservativeFlux != none
+archiveFlag = ArchiveFlags.EVERY_USER_STEP
 
 tnList = ctx.tnList
-

@@ -48,6 +48,16 @@ matrix = LinearAlgebraTools.SparseMatrix
 multilevelLinearSolver = LinearSolvers.LU
 levelLinearSolver = LinearSolvers.LU
 
+linear_solver_options_prefix = 'velocity_'
+
+if ctx.opts.parallel:
+    multilevelLinearSolver = LinearSolvers.KSP_petsc4py
+    levelLinearSolver      = LinearSolvers.KSP_petsc4py
+    parallelPartitioningType = ctx.parallelPartitioningType
+    nLayersOfOverlapForParallel = ctx.nLayersOfOverlapForParallel
+    nonlinearSmoother = None
+    linearSmoother    = None
+
 multilevelNonlinearSolver = NonlinearSolvers.Newton
 levelNonlinearSolver = NonlinearSolvers.Newton
 
@@ -60,9 +70,12 @@ levelNonlinearSolver = NonlinearSolvers.Newton
 # nl_atol_res = 1.0e-5
 
 linTolFac = 0.001
-l_atol_res = 0.001*ctx.ns_nl_atol_res
+l_atol_res = 0.001*ctx.velocity_atol_res
 tolFac = 0.0
-nl_atol_res = ctx.ns_nl_atol_res
+nl_atol_res = ctx.velocity_atol_res
+nonlinearSolverConvergenceTest = 'r'
+levelNonlinearSolverConvergenceTest = 'r'
+linearSolverConvergenceTest             = 'r-true'
 
 periodicDirichletConditions=None
 
