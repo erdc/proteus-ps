@@ -21,7 +21,7 @@ coefficients=NavierStokes.DensityTransport2D(bdf=ctx.globalBDFTimeOrder,
                                              useVelocityComponents=ctx.useVelocityComponents, #set to false to use 'velocity' (possible post-processed)
                                              pressureIncrementModelIndex=2,
                                              pressureIncrementFunction=None,  # or ctx.pitrue
-                                             useStabilityTerms=False)#ctx.useStabilityTerms)
+                                             useStabilityTerms=ctx.useStabilityTerms)
 
 if ctx.opts.analytical:
    analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.rhotrue)}
