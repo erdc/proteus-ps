@@ -20,7 +20,8 @@ coefficients=NavierStokes.PressureIncrement2D(bdf=ctx.globalBDFTimeOrder,
                                               velocityFunction=None, # use ctx.velocityFunction for exact velocity
                                               currentModelIndex=2)
 
-analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.pitrue,ctx.gradpitrue)}
+if ctx.opts.analytical:
+    analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.pitrue,ctx.gradpitrue)}
 
 def getDBC_p(x,flag):
     if flag in [ctx.boundaryTags['bottom'],

@@ -5,6 +5,11 @@ from proteus.default_n import *
 from proteus.Profiling import logEvent
 import numpy as np
 
+from proteus import Context
+opts = Context.Options([
+    ("parallel", False, "Run in parallel mode"),
+    ("analytical", False, "Archive the analytical solution")
+])
 
 #  Discretization
 nd = 2
@@ -18,7 +23,7 @@ useVelocityComponents = True
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 
 # actual time step for FixedStep
-T = 10.0
+T = 1.0
 DT = 0.00625
 nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]
@@ -232,10 +237,14 @@ if unitCircle:
 
 
 # numerical tolerances
-ns_nl_atol_res = max(1.0e-8,0.01*he**2)
+density_atol_res = max(1.0e-8,0.01*he**2)
+velocity_atol_res = max(1.0e-8,0.01*he**2)
+phi_atol_res = max(1.0e-8,0.01*he**2)
+pressure_atol_res = max(1.0e-8,0.01*he**2)
 
 
-
+parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node
+nLayersOfOverlapForParallel = 0
 
 # Time stepping for output
 # T=10.0

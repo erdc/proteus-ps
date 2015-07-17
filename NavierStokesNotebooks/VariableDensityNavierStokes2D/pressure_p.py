@@ -23,7 +23,8 @@ coefficients=NavierStokes.Pressure2D(bdf=ctx.globalBDFTimeOrder,
                                      pressureIncrementFunction=None,  # use ctx.gradpitrue for exact pressure increment (=0)
                                      currentModelIndex=3)
 
-analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.ptrue,ctx.gradptrue)}
+if ctx.opts.analytical:
+    analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.ptrue,ctx.gradptrue)}
 
 # analyticalSolutionVelocity = {0:ctx.AnalyticSolutionConverter(ctx.velocityFunctionLocal)}
 

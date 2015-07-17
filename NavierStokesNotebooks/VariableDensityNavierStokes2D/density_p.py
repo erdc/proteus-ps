@@ -23,7 +23,8 @@ coefficients=NavierStokes.DensityTransport2D(bdf=ctx.globalBDFTimeOrder,
                                              pressureIncrementFunction=None,  # or ctx.pitrue
                                              useStabilityTerms=False)#ctx.useStabilityTerms)
 
-analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.rhotrue)}
+if ctx.opts.analytical:
+   analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.rhotrue)}
 
 #this function's job is to return another function holding the Dirichlet boundary conditions
 # wherever they are set
