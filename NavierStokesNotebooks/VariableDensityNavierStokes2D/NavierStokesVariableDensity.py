@@ -380,7 +380,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             c[('df',0,0)][...,0] = u_star
             c[('df',0,0)][...,1] = v_star
         elif self.bdf is int(2):
-            c[('H',0)][:] = u_star*grad_phi[...,0] + v_star*grad_phi[...,1]
+            c[('H',0)][:] = u_star*grad_rho[...,0] + v_star*grad_rho[...,1]
             c[('dH',0,0)][...,0] = u_star #  dH d(u_x)
             c[('dH',0,0)][...,1] = v_star #  dH d(u_y)
         else:
