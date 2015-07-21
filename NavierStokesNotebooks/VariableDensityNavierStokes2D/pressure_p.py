@@ -59,6 +59,9 @@ class getIBC_p:
 
 initialConditions = {0:getIBC_p()}
 
-dirichletConditions = {0:getDBC_p }
+if ctx.useDirichletPressureBC:
+    dirichletConditions = {0:getDBC_p }
+else:
+    dirichletConditions = {0:getNone }
 
 advectiveFluxBoundaryConditions = {0:getNone} # check this?

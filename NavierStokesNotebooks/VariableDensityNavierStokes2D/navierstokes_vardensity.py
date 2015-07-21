@@ -21,11 +21,13 @@ quad_degree = 5  # exact for polynomials of this degree
 # Model Flags
 useStabilityTerms = True
 useVelocityComponents = True
-globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
+globalBDFTimeOrder = 1 # 1 or 2 for time integration algorithms
+useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
+useRotationalModel = True #  Standard vs Rotational models in pressure update
 
 # actual time step for FixedStep
 T = 1.0
-DT = 0.00625
+DT = 0.0125
 nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]
 
@@ -213,6 +215,7 @@ if unitCircle:
             vertexFlags.append(boundaryTags['fixed'])
         else:
             vertexFlags.append(boundaryTags['bottom'])
+
         segments.append([i,(i+1)%nvertices])
         if i in [nsegments-1,0]:
             segmentFlags.append(boundaryTags['top'])
