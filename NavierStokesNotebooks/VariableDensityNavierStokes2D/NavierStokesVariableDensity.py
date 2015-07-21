@@ -1008,15 +1008,20 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         Calculate the mean value of phi and adjust to make mean value 0.
         """
+        from math import fabs
         import proteus.Norms as Norms
         if self.zeroMean:
             meanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
                                                    self.model.q[('u',0)],
-                                                   self.model.mesh.nElements_owned)
-            self.model.q[('u',0)] -= meanvalue
+                                                   self.model.mesh.nElements_owned)/self.model.mesh.volume
+            self.model.q[('u',0)][:] = self.model.q[('u',0)] - meanvalue
             self.model.ebqe[('u',0)] -= meanvalue
             self.model.u[0].dof -= meanvalue
 
+            newmeanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
+                                                      self.model.q[('u',0)],
+                                                      self.model.mesh.nElements_owned)
+            assert fabs(newmeanvalue) < 1.0e-8, "new mean should be zero but is "+`newmeanvalue`
         # add post processing adjustments here if possible.  They have already be solved for by this point.
 
         copyInstructions = {}
