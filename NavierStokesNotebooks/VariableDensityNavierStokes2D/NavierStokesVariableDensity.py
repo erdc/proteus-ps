@@ -1001,9 +1001,9 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         import proteus.Norms as Norms
         if self.zeroMean:
-            meanvalue = Norms.globalScalarDomainIntegral(self.model.q['dV'],
-                                                         self.model.q[('u',0)],
-                                                         self.model.mesh.nElements_owned)
+            meanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
+                                                   self.model.q[('u',0)],
+                                                   self.model.mesh.nElements_owned)
             self.model.q[('u',0)] -= meanvalue
             self.model.ebqe[('u',0)] -= meanvalue
             self.model.u[0].dof -= meanvalue
