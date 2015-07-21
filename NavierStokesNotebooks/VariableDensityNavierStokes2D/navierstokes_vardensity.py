@@ -11,15 +11,16 @@ opts = Context.Options([
     ("analytical", False, "Archive the analytical solution")
 ])
 
+
 #  Discretization
 nd = 2
 
 # Numerics
 quad_degree = 5  # exact for polynomials of this degree
 
+# Model Flags
 useStabilityTerms = True
 useVelocityComponents = True
-
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 
 # actual time step for FixedStep
@@ -245,6 +246,10 @@ pressure_atol_res = max(1.0e-8,0.01*he**2)
 
 parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node
 nLayersOfOverlapForParallel = 0
+
+
+
+
 
 # Time stepping for output
 # T=10.0

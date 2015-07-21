@@ -785,6 +785,88 @@ and
 \end{equation}
 
 
+
+\appendix
+\chapter{Various Extensions and Proofs}
+
+\section{Rotational Scheme Still Consistent with Variable Viscosity but Constant Density}
+We verify that the artificial boundary conditions imposed on pressure by the rotational fix under assumptions of constant viscosity and density still roughly hold when viscosity is no longer constant.  Mainly we will show that 
+\begin{equation}
+  \left.\frac{\partial p^{k+1}}{\partial \n}\right|_{\partial\Omega} = \left.\left(f^{k+1} + \nabla\cdot\ut^{k+1}\nabla\mu - \nabla\times\left(\mu\nabla\times \ub^{k+1}  \right)  \right)\cdot \n\right|_{\partial\Omega}
+\end{equation}
+which is almost a consistent pressure boundary condition.  Compare this to the imposed boundary condition when viscosity is assumed constant
+\begin{equation}
+  \left.\frac{\partial p^{k+1}}{\partial \n}\right|_{\partial\Omega} = \left.\left(f^{k+1} - \mu\nabla\times\nabla\times \ub^{k+1} \right)\cdot \n\right|_{\partial\Omega}
+\end{equation}
+ as discussed in \cite{guermond2004error}.  
+ 
+ Thus we are left with the  distortions from the operator splitting being manifest as the tangential velocity requirement
+\begin{equation}
+  \left.\ub^{k+1}\cdot\n\right|_{\partial\Omega} = 0.
+\end{equation}
+and an extra penalty term manifesting in the normal pressure gradient scaled by $\nabla\cdot\ut^{k+1}$.  
+
+
+
+%
+%
+\subsection{Proof of consistent boundary conditions}
+The following identities on a smooth vector function $\Ab$ will be of use to us:
+\begin{align}
+  \nabla\times\nabla\times \Ab &= \nabla\left( \nabla\cdot \Ab\right) - \nabla^2 \Ab\label{eqn:curlcurlidentity}\\
+  \nabla\times\left( \mu \nabla\times \Ab \right) &= \mu\nabla\left(\nabla\cdot \Ab\right) - \nabla\cdot\left(\mu \nabla \Ab \right)\label{eqn:curlmucurlidentity}\\
+  \nabla\left( \mu \nabla\cdot \Ab\right) &= \mu\nabla\left(\nabla\cdot \Ab\right) + \left( \nabla\cdot \Ab\right)\nabla\mu\label{eqn:gradmudividentity}
+\end{align}
+
+Recall that we are approximating the solution to the continuous equations
+\begin{numcases}{}
+  \rho\left(\frac{\partial \ub}{\partial t}  + \ub\cdot\nabla\ub\right) - \nabla\left(\cdot\mu \nabla\ub\right) + \nabla p = \fb\label{eqn:continuousmomentumequation}\\
+  \left.\ub\right|_{\partial\Omega} = 0\label{eqn:continuousvelocitydirichletbc}\\
+  \nabla\cdot\ub = 0\label{eqn:continuousdivergencevelocityequalszero}
+\end{numcases}
+with constant density and variable viscosity.  To proceed with the proof, we start with the initial scheme (any BDF formula for time derivative will work but we give proof in terms of BDF1)
+\begin{numcases}{}
+  \frac{\rho}{\tau}\left( \ut^{k+1} - \ub^{k}\right) + \rho \ut^{k}\cdot\nabla\ut^{k+1} - \nabla\cdot\left(\mu\nabla\ut^{k+1}\right) + \nabla p^{k} = \fb^{k+1},\label{eqn:initialmomentum}\\ 
+  \left.\ut^{k+1}\right|_{\partial\Omega} = 0,\\
+  \frac{\rho}{\tau}\left(\ub^{k+1} - \ut^{k+1}  \right) + \nabla \phi^{k+1} = 0,\label{eqn:initialprojection} \\
+  \left.\ub^{k+1}\cdot\n\right|_{\partial\Omega} = 0,\\
+  \nabla\cdot \ub^{k+1} = 0,\\
+  p^{k+1} = p^{k} + \phi^{k+1} - \mu\nabla\cdot\ut^{k+1}.\label{eqn:initialpressureupdate}
+\end{numcases}
+By applying $\nabla\times\left(\mu\nabla\times \ \cdot\  \right)$ to both sides of (\ref{eqn:initialprojection}) we observe that
+\begin{equation}\label{eqn:curlcurluequalscurlcurlutilde}
+  \nabla\times\left( \mu\nabla\times \ub^{k+1}\right) =   \nabla\times\left( \mu\nabla\times \ut^{k+1}\right)
+\end{equation}
+
+So by plugging equations (\ref{eqn:initialprojection}) and (\ref{eqn:initialpressureupdate}) into (\ref{eqn:initialmomentum}) and using identities (\ref{eqn:curlmucurlidentity}) and (\ref{eqn:gradmudividentity}) (with $\Ab=\ut^{k+1}$) and applying (\ref{eqn:curlcurluequalscurlcurlutilde}), we obtain
+
+\begin{numcases}{}
+  \begin{split}\frac{\rho}{\tau}\left(\ub^{k+1} - \ub^{k}   \right) + \rho\ut^{k}\cdot\nabla\ut^{k+1} + \nabla\times\left( \mu\nabla\times\ub^{k+1}\right)&\\ 
+    - \left(\nabla\cdot\ut^{k+1}\right)\nabla\mu + \nabla p^{k+1} &= \fb^{k+1},\end{split}\label{eqn:momentumcwithurlculequation}\\
+  \left.\ut^{k+1}\right|_{\partial\Omega} = 0,\label{eqn:utildeonboundaryequalszero}\\
+  \left.\ub^{k+1}\cdot\n\right|_{\partial\Omega} = 0,\label{eqn:tangentialuonboundaryequalszero}\\
+  \nabla\cdot\ub^{k+1} = 0.\label{eqn:divuequalszero}
+\end{numcases}
+By dotting (\ref{eqn:momentumcwithurlculequation}) with $\n$ and restricting to boundary and using properties (\ref{eqn:utildeonboundaryequalszero}) and (\ref{eqn:tangentialuonboundaryequalszero}), we get the normal pressure gradient condition
+
+\begin{equation}
+  \left.\frac{\partial p^{k+1}}{\partial \n}\right|_{\partial\Omega} = \left.\left(f^{k+1} + \nabla\cdot\ut^{k+1}\nabla\mu - \nabla\times\left(\mu\nabla\times \ub^{k+1}  \right)  \right)\cdot \n\right|_{\partial\Omega}.
+\end{equation}
+
+Finally notice that because of (\ref{eqn:divuequalszero}) and (\ref{eqn:curlmucurlidentity}), we have 
+\begin{equation}
+  \nabla\times\left(\mu\nabla\times \ub^{k+1}\right) = \nabla\cdot\left(\mu\nabla\ub^{k+1}\right)
+\end{equation}
+so 
+\begin{equation}
+  \left.\frac{\partial p^{k+1}}{\partial \n}\right|_{\partial\Omega} = \left.\left(f^{k+1} + \nabla\cdot\left(\mu\nabla\ub^{k+1}\right) \right)\cdot \n\right|_{\partial\Omega} + \left.\nabla\cdot\ut^{k+1}\frac{\partial\mu}{\partial\n}\right|_{\partial\Omega},
+\end{equation}
+which is almost consistent with the momentum equation (\ref{eqn:continuousmomentumequation}).  The inconsistency comes from the $\nabla\cdot\ut^{k+1}\frac{\partial\mu}{\partial\n}$ term which can be seen as a penalty term for the normal pressure gradient.
+
+
+
+
+
 \bibliographystyle{chicago}
 \bibliography{ps.bib}
 % \appendix
