@@ -15,6 +15,7 @@ name = "pressureincrement"
 # from pnList in *_so.py  0 = density,  1 = (u,v),  2 = (pressureincrement),  3 = (pressure)
 coefficients=NavierStokes.PressureIncrement2D(bdf=ctx.globalBDFTimeOrder,
                                               chiValue=ctx.chi,
+                                              zeroMean=not ctx.useDirichletPressureBC,
                                               densityModelIndex=0,
                                               velocityModelIndex=1,
                                               velocityFunction=None, # use ctx.velocityFunction for exact velocity
@@ -28,8 +29,10 @@ def getDBC_p(x,flag):
                 ctx.boundaryTags['top'],
                 ctx.boundaryTags['fixed']]:
         return lambda x,t: 0.0
-#    if flag in [ctx.boundaryTags['fixed']]:
-#        return lambda x,t: 0.0
+
+def getDBC_fixed(x,flag):
+    if flag in [ctx.boundaryTags['fixed']]:
+        return lambda x,t: 0.0
 
 def getNone(x,flag):
     return None
@@ -48,7 +51,10 @@ class getIBC_p:
 
 initialConditions = {0:getIBC_p()}
 
-dirichletConditions = {0:getDBC_p }
+if ctx.useDirichletPressureBC:
+    dirichletConditions = {0:getDBC_p }
+else:
+    dirichletConditions = {0:getDBC_fixed }
 
 advectiveFluxBoundaryConditions = {0:getNone}
 

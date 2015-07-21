@@ -1008,15 +1008,20 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         Calculate the mean value of phi and adjust to make mean value 0.
         """
+        from math import fabs
         import proteus.Norms as Norms
         if self.zeroMean:
             meanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
                                                    self.model.q[('u',0)],
-                                                   self.model.mesh.nElements_owned)
-            self.model.q[('u',0)] -= meanvalue
+                                                   self.model.mesh.nElements_owned)/self.model.mesh.volume
+            self.model.q[('u',0)][:] = self.model.q[('u',0)] - meanvalue
             self.model.ebqe[('u',0)] -= meanvalue
             self.model.u[0].dof -= meanvalue
 
+            newmeanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
+                                                      self.model.q[('u',0)],
+                                                      self.model.mesh.nElements_owned)
+            assert fabs(newmeanvalue) < 1.0e-8, "new mean should be zero but is "+`newmeanvalue`
         # add post processing adjustments here if possible.  They have already be solved for by this point.
 
         copyInstructions = {}
@@ -1089,6 +1094,7 @@ class Pressure2D(TransportCoefficients.TC_base):
                  useVelocityComponents=True,
                  pressureIncrementModelIndex=-1,
                  pressureIncrementFunction=None,
+                 useRotationalModel=True,
                  chiValue=1.0):
         """Construct a coefficients object
 
@@ -1120,10 +1126,12 @@ class Pressure2D(TransportCoefficients.TC_base):
         self.useVelocityComponents = useVelocityComponents
         self.pressureIncrementModelIndex = pressureIncrementModelIndex
         self.pressureIncrementFunction = pressureIncrementFunction
+        self.useRotationalModel = useRotationalModel
         self.chiValue = chiValue
-        self.c_u = {}
-        self.c_v = {}
-        self.c_velocity = {}
+        if self.useRotationalModel:
+            self.c_u = {}
+            self.c_v = {}
+            self.c_velocity = {}
         self.c_phi = {}
         self.firstStep = True # manipulated in preStep()
 
@@ -1154,7 +1162,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         self.model.points_quadrature.add(('u_last',0))
         self.model.points_elementBoundaryQuadrature.add(('u_last',0))
         self.model.numericalFlux.ebqe[('u_last',0)] = self.model.ebqe[('u_last',0)]  # why do we need this line? srp july 15, 2015
-        if not self.useVelocityComponents and self.pressureIncrementModelIndex >= 0:
+        if self.useRotationalModel and not self.useVelocityComponents and self.pressureIncrementModelIndex >= 0:
             assert self.pressureIncrementModelIndex < len(modelList), \
                 "pressure increment model index out of range 0," + repr(len(modelList))
             self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
@@ -1170,7 +1178,7 @@ class Pressure2D(TransportCoefficients.TC_base):
             if ('velocity',0) in self.pressureIncrementModel.ebq_global:
                 vel = self.pressureIncrementModel.ebq_global[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
-        elif self.useVelocityComponents and self.velocityModelIndex >= 0:
+        elif self.useRotationalModel and self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
@@ -1280,34 +1288,41 @@ class Pressure2D(TransportCoefficients.TC_base):
         else:
             phi = self.c_phi[c[('u',0)].shape]
 
-        # extract scaling terms for post processed velocity (see pressureIncrement model for description)
-        if not self.useVelocityComponents:
-            dt = self.model.timeIntegration.dt
-            chi = self.chiValue
-            # beta_0 coefficient scalar
-            if self.bdf is int(1) or self.firstStep:
-                b0 = 1.0/dt
-            elif self.bdf is int(2):
-                b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
-            Invb0chi = 1.0/(chi*b0)
+        if self.useRotationalModel:
+            # extract scaling terms for post processed velocity (see pressureIncrement model for description)
+            if not self.useVelocityComponents:
+                dt = self.model.timeIntegration.dt
+                chi = self.chiValue
+                # beta_0 coefficient scalar
+                if self.bdf is int(1) or self.firstStep:
+                    b0 = 1.0/dt
+                elif self.bdf is int(2):
+                    b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
+                Invb0chi = 1.0/(chi*b0)
 
-        # extract velocity components
-        if self.velocityFunction != None:
-            u = self.velocityFunction(c['x'],t)[...,0]
-            v = self.velocityFunction(c['x'],t)[...,1]
-        elif self.useVelocityComponents:
-            u = self.c_u[c[('u',0)].shape]
-            v = self.c_v[c[('u',0)].shape]
-        else:
-            u = Invb0chi*self.c_velocity[c[('f',0)].shape][...,0] # adjust post processed velocity to be physical units by mult by dt/chi
-            v = Invb0chi*self.c_velocity[c[('f',0)].shape][...,1] # adjust post processed velocity to be physical units by mult by dt/chi
+            # extract velocity components
+            if self.velocityFunction != None:
+                u = self.velocityFunction(c['x'],t)[...,0]
+                v = self.velocityFunction(c['x'],t)[...,1]
+            elif self.useVelocityComponents:
+                u = self.c_u[c[('u',0)].shape]
+                v = self.c_v[c[('u',0)].shape]
+            else:
+                u = Invb0chi*self.c_velocity[c[('f',0)].shape][...,0] # adjust post processed velocity to be physical units by mult by dt/chi
+                v = Invb0chi*self.c_velocity[c[('f',0)].shape][...,1] # adjust post processed velocity to be physical units by mult by dt/chi
 
         # set coefficients   p - p_last - phi + div (mu u) = 0
         #G&S11,p941,remark 5.5
-        c[('f',0)][...,0] = self.mu*u
-        c[('f',0)][...,1] = self.mu*v
-        c[('df',0,0)][...,0] = 0.0
-        c[('df',0,0)][...,1] = 0.0
+        if self.useRotationalModel:
+            c[('f',0)][...,0] = self.mu*u
+            c[('f',0)][...,1] = self.mu*v
+            c[('df',0,0)][...,0] = 0.0
+            c[('df',0,0)][...,1] = 0.0
+        else:
+            c[('f',0)][...,0] = 0.0
+            c[('f',0)][...,1] = 0.0
+            c[('df',0,0)][...,0] = 0.0
+            c[('df',0,0)][...,1] = 0.0
         #G&S11,p92, eq 3.10
         c[('r',0)][:] = p - p_last - phi
         c[('dr',0,0)][:] = 1.0
