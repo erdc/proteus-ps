@@ -34,5 +34,7 @@ mesh*
 *.synctex.gz
 *.bbl
 *.blg
+*.fls
+*.fdb_latexmk
 *Gauge*.txt
 *History*.txt
