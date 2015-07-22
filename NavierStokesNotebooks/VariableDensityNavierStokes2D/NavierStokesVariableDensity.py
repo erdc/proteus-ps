@@ -323,13 +323,15 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
 
         # extract scaling terms for post processed velocity (see pressureIncrement model for description)
-        if not self.useVelocityComponents:
+        if not self.useVelocityComponents and self.velocityFunction is None:
             chi = self.chiValue
             # beta_0 coefficient scalar
             if self.bdf is int(1) or self.firstStep:
                 b0 = 1.0/dt
             elif self.bdf is int(2):
-                b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
+                r = dt/dt_last
+                dtInv = 1./dt
+                b0 = (1.0+2.0*r)/(1.0+r)*dtInv  # = self.model.timeIntegration.alpha_bdf  # = beta_0
             Invb0chi = 1.0/(chi*b0)
 
 
@@ -434,6 +436,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                  currentModelIndex=1,
                  densityModelIndex=-1,
                  densityFunction=None,
+                 densityGradFunction=None,
                  pressureIncrementModelIndex=-1,
                  pressureIncrementGradFunction=None,
                  pressureModelIndex=-1,
@@ -472,6 +475,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         self.currentModelIndex = currentModelIndex
         self.densityModelIndex = densityModelIndex
         self.densityFunction = densityFunction
+        self.densityGradFunction = densityGradFunction
         self.pressureModelIndex = pressureModelIndex
         self.pressureGradFunction = pressureGradFunction
         self.pressureIncrementModelIndex = pressureIncrementModelIndex
@@ -723,7 +727,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             rho = self.densityFunction(c['x'],t)
             rho_last =  self.densityFunction(c['x'],tLast)
             if self.useStabilityTerms:
-                grad_rho = self.gradDensityFunction(c['x'],t)
+                grad_rho = self.densityGradFunction(c['x'],t)
             if self.bdf is int(2) and not self.firstStep:
                 rho_lastlast = self.densityFunction(c['x'],tLastLast)
         else:#use mass shape as key since it is same shape as density
