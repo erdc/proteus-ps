@@ -632,17 +632,77 @@ with $\int_{\Omega}\phi_h^{k+1}d\x = 0$.  Notice that we have incorporated the n
 %   \end{center}
 % \end{table}
 
+% \begin{table}[h!]
+%   \begin{center}
+%     \caption{Velocity Error Max Norm in Time BDF1}
+%     \begin{tabular}{c|c|l|c|l|c}
+%       dt & numTS &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{H^1}$ &  Rate\\
+%       \hline
+%       0.1     & 00050 &  8.621e-03 &  -  &  3.676e-02 &  -\\
+%       0.05    & 00100 &  3.688e-03 &  1.23  &  1.579e-02 &  1.22\\
+%       0.025   & 00200 &  1.682e-03 &  1.13  &  7.210e-03 &  1.13\\
+%       0.0125  & 00400 &  8.088e-04 &  1.06  &  3.464e-03 &  1.06\\
+%       0.006125 & 00816 &  3.911e-04 &  1.02  &  1.674e-03 &  1.02
+%     \end{tabular}
+%   \end{center}
+% \end{table}
+%
+% \begin{table}[h!]
+%   \begin{center}
+%     \caption{Velocity Error $\ell^2$ Norm in Time BDF1}
+%     \begin{tabular}{c|c|l|c|l|c}
+%       dt & numTS &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate  &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(H^1)}$  &  Rate\\
+%       \hline
+%       0.1     & 00050 &  1.321e-02 &  -  &  5.723e-02 &  -\\
+%       0.05    & 00100 &  5.741e-03 &  1.20  &  2.512e-02 &  1.19\\
+%       0.025   & 00200 &  2.638e-03 &  1.12  &  1.160e-02 &  1.11\\
+%       0.0125  & 00400 &  1.273e-03 &  1.05  &  5.600e-03 &  1.05\\
+%       0.006125 & 00816 &  6.162e-04 &  1.02  &  2.710e-03 &  1.02
+%     \end{tabular}
+%   \end{center}
+% \end{table}
+%
+% \begin{table}[h!]
+%   \begin{center}
+%     \caption{Density Error Norms BDF1}
+%     \begin{tabular}{c|c|l|c|l|c}
+%       dt & numTS  & $\displaystyle\max_{k} \left\|\rho^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\left\|\left(\rho_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate\\
+%       \hline
+%       0.1     & 00050  & 1.195e-01 &  -  &  1.929e-01 &  -\\
+%       0.05    & 00100  & 6.095e-02 &  0.97  &  9.778e-02 &  0.98\\
+%       0.025   & 00200  & 3.079e-02 &  0.99  &  4.921e-02 &  0.99\\
+%       0.0125  & 00400  & 1.547e-02 &  0.99  &  2.469e-02 &  1.00\\
+%       0.006125 & 00816  & 7.601e-03 &  1.00  &  1.212e-02 &  1.00
+%     \end{tabular}
+%   \end{center}
+% \end{table}
+%
+% \begin{table}[h!]
+%   \begin{center}
+%     \caption{Pressure Error Norms BDF1}
+%     \begin{tabular}{c|c|l|c|l|c}
+%       dt & numTS &  $\displaystyle\max_{k} \left\|p^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\left\|\left(p_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate\\
+%       \hline
+%       0.1     & 00050 &  8.914e-02  &  -  & 1.262e-01 &  -\\
+%       0.05    & 00100 &  9.600e-02  & -0.11  & 1.285e-01 & -0.00\\
+%       0.025   & 00200 &  1.071e-01  & -0.16  & 1.578e-01 & -0.30\\
+%       0.0125  & 00400 &  1.184e-01  & -0.14  & 1.845e-01 & -0.23\\
+%       0.006125 & 00816 &  1.280e-01  & -0.11  & 2.040e-01 & -0.14
+%     \end{tabular}
+%   \end{center}
+% \end{table}
+
 \begin{table}[h!]
   \begin{center}
     \caption{Velocity Error Max Norm in Time BDF1}
     \begin{tabular}{c|c|l|c|l|c}
       dt & numTS &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{H^1}$ &  Rate\\
       \hline
-      0.1     & 00050 &  8.621e-03 &  -  &  3.676e-02 &  -\\
-      0.05    & 00100 &  3.688e-03 &  1.23  &  1.579e-02 &  1.22\\
-      0.025   & 00200 &  1.682e-03 &  1.13  &  7.210e-03 &  1.13\\
-      0.0125  & 00400 &  8.088e-04 &  1.06  &  3.464e-03 &  1.06\\
-      0.006125 & 00816 &  3.911e-04 &  1.02  &  1.674e-03 &  1.02
+      0.1     & 00010 & 8.024e-03 &  -   & 3.449e-02 &  -\\
+      0.05    & 00020 & 3.322e-03 & 1.27 & 1.430e-02 & 1.27\\
+      0.025   & 00040 & 1.531e-03 & 1.12 & 6.586e-03 & 1.12\\
+      0.0125  & 00080 & 7.395e-04 & 1.05 & 3.177e-03 & 1.05\\
+      0.00625 & 00160 & 3.659e-04 & 1.02 & 1.570e-03 & 1.02
     \end{tabular}
   \end{center}
 \end{table}
@@ -653,11 +713,11 @@ with $\int_{\Omega}\phi_h^{k+1}d\x = 0$.  Notice that we have incorporated the n
     \begin{tabular}{c|c|l|c|l|c}
       dt & numTS &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate  &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(H^1)}$  &  Rate\\
       \hline
-      0.1     & 00050 &  1.321e-02 &  -  &  5.723e-02 &  -\\
-      0.05    & 00100 &  5.741e-03 &  1.20  &  2.512e-02 &  1.19\\
-      0.025   & 00200 &  2.638e-03 &  1.12  &  1.160e-02 &  1.11\\
-      0.0125  & 00400 &  1.273e-03 &  1.05  &  5.600e-03 &  1.05\\
-      0.006125 & 00816 &  6.162e-04 &  1.02  &  2.710e-03 &  1.02
+      0.1     & 00010 & 6.795e-03 &   -  &  2.922e-02 &  -\\
+      0.05    & 00020 & 2.938e-03 & 1.21 & 1.270e-02 & 1.20\\
+      0.025   & 00040 & 1.334e-03 & 1.14 & 5.774e-03 & 1.14\\
+      0.0125  & 00080 & 6.392e-04 & 1.06 & 2.765e-03 & 1.06\\
+      0.00625 & 00160 & 3.152e-04 & 1.02 & 1.362e-03 & 1.02
     \end{tabular}
   \end{center}
 \end{table}
@@ -668,11 +728,11 @@ with $\int_{\Omega}\phi_h^{k+1}d\x = 0$.  Notice that we have incorporated the n
     \begin{tabular}{c|c|l|c|l|c}
       dt & numTS  & $\displaystyle\max_{k} \left\|\rho^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\left\|\left(\rho_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate\\
       \hline
-      0.1     & 00050  & 1.195e-01 &  -  &  1.929e-01 &  -\\
-      0.05    & 00100  & 6.095e-02 &  0.97  &  9.778e-02 &  0.98\\
-      0.025   & 00200  & 3.079e-02 &  0.99  &  4.921e-02 &  0.99\\
-      0.0125  & 00400  & 1.547e-02 &  0.99  &  2.469e-02 &  1.00\\
-      0.006125 & 00816  & 7.601e-03 &  1.00  &  1.212e-02 &  1.00
+      0.1     & 00010  & 4.004e-02 &  -    &  2.606e-02 &  - \\
+      0.05    & 00020  & 1.931e-02 & 1.05  &  1.232e-02 & 1.08\\
+      0.025   & 00040  & 9.345e-03 & 1.05  &  5.870e-03 & 1.07\\
+      0.0125  & 00080  & 4.603e-03 & 1.02  &  2.863e-03 & 1.04\\
+      0.00625 & 00160  & 2.290e-03 & 1.01  &  1.417e-03 & 1.01
     \end{tabular}
   \end{center}
 \end{table}
@@ -683,14 +743,17 @@ with $\int_{\Omega}\phi_h^{k+1}d\x = 0$.  Notice that we have incorporated the n
     \begin{tabular}{c|c|l|c|l|c}
       dt & numTS &  $\displaystyle\max_{k} \left\|p^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\left\|\left(p_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate\\
       \hline
-      0.1     & 00050 &  8.914e-02  &  -  & 1.262e-01 &  -\\
-      0.05    & 00100 &  9.600e-02  & -0.11  & 1.285e-01 & -0.00\\
-      0.025   & 00200 &  1.071e-01  & -0.16  & 1.578e-01 & -0.30\\
-      0.0125  & 00400 &  1.184e-01  & -0.14  & 1.845e-01 & -0.23\\
-      0.006125 & 00816 &  1.280e-01  & -0.11  & 2.040e-01 & -0.14
+      0.1     & 00010 &  2.751e-02  &  -  & 2.437e-02 &  -\\
+      0.05    & 00020 & 1.321e-02 & 1.06 & 1.104e-02 & 1.14\\
+      0.025   & 00040 & 6.497e-03 & 1.02 & 5.146e-03 & 1.10\\
+      0.0125  & 00080 & 3.234e-03 & 1.01 & 2.483e-03 & 1.05\\
+      0.00625 & 00160 & 1.616e-03 & 1.00 & 1.223e-03 & 1.02
     \end{tabular}
   \end{center}
 \end{table}
+
+
+
 
 \appendix
 %
