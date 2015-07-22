@@ -6,6 +6,9 @@ import shelve # to open and read the database file
 
 import numpy as np
 
+import matplotlib
+matplotlib.use('AGG')   # generate png output by default
+
 import matplotlib.pyplot as plt
 from matplotlib import rc
 rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
