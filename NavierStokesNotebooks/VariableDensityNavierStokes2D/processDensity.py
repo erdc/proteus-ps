@@ -6,21 +6,22 @@ import shelve # to open and read the database file
 
 import numpy as np
 
-usePlots = True
+usePlots = False
+
 if usePlots:
     import matplotlib
     matplotlib.use('AGG')   # generate png output by default
 
-	import matplotlib.pyplot as plt
-	from matplotlib import rc
-	rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-	## for Palatino and other serif fonts use:
-	#rc('font',**{'family':'serif','serif':['Palatino']})
-	rc('text', usetex=True)
+    import matplotlib.pyplot as plt
+    from matplotlib import rc
+    rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+    ## for Palatino and other serif fonts use:
+    #rc('font',**{'family':'serif','serif':['Palatino']})
+    rc('text', usetex=True)
 
-	# create plots for time series of errors
-	fig_L2, ax_L2 = plt.subplots(nrows=1, ncols=1)
-	# fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
+    # create plots for time series of errors
+    fig_L2, ax_L2 = plt.subplots(nrows=1, ncols=1)
+    # fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
 
 # read in file names and test if they can be found.  if so
 # then add them to our list of filenames to be processed

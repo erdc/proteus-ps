@@ -6,7 +6,7 @@ import shelve # to open and read the database file
 
 import numpy as np
 
-usePlots = True
+usePlots = False
 
 if usePlots:
     import matplotlib
