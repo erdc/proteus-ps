@@ -27,8 +27,9 @@ useRotationalModel = True #  Standard vs Rotational models in pressure update
 
 # actual time step for FixedStep
 T = 1.0
-DT = 0.1
+DT = 0.05  # target time step size
 
+# spin up to DT from DT**2  doubling each time until we have DT then continue
 DTstep = DT*DT
 Tval = 0.0
 tnList = [0.0]
@@ -36,14 +37,11 @@ while DTstep < DT:
     Tval = Tval + DTstep
     tnList.append(Tval)
     DTstep *= 2.0
-
-nNewDT = int(np.floor((T-tnList[-1])/DT))
+remainingDTSteps = int(np.floor((T-tnList[-1])/DT))
 lastVal = tnList[-1]
-tnList[len(tnList):] =  [lastVal + (i+1)*DT for i in range(nNewDT) ]
-
+tnList[len(tnList):] =  [lastVal + (i+1)*DT for i in range(remainingDTSteps) ]
 if tnList[-1] < T :
     tnList.append(T)
-
 nFrames = len(tnList)
 
 # nFrames = int(T/DT) + 1
@@ -128,7 +126,7 @@ def vtrue(x,t):
     return vl(x[...,0],x[...,1],t)
 
 def pitrue(x,t): # pressure increment
-    return 0.0*pl(x[...,0],x[...,1],t)
+    return np.zeros(x[...,0].shape)
 
 def ptrue(x,t):
     return pl(x[...,0],x[...,1],t)
@@ -174,7 +172,9 @@ def divVelocityFunction(x,t):
 
 # analytic gradients
 def gradrhotrue(x,t):
-    return np.array([drhodxtrue(x,t), drhodytrue(x,t)])
+    return np.vstack((drhodxtrue(x,t)[...,np.newaxis].transpose(),
+                      drhodytrue(x,t)[...,np.newaxis].transpose())
+                      ).transpose()
 
 def gradutrue(x,t):
     return np.array([dudxtrue(x,t), dudytrue(x,t)])
@@ -183,10 +183,14 @@ def gradvtrue(x,t):
     return np.array([dvdxtrue(x,t), dvdytrue(x,t)])
 
 def gradptrue(x,t):
-    return np.array([dpdxtrue(x,t), dpdytrue(x,t)])
+    return np.vstack((dpdxtrue(x,t)[...,np.newaxis].transpose(),
+                      dpdytrue(x,t)[...,np.newaxis].transpose())
+                      ).transpose()
 
 def gradpitrue(x,t): # pressure increment
-    return 0.0*np.array([dpdxtrue(x,t), dpdytrue(x,t)])
+    return np.vstack((np.zeros(x[...,0].shape)[...,np.newaxis].transpose(),
+                      np.zeros(x[...,0].shape)[...,np.newaxis].transpose())
+                      ).transpose()
 
 class AnalyticSolutionConverter:
     """
@@ -284,7 +288,7 @@ nLayersOfOverlapForParallel = 0
 
 # Time stepping for output
 # T=10.0
-# DT = 0.1
+# DT = 0.05
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
