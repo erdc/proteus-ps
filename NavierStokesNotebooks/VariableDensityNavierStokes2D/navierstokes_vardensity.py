@@ -21,13 +21,13 @@ quad_degree = 5  # exact for polynomials of this degree
 # Model Flags
 useStabilityTerms = True
 useVelocityComponents = True
-globalBDFTimeOrder = 1 # 1 or 2 for time integration algorithms
+globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useRotationalModel = True #  Standard vs Rotational models in pressure update
 
 # actual time step for FixedStep
 T = 1.0
-DT = 0.0125
+DT = 0.00625
 nFrames = int(T/DT) + 1
 tnList =  [ i*DT for i in range(nFrames) ]
 

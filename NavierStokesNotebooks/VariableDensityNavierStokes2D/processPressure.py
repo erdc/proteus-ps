@@ -6,19 +6,22 @@ import shelve # to open and read the database file
 
 import numpy as np
 
-import matplotlib
-matplotlib.use('AGG')   # generate png output by default
+usePlots = True
 
-import matplotlib.pyplot as plt
-from matplotlib import rc
-rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-## for Palatino and other serif fonts use:
-#rc('font',**{'family':'serif','serif':['Palatino']})
-rc('text', usetex=True)
+if usePlots:
+    import matplotlib
+    matplotlib.use('AGG')   # generate png output by default
 
-# create plots for time series of errors
-fig_L2, ax_L2 = plt.subplots(nrows=1, ncols=1)
-# fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
+    import matplotlib.pyplot as plt
+    from matplotlib import rc
+    rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+    ## for Palatino and other serif fonts use:
+    #rc('font',**{'family':'serif','serif':['Palatino']})
+    rc('text', usetex=True)
+
+    # create plots for time series of errors
+    fig_L2, ax_L2 = plt.subplots(nrows=1, ncols=1)
+    # fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
 
 # read in file names and test if they can be found.  if so
 # then add them to our list of filenames to be processed
@@ -103,22 +106,24 @@ for i in range(num_filenames):
     print "  ||p||_{\\ell_2-L2}\t= %2.4g" %pres_ell2L2Norm[i]
     # print "  ||v||_{\\ell_2-H1}\t= %2.4g" %pres_ell2H1Norm[i]
 
-    # plot time series of errors
-    ax_L2.plot(tnList, pres_L2Error,label='dt=%1.5f' %dt[i])
-    # ax_H1.plot(tnList, pres_H1Error,label='dt=%1.5f' %dt[i])
+    if usePlots:
+    	# plot time series of errors
+    	ax_L2.plot(tnList, pres_L2Error,label='dt=%1.5f' %dt[i])
+    	# ax_H1.plot(tnList, pres_H1Error,label='dt=%1.5f' %dt[i])
 
-# format plots
-ax_L2.set_xlabel('Time')
-ax_L2.set_ylabel(r'$e_h(t)$')
-ax_L2.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-fig_L2.savefig('plotPressureErrorL2.png', bbox_inches='tight')
-plt.close(fig_L2)
+if usePlots:
+    # format plots
+    ax_L2.set_xlabel('Time')
+    ax_L2.set_ylabel(r'$e_h(t)$')
+    ax_L2.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    fig_L2.savefig('plotPressureErrorL2.png', bbox_inches='tight')
+    plt.close(fig_L2)
 
-# ax_H1.set_xlabel('Time')
-# ax_H1.set_ylabel(r'$e_h(t)$')
-# ax_H1.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-# fig_H1.savefig('plotPressureErrorH1.png', bbox_inches='tight')
-# plt.close(fig_H1)
+    # ax_H1.set_xlabel('Time')
+    # ax_H1.set_ylabel(r'$e_h(t)$')
+    # ax_H1.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    # fig_H1.savefig('plotPressureErrorH1.png', bbox_inches='tight')
+    # plt.close(fig_H1)
 
 
 
