@@ -99,11 +99,11 @@ class NonConservativeVBDF(proteus.TimeIntegration.VBDF):
         #mwf debug
         #log("VBDF calculateElementCoefficients t= %s dt= %s alpha= %s " % (self.t,self.dt,self.alpha_bdf))
         for ci in self.massComponents:
-            self.m_tmp[ci][:] = q[('u',ci)]
+            self.m_tmp[ci][:] = q[('u',ci)]  # use 'u' instead of 'm' to avoid conservativeness
             self.mt_tmp[ci][:]= q[('u',ci)]
             self.mt_tmp[ci] *= self.alpha_bdf
             self.mt_tmp[ci]  += self.beta_bdf[ci]
-            self.mt_tmp[ci] *= q[('dm', ci, ci)]
+            self.mt_tmp[ci] *= q[('dm', ci, ci)] # multiply by dm/du to get nonconservative coefficient out front
             q[('mt',ci)][:]   = self.mt_tmp[ci]
             for cj in range(self.nc):
                 if q.has_key(('dmt',ci,cj)):
