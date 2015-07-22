@@ -27,9 +27,27 @@ useRotationalModel = True #  Standard vs Rotational models in pressure update
 
 # actual time step for FixedStep
 T = 1.0
-DT = 0.00625
-nFrames = int(T/DT) + 1
-tnList =  [ i*DT for i in range(nFrames) ]
+DT = 0.1
+
+DTstep = DT*DT
+Tval = 0.0
+tnList = [0.0]
+while DTstep < DT:
+    Tval = Tval + DTstep
+    tnList.append(Tval)
+    DTstep *= 2.0
+
+nNewDT = int(np.floor((T-tnList[-1])/DT))
+lastVal = tnList[-1]
+tnList[len(tnList):] =  [lastVal + (i+1)*DT for i in range(nNewDT) ]
+
+if tnList[-1] < T :
+    tnList.append(T)
+
+nFrames = len(tnList)
+
+# nFrames = int(T/DT) + 1
+# tnList =  [ i*DT for i in range(nFrames) ]
 
 # for outputting in file names without '.' and the like
 decimal_length = 6
@@ -90,6 +108,8 @@ rhol = lambdify((xs, ys, ts), rhos, "numpy")
 f1l = lambdify((xs, ys, ts), f1s, "numpy")
 f2l = lambdify((xs, ys, ts), f2s, "numpy")
 
+drhol_dx = lambdify((xs, ys, ts), simplify(diff(rhos,xs)), "numpy")
+drhol_dy = lambdify((xs, ys, ts), simplify(diff(rhos,ys)), "numpy")
 dul_dx = lambdify((xs, ys, ts), simplify(diff(us,xs)), "numpy")
 dul_dy = lambdify((xs, ys, ts), simplify(diff(us,ys)), "numpy")
 dvl_dx = lambdify((xs, ys, ts), simplify(diff(vs,xs)), "numpy")
@@ -129,6 +149,11 @@ def velocityFunctionLocal(x,t):
 
 
 # analytic derivatives
+def drhodxtrue(x,t):
+    return drhol_dx(x[...,0],x[...,1],t)
+def drhodytrue(x,t):
+    return drhol_dy(x[...,0],x[...,1],t)
+
 def dudxtrue(x,t):
     return dul_dx(x[...,0],x[...,1],t)
 def dudytrue(x,t):
@@ -148,6 +173,9 @@ def divVelocityFunction(x,t):
     return dudxtrue(x,t) + dvdytrue(x,t)
 
 # analytic gradients
+def gradrhotrue(x,t):
+    return np.array([drhodxtrue(x,t), drhodytrue(x,t)])
+
 def gradutrue(x,t):
     return np.array([dudxtrue(x,t), dudytrue(x,t)])
 
@@ -256,7 +284,7 @@ nLayersOfOverlapForParallel = 0
 
 # Time stepping for output
 # T=10.0
-# DT = 0.00625
+# DT = 0.1
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
