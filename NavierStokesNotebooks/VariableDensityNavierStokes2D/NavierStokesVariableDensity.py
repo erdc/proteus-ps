@@ -330,7 +330,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 b0 = 1.0/dt
             elif self.bdf is int(2):
                 r = dt/dt_last
-                dtInv = 1./dt
+                dtInv = 1.0/dt
                 b0 = (1.0+2.0*r)/(1.0+r)*dtInv  # = self.model.timeIntegration.alpha_bdf  # = beta_0
             Invb0chi = 1.0/(chi*b0)
 
@@ -815,7 +815,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         #equation ev = 1
         # rho_sharp*v_t + rho(u_star v_x + v_star v_y ) + p_sharp_y - f2 + div(-mu grad(v))
         #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )v = 0
-        c[('m',ev)][:] = rho_sharp*u    # d/dt ( rho_sharp * v) = d/dt (m_0)
+        c[('m',ev)][:] = rho_sharp*v    # d/dt ( rho_sharp * v) = d/dt (m_0)
         c[('dm',ev,vi)][:] = rho_sharp  # dm^0_dv
         c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_psharp[...,yi]
         c[('dr',ev,vi)][:] = 0.0
@@ -1048,7 +1048,6 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             rho = self.c_rho[c[('m',0)].shape]
         else:
             rho = [self.chiValue] # just give it the self.chiValue so that test passes as we assume user has given correct chiValue in this case.
-
 
         # Extract minimum of density and compare to given chiValue.
         # Ideally, the density model is maximum preserving and will not drop values
@@ -1302,6 +1301,10 @@ class Pressure2D(TransportCoefficients.TC_base):
                     b0 = 1.0/dt
                 elif self.bdf is int(2):
                     b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
+                    # dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
+                    # r = dt/dt_last
+                    # dtInv = 1.0/dt
+                    # b0 = (1.0+2.0*r)/(1.0+r)*dtInv  # = self.model.timeIntegration.alpha_bdf  # = beta_0
                 Invb0chi = 1.0/(chi*b0)
 
             # extract velocity components
