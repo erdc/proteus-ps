@@ -53,7 +53,7 @@ python processPressure.py results/pressure_BDF1_dt_0_100000_0.db \
                           results/pressure_BDF1_dt_0_050000_0.db \
                           results/pressure_BDF1_dt_0_025000_0.db \
                           results/pressure_BDF1_dt_0_012500_0.db \
-                          results/pressure__BDF1DT_0_006250_0.db
+                          results/pressure_BDF1_DT_0_006250_0.db
 
 python processDensity.py results/density_BDF1_dt_0_100000_0.db \
                         results/density_BDF1_dt_0_050000_0.db \
