@@ -161,7 +161,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 u_last = self.velocityModel.q[('u',0)] # velocity is from last time step so is called _last here
                 v_last = self.velocityModel.q[('u',1)]
                 self.c_u_last[u_last.shape] = u_last
-                self.c_v_last[v_last.shape] = v_;ast
+                self.c_v_last[v_last.shape] = v_last
                 if self.useStabilityTerms:
                     grad_u_last = self.velocityModel.q[('grad(u)',0)]
                     grad_v_last = self.velocityModel.q[('grad(u)',1)]
