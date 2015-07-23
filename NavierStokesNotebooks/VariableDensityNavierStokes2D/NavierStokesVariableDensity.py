@@ -113,7 +113,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             self.model.points_elementBoundaryQuadrature.add(('u_lastlast',0))
             self.model.numericalFlux.ebqe[('u_lastlast',0)] = self.model.ebqe[('u_lastlast',0)]
 
-        if not self.useVelocityComponents and self.velocityModelIndex >= 0:
+        if (not self.useVelocityComponents and self.velocityModelIndex >= 0 and
+               self.velocityFunction is None):
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             assert self.pressureIncrementModelIndex < len(modelList), \
@@ -153,7 +154,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     grad_v_last = self.velocityModel.ebq_global[('grad(u)',1)]
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
-        elif self.useVelocityComponents and self.velocityModelIndex >= 0:
+        elif (self.useVelocityComponents and self.velocityModelIndex >= 0 and
+              self.velocityFunction is None):
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
@@ -371,7 +373,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
 
 
         # choose the velocity to be used for transport
-        if self.bdf is int(1) or self.firstStep: # TODO move useVelocityComponents to second order
+        if self.bdf is int(1) or self.firstStep:
             # use first order extrapolation of velocity
             u_star = u_last
             v_star = v_last
@@ -524,7 +526,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 self.model.points_elementBoundaryQuadrature.add(('u_lastlast',ci))
                 self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
                 self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
-        if self.densityModelIndex >= 0:
+        if (self.densityModelIndex >= 0 and self.densityFunction is None):
             assert self.densityModelIndex < len(modelList), \
                 "density model index out of range 0," + repr(len(modelList))
             self.densityModel = modelList[self.densityModelIndex]
@@ -572,7 +574,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 if self.bdf is int(2):
                     rho_lastlast = self.densityModel.ebq_global[('u_lastlast',0)]
                     self.c_rho_lastlast[rho_lastlast.shape] = rho_lastlast
-        if self.pressureIncrementModelIndex >= 0:
+        if (self.pressureIncrementModelIndex >= 0 and self.pressureIncrementGradFunction is None):
             assert self.pressureIncrementModelIndex < len(modelList), \
                 "pressure increment model index out of range 0," + repr(len(modelList))
             self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
@@ -600,7 +602,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 if self.bdf is int(2):
                     grad_phi_lastlast = self.pressureIncrementModel.ebq_global[('grad(u)_last',0)]
                     self.c_phi_lastlast[grad_phi_lastlast.shape] = grad_phi_lastlast
-        if self.pressureModelIndex >= 0:
+        if (self.pressureModelIndex >= 0 and self.pressureGradFunction is None):
             assert self.pressureModelIndex < len(modelList), \
                 "pressure model index out of range 0," + repr(len(modelList))
             self.pressureModel = modelList[self.pressureModelIndex]
@@ -911,7 +913,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             self.model.vectors_quadrature.add(('grad(u)_last',0))
             self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',0))
             self.model.numericalFlux.ebqe[('grad(u)_last',0)] = self.model.ebqe[('grad(u)_last',0)]
-        if self.velocityModelIndex >= 0:
+        if (self.velocityModelIndex >= 0 and self.velocityFunction is None):
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
@@ -935,7 +937,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                 v = self.velocityModel.ebq_global[('u',1)]
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
-        if self.densityModelIndex >= 0:
+        if self.densityModelIndex >= 0:  # make this model available to test vs chi
             assert self.densityModelIndex < len(modelList), \
                 "density model index out of range 0," + repr(len(modelList))
             self.densityModel = modelList[self.densityModelIndex]
@@ -1067,11 +1069,15 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         # below this but if it does we want to know.  Even still we will
         # use the user given value of chi.
         chi = np.min(rho)
-        if self.chiValue < chi:  # raise warning but do not stop
+        if chi < self.chiValue :  # raise warning but do not stop
             log("*** warning: minimum of density = %1.3e is below physical limit chiValue = %1.3e. ***" %(chi, self.chiValue),  level=1)
         chi = self.chiValue
 
-        # extract velocity components   ** notice that the ('velocity',0) field corresponds to this model so is not available **  (why not ? srp July 11, 2015)
+        # Extract velocity components:  notice that the ('velocity',0) field
+        # corresponds to this model so it has not been updated to reflect the
+        # new information calculated.  Thus it is unavailable at this time.
+        # The post processed velocity should be generated here from the newly
+        # calculated velocity so we want to use the actual velocityModel data.
         if self.velocityFunction != None:
             u = self.velocityFunction(c['x'],t)[...,0]
             v = self.velocityFunction(c['x'],t)[...,1]
@@ -1080,6 +1086,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             v = self.c_v[c[('u',0)].shape]
 
         # set coefficients  -div (grad phi) + chi b0 div (u) = 0
+        #  div ( f - a grad phi  )  = div( chi b0 u - grad phi) = 0
         c[('f',0)][...,0] = chi*b0*u
         c[('f',0)][...,1] = chi*b0*v
         c[('df',0,0)][...,0] = 0.0
@@ -1178,7 +1185,8 @@ class Pressure2D(TransportCoefficients.TC_base):
         self.model.points_quadrature.add(('u_last',0))
         self.model.points_elementBoundaryQuadrature.add(('u_last',0))
         self.model.numericalFlux.ebqe[('u_last',0)] = self.model.ebqe[('u_last',0)]  # why do we need this line? srp july 15, 2015
-        if self.useRotationalModel and not self.useVelocityComponents and self.pressureIncrementModelIndex >= 0:
+        if ( self.useRotationalModel and not self.useVelocityComponents and
+             self.pressureIncrementModelIndex >= 0 and self.velocityFunction is None ):
             assert self.pressureIncrementModelIndex < len(modelList), \
                 "pressure increment model index out of range 0," + repr(len(modelList))
             self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
@@ -1194,7 +1202,8 @@ class Pressure2D(TransportCoefficients.TC_base):
             if ('velocity',0) in self.pressureIncrementModel.ebq_global:
                 vel = self.pressureIncrementModel.ebq_global[('velocity',0)]
                 self.c_velocity[vel.shape] = vel
-        elif self.useRotationalModel and self.useVelocityComponents and self.velocityModelIndex >= 0:
+        elif (self.useRotationalModel and self.useVelocityComponents and
+              self.velocityFunction is None and self.velocityModelIndex >= 0):
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
@@ -1218,7 +1227,7 @@ class Pressure2D(TransportCoefficients.TC_base):
                 v = self.velocityModel.ebq_global[('u',1)]
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
-        if self.pressureIncrementModelIndex >= 0:
+        if (self.pressureIncrementModelIndex >= 0 and self.pressureIncrementFunction is None):
             assert self.pressureIncrementModelIndex < len(modelList), \
                 "pressure increment model index out of range 0," + repr(len(modelList))
             self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
@@ -1299,7 +1308,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         p_last = c[('u_last',0)]
 
         # extract pressure increment
-        if self.velocityFunction != None:
+        if self.pressureIncrementFunction != None:
             phi = self.pressureIncrementFunction(c['x'],t)
         else:
             phi = self.c_phi[c[('u',0)].shape]
