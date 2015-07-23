@@ -60,8 +60,8 @@ class getIBC_p:
 initialConditions = {0:getIBC_p()}
 
 if ctx.useDirichletPressureBC:
-    dirichletConditions = {0:getDBC_p }
+    dirichletConditions = {0:getDBC_p } # pressure bc are explicitly set
 else:
-    dirichletConditions = {0:getNone }
+    dirichletConditions = {0:getNone } # pressure bc are set by pressure increment
 
 advectiveFluxBoundaryConditions = {0:getNone} # check this?
