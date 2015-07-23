@@ -69,16 +69,16 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         self.chiValue = chiValue
         self.pressureIncrementModelIndex=pressureIncrementModelIndex
         self.pressureIncrementFunction=pressureIncrementFunction
-        self.c_u = {}
-        self.c_v = {}
         self.c_u_last = {}
         self.c_v_last = {}
-        self.c_velocity = {}
-        self.c_grad_u = {}
-        self.c_grad_v = {}
+        self.c_u_lastlast = {}
+        self.c_v_lastlast = {}
+        self.c_velocity_last = {}
         self.c_grad_u_last = {}
         self.c_grad_v_last = {}
-        self.c_grad_velocity = {}
+        self.c_grad_u_lastlast = {}
+        self.c_grad_v_lastlast = {}
+        # self.c_grad_velocity_last = {}
         self.useStabilityTerms = useStabilityTerms
         self.firstStep = True # manipulated in preStep()
 
@@ -122,121 +122,121 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             self.velocityModel = modelList[self.velocityModelIndex]
             self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
             if ('velocity',0) in self.pressureIncrementModel.q:
-                vel = self.pressureIncrementModel.q[('velocity',0)]
-                self.c_velocity[vel.shape] = vel
+                vel_last = self.pressureIncrementModel.q[('velocity',0)] # velocity is from previous time step so is called _last here
+                self.c_velocity_last[vel_last.shape] = vel_last
                 if self.useStabilityTerms:
-                    grad_u = self.velocityModel.q[('grad(u)',0)]
-                    grad_v = self.velocityModel.q[('grad(u)',1)]
-                    self.c_grad_u[grad_u.shape] = grad_u
-                    self.c_grad_v[grad_v.shape] = grad_v
+                    grad_u_last = self.velocityModel.q[('grad(u)',0)]
+                    grad_v_last = self.velocityModel.q[('grad(u)',1)]
+                    self.c_grad_u_last[grad_u_last.shape] = grad_u_last
+                    self.c_grad_v_last[grad_v_last.shape] = grad_v_last
             if ('velocity',0) in self.pressureIncrementModel.ebq:
-                vel = self.pressureIncrementModel.ebq[('velocity',0)]
-                self.c_velocity[vel.shape] = vel
+                vel_last = self.pressureIncrementModel.ebq[('velocity',0)]
+                self.c_velocity_last[vel_last.shape] = vel_last
                 if self.useStabilityTerms:
-                    grad_u = self.velocityModel.ebq[('grad(u)',0)]
-                    grad_v = self.velocityModel.ebq[('grad(u)',1)]
-                    self.c_grad_u[grad_u.shape] = grad_u
-                    self.c_grad_v[grad_v.shape] = grad_v
+                    grad_u_last = self.velocityModel.ebq[('grad(u)',0)]
+                    grad_v_last = self.velocityModel.ebq[('grad(u)',1)]
+                    self.c_grad_u_last[grad_u_last.shape] = grad_u_last
+                    self.c_grad_v_last[grad_v_last.shape] = grad_v_last
             if ('velocity',0) in self.pressureIncrementModel.ebqe:
-                vel = self.pressureIncrementModel.ebqe[('velocity',0)]
-                self.c_velocity[vel.shape] = vel
+                vel_last = self.pressureIncrementModel.ebqe[('velocity',0)]
+                self.c_velocity_last[vel_last.shape] = vel_last
                 if self.useStabilityTerms:
-                    grad_u = self.velocityModel.ebqe[('grad(u)',0)]
-                    grad_v = self.velocityModel.ebqe[('grad(u)',1)]
-                    self.c_grad_u[grad_u.shape] = grad_u
-                    self.c_grad_v[grad_v.shape] = grad_v
+                    grad_u_last = self.velocityModel.ebqe[('grad(u)',0)]
+                    grad_v_last = self.velocityModel.ebqe[('grad(u)',1)]
+                    self.c_grad_u_last[grad_u_last.shape] = grad_u_last
+                    self.c_grad_v_last[grad_v_last.shape] = grad_v_last
             if ('velocity',0) in self.pressureIncrementModel.ebq_global:
-                vel = self.pressureIncrementModel.ebq_global[('velocity',0)]
-                self.c_velocity[vel.shape] = vel
+                vel_last = self.pressureIncrementModel.ebq_global[('velocity',0)]
+                self.c_velocity_last[vel_last.shape] = vel_last
                 if self.useStabilityTerms:
-                    grad_u = self.velocityModel.ebq_global[('grad(u)',0)]
-                    grad_v = self.velocityModel.ebq_global[('grad(u)',1)]
-                    self.c_grad_u[grad_u.shape] = grad_u
-                    self.c_grad_v[grad_v.shape] = grad_v
+                    grad_u_last = self.velocityModel.ebq_global[('grad(u)',0)]
+                    grad_v_last = self.velocityModel.ebq_global[('grad(u)',1)]
+                    self.c_grad_u_last[grad_u_last.shape] = grad_u_last
+                    self.c_grad_v_last[grad_v_last.shape] = grad_v_last
         elif self.useVelocityComponents and self.velocityModelIndex >= 0:
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
             if ('u',0) in self.velocityModel.q:
-                u = self.velocityModel.q[('u',0)]
-                v = self.velocityModel.q[('u',1)]
-                self.c_u[u.shape] = u
-                self.c_v[v.shape] = v
+                u_last = self.velocityModel.q[('u',0)] # velocity is from last time step so is called _last here
+                v_last = self.velocityModel.q[('u',1)]
+                self.c_u_last[u_last.shape] = u_last
+                self.c_v_last[v_last.shape] = v_;ast
                 if self.useStabilityTerms:
-                    grad_u = self.velocityModel.q[('grad(u)',0)]
-                    grad_v = self.velocityModel.q[('grad(u)',1)]
-                    self.c_grad_u[grad_u.shape] = grad_u
-                    self.c_grad_v[grad_v.shape] = grad_v
+                    grad_u_last = self.velocityModel.q[('grad(u)',0)]
+                    grad_v_last = self.velocityModel.q[('grad(u)',1)]
+                    self.c_grad_u_last[grad_u_last.shape] = grad_u_last
+                    self.c_grad_v_last[grad_v_last.shape] = grad_v_last
                 if self.bdf is int(2):
-                    u_last = self.velocityModel.q[('u_last',0)]
-                    v_last = self.velocityModel.q[('u_last',1)]
-                    self.c_u_last[u_last.shape] = u_last
-                    self.c_v_last[v_last.shape] = v_last
+                    u_lastlast = self.velocityModel.q[('u_last',0)]
+                    v_lastlast = self.velocityModel.q[('u_last',1)]
+                    self.c_u_lastlast[u_lastlast.shape] = u_lastlast
+                    self.c_v_lastlast[v_lastlast.shape] = v_lastlast
                     if self.useStabilityTerms:
-                        grad_u_last = self.velocityModel.q[('grad(u)_last',0)]
-                        grad_v_last = self.velocityModel.q[('grad(u)_last',1)]
-                        self.c_grad_u_last[grad_u_last.shape] = grad_u_last
-                        self.c_grad_v_last[grad_v_last.shape] = grad_v_last
+                        grad_u_lastlast = self.velocityModel.q[('grad(u)_last',0)]
+                        grad_v_lastlast = self.velocityModel.q[('grad(u)_last',1)]
+                        self.c_grad_u_lastlast[grad_u_lastlast.shape] = grad_u_lastlast
+                        self.c_grad_v_lastlast[grad_v_lastlast.shape] = grad_v_lastlast
             if ('u',0) in self.velocityModel.ebq:
-                u = self.velocityModel.ebq[('u',0)]
-                v = self.velocityModel.ebq[('u',1)]
-                self.c_u[u.shape] = u
-                self.c_v[v.shape] = v
+                u_last = self.velocityModel.ebq[('u',0)]
+                v_last = self.velocityModel.ebq[('u',1)]
+                self.c_u_last[u_last.shape] = u_last
+                self.c_v_last[v_last.shape] = v_last
                 if self.useStabilityTerms:
-                    grad_u = self.velocityModel.ebq[('grad(u)',0)]
-                    grad_v = self.velocityModel.ebq[('grad(u)',1)]
-                    self.c_grad_u[grad_u.shape] = grad_u
-                    self.c_grad_v[grad_v.shape] = grad_v
+                    grad_u_last = self.velocityModel.ebq[('grad(u)',0)]
+                    grad_v_last = self.velocityModel.ebq[('grad(u)',1)]
+                    self.c_grad_u_last[grad_u_last.shape] = grad_u_last
+                    self.c_grad_v_last[grad_v_last.shape] = grad_v_last
                 if self.bdf is int(2):
-                    u_last = self.velocityModel.ebq[('u_last',0)]
-                    v_last = self.velocityModel.ebq[('u_last',1)]
-                    self.c_u_last[u_last.shape] = u_last
-                    self.c_v_last[v_last.shape] = v_last
+                    u_lastlast = self.velocityModel.ebq[('u_last',0)]
+                    v_lastlast = self.velocityModel.ebq[('u_last',1)]
+                    self.c_u_lastlast[u_lastlast.shape] = u_lastlast
+                    self.c_v_lastlast[v_lastlast.shape] = v_lastlast
                     if self.useStabilityTerms:
-                        grad_u_last = self.velocityModel.ebq[('grad(u)_last',0)]
-                        grad_v_last = self.velocityModel.ebq[('grad(u)_last',1)]
-                        self.c_grad_u_last[grad_u_last.shape] = grad_u_last
-                        self.c_grad_v_last[grad_v_last.shape] = grad_v_last
+                        grad_u_lastlast = self.velocityModel.ebq[('grad(u)_last',0)]
+                        grad_v_lastlast = self.velocityModel.ebq[('grad(u)_last',1)]
+                        self.c_grad_u_lastlast[grad_u_lastlast.shape] = grad_u_lastlast
+                        self.c_grad_v_lastlast[grad_v_lastlast.shape] = grad_v_lastlast
             if ('u',0) in self.velocityModel.ebqe:
-                u = self.velocityModel.ebqe[('u',0)]
-                v = self.velocityModel.ebqe[('u',1)]
-                self.c_u[u.shape] = u
-                self.c_v[v.shape] = v
+                u_last = self.velocityModel.ebqe[('u',0)]
+                v_last = self.velocityModel.ebqe[('u',1)]
+                self.c_u_last[u_last.shape] = u_last
+                self.c_v_last[v_last.shape] = v_last
                 if self.useStabilityTerms:
-                    grad_u = self.velocityModel.ebqe[('grad(u)',0)]
-                    grad_v = self.velocityModel.ebqe[('grad(u)',1)]
-                    self.c_grad_u[grad_u.shape] = grad_u
-                    self.c_grad_v[grad_v.shape] = grad_v
+                    grad_u_last = self.velocityModel.ebqe[('grad(u)',0)]
+                    grad_v_last = self.velocityModel.ebqe[('grad(u)',1)]
+                    self.c_grad_u_last[grad_u_last.shape] = grad_u_last
+                    self.c_grad_v_last[grad_v_last.shape] = grad_v_last
                 if self.bdf is int(2):
-                    u_last = self.velocityModel.ebqe[('u_last',0)]
-                    v_last = self.velocityModel.ebqe[('u_last',1)]
-                    self.c_u_last[u_last.shape] = u_last
-                    self.c_v_last[v_last.shape] = v_last
+                    u_lastlast = self.velocityModel.ebqe[('u_last',0)]
+                    v_lastlast = self.velocityModel.ebqe[('u_last',1)]
+                    self.c_u_lastlast[u_lastlast.shape] = u_lastlast
+                    self.c_v_lastlast[v_lastlast.shape] = v_lastlast
                     if self.useStabilityTerms:
-                        grad_u_last = self.velocityModel.ebqe[('grad(u)_last',0)]
-                        grad_v_last = self.velocityModel.ebqe[('grad(u)_last',1)]
-                        self.c_grad_u_last[grad_u_last.shape] = grad_u_last
-                        self.c_grad_v_last[grad_v_last.shape] = grad_v_last
+                        grad_u_lastlast = self.velocityModel.ebqe[('grad(u)_last',0)]
+                        grad_v_lastlast = self.velocityModel.ebqe[('grad(u)_last',1)]
+                        self.c_grad_u_lastlast[grad_u_lastlast.shape] = grad_u_lastlast
+                        self.c_grad_v_lastlast[grad_v_lastlast.shape] = grad_v_lastlast
             if ('u',0) in self.velocityModel.ebq_global:
-                u = self.velocityModel.ebq_global[('u',0)]
-                v = self.velocityModel.ebq_global[('u',1)]
-                self.c_u[u.shape] = u
-                self.c_v[v.shape] = v
+                u_last = self.velocityModel.ebq_global[('u',0)]
+                v_last = self.velocityModel.ebq_global[('u',1)]
+                self.c_u_last[u_last.shape] = u_last
+                self.c_v_last[v_last.shape] = v_last
                 if self.useStabilityTerms:
-                    grad_u = self.velocityModel.ebq_global[('grad(u)',0)]
-                    grad_v = self.velocityModel.ebq_global[('grad(u)',1)]
-                    self.c_grad_u[grad_u.shape] = grad_u
-                    self.c_grad_v[grad_v.shape] = grad_v
+                    grad_u_last = self.velocityModel.ebq_global[('grad(u)',0)]
+                    grad_v_last = self.velocityModel.ebq_global[('grad(u)',1)]
+                    self.c_grad_u_last[grad_u_last.shape] = grad_u_last
+                    self.c_grad_v_last[grad_v_last.shape] = grad_v_last
                 if self.bdf is int(2):
-                    u_last = self.velocityModel.ebq_global[('u_last',0)]
-                    v_last = self.velocityModel.ebq_global[('u_last',1)]
-                    self.c_u_last[u_last.shape] = u_last
-                    self.c_v_last[v_last.shape] = v_last
+                    u_lastlast = self.velocityModel.ebq_global[('u_last',0)]
+                    v_lastlast = self.velocityModel.ebq_global[('u_last',1)]
+                    self.c_u_lastlast[u_lastlast.shape] = u_lastlast
+                    self.c_v_lastlast[v_lastlast.shape] = v_lastlast
                     if self.useStabilityTerms:
-                        grad_u_last = self.velocityModel.ebq_global[('grad(u)_last',0)]
-                        grad_v_last = self.velocityModel.ebq_global[('grad(u)_last',1)]
-                        self.c_grad_u_last[grad_u_last.shape] = grad_u_last
-                        self.c_grad_v_last[grad_v_last.shape] = grad_v_last
+                        grad_u_lastlast = self.velocityModel.ebq_global[('grad(u)_last',0)]
+                        grad_v_lastlast = self.velocityModel.ebq_global[('grad(u)_last',1)]
+                        self.c_grad_u_lastlast[grad_u_lastlast.shape] = grad_u_lastlast
+                        self.c_grad_v_lastlast[grad_v_lastlast.shape] = grad_v_lastlast
     def initializeMesh(self,mesh):
         """
         Give the TC object access to the mesh for any mesh-dependent information.
@@ -322,6 +322,10 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         if self.bdf is int(2):
             dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
 
+        tLast = self.model.timeIntegration.tLast
+        if self.bdf is int(2) and not self.firstStep:
+            tLastLast = tLast - dt_last
+
         # extract scaling terms for post processed velocity (see pressureIncrement model for description)
         if not self.useVelocityComponents and self.velocityFunction is None:
             chi = self.chiValue
@@ -335,41 +339,50 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             Invb0chi = 1.0/(chi*b0)
 
 
-        # extract current velocity components
+        # extract last velocity components
         if self.velocityFunction != None:
-            u = self.velocityFunction(c['x'],t)[...,0]
-            v = self.velocityFunction(c['x'],t)[...,1]
+            u_last = self.velocityFunction(c['x'],tLast)[...,0]
+            v_last = self.velocityFunction(c['x'],tLast)[...,1]
             if self.useStabilityTerms:
-                div_vel = self.divVelocityFunction(c['x'],t)
+                div_vel_last = self.divVelocityFunction(c['x'],tLast)
         elif self.useVelocityComponents:
-            u = self.c_u[c[('m',0)].shape]
-            v = self.c_v[c[('m',0)].shape]
+            u_last = self.c_u_last[c[('m',0)].shape]
+            v_last = self.c_v_last[c[('m',0)].shape]
             if self.useStabilityTerms:
-                div_vel = self.c_grad_u[c[('f',0)].shape][...,0] + self.c_grad_v[c[('f',0)].shape][...,1]
+                div_vel_last = self.c_grad_u_last[c[('f',0)].shape][...,0] + self.c_grad_v_last[c[('f',0)].shape][...,1]
         else:
-            u = Invb0chi*self.c_velocity[c[('f',0)].shape][...,0]  # make adjustment to physical values here by mult by dt/chi
-            v = Invb0chi*self.c_velocity[c[('f',0)].shape][...,1]  # make adjustment to physical values here by mult by dt/chi
+            u_last = Invb0chi*self.c_velocity_last[c[('f',0)].shape][...,0]  # make adjustment to physical values here by mult by dt/chi
+            v_last = Invb0chi*self.c_velocity_last[c[('f',0)].shape][...,1]  # make adjustment to physical values here by mult by dt/chi
             if self.useStabilityTerms:
-                div_vel = self.c_grad_u[c[('f',0)].shape][...,0] + self.c_grad_v[c[('f',0)].shape][...,1]
+                div_vel_last = self.c_grad_u_last[c[('f',0)].shape][...,0] + self.c_grad_v_last[c[('f',0)].shape][...,1]
+
+        # extract the lastlast time step values as needed
+        if self.bdf is int(2) and not self.firstStep:
+            if self.velocityFunction != None:
+                u_lastlast = self.velocityFunction(c['x'],tLastLast)[...,0]
+                v_lastlast = self.velocityFunction(c['x'],tLastLast)[...,1]
+                if self.useStabilityTerms:
+                    div_vel_lastlast = self.divVelocityFunction(c['x'],tLastLast)
+            else:  # TODO: add if not self.useVelocityComponents condition here
+                u_lastlast = self.c_u_lastlast[c[('m',0)].shape]
+                v_lastlast = self.c_v_lastlast[c[('m',0)].shape]
+                if self.useStabilityTerms:
+                    div_vel_lastlast = self.c_grad_u_lastlast[c[('f',0)].shape][...,0] + self.c_grad_v_lastlast[c[('f',0)].shape][...,1]
 
 
         # choose the velocity to be used for transport
-        if self.bdf is int(1) or self.firstStep or self.velocityFunction != None or not self.useVelocityComponents: # TODO move useVelocityComponents to second order
+        if self.bdf is int(1) or self.firstStep: # TODO move useVelocityComponents to second order
             # use first order extrapolation of velocity
-            u_star = u
-            v_star = v
+            u_star = u_last
+            v_star = v_last
             if self.useStabilityTerms:
-                div_vel_star = div_vel
+                div_vel_star = div_vel_last
         elif self.bdf is int(2):
-            # extract the previous time step values as needed
-            u_last = self.c_u_last[c[('m',0)].shape]
-            v_last = self.c_v_last[c[('m',0)].shape]
             # use second order extrapolation of velocity
-            u_star = u + dt/dt_last*( u - u_last )
-            v_star = v + dt/dt_last*( v - v_last )
+            u_star = u_last + dt/dt_last*( u_last - u_lastlast )
+            v_star = v_last + dt/dt_last*( v_last - v_lastlast )
             if self.useStabilityTerms:
-                div_vel_last = self.c_grad_u_last[c[('f',0)].shape][...,0] + self.c_grad_v_last[c[('f',0)].shape][...,1]
-                div_vel_star = div_vel + dt/dt_last*(div_vel - div_vel_last )
+                div_vel_star = div_vel_last + dt/dt_last*(div_vel_last - div_vel_lastlast )
         else:
             assert False, "Error: self.bdf = %f is not supported" %self.bdf
 
