@@ -20,16 +20,38 @@ quad_degree = 5  # exact for polynomials of this degree
 
 # Model Flags
 useStabilityTerms = True
-useVelocityComponents = True
+useVelocityComponents = True  # False uses post processed velocity,
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useRotationalModel = True #  Standard vs Rotational models in pressure update
 
-# actual time step for FixedStep
+# setup time variables
 T = 1.0
-DT = 0.00625
-nFrames = int(T/DT) + 1
-tnList =  [ i*DT for i in range(nFrames) ]
+DT = 0.05  # target time step size
+
+# setup tnList
+if globalBDFTimeOrder == 1:
+    nFrames = int(T/DT) + 1
+    tnList =  [ i*DT for i in range(nFrames) ]
+elif globalBDFTimeOrder == 2:
+    # spin up to DT from DT**2  doubling each time until we have DT then continue
+    DTstep = DT*DT
+    Tval = 0.0
+    tnList = [0.0]
+    while DTstep < DT:
+        Tval = Tval + DTstep
+        tnList.append(Tval)
+        DTstep *= 2.0
+
+    remainingDTSteps = int(np.floor((T-tnList[-1])/DT))
+    lastVal = tnList[-1]
+    tnList[len(tnList):] =  [lastVal + (i+1)*DT for i in range(remainingDTSteps) ]
+    if tnList[-1] < T :
+        tnList.append(T)
+    nFrames = len(tnList)
+else:
+    assert False, \
+      "Error: BDF time order = % is not supported.  It must be in {1,2}." % globalBDFTimeOrder
 
 # for outputting in file names without '.' and the like
 decimal_length = 6
@@ -63,7 +85,7 @@ xs,ys,ts = symbols('x y t')
 
 # viscosity coefficient
 mu = 1.0 # the viscosity coefficient
-chi = 1.0  # this is the minimal value of rho density.
+chi = 0.8  # 1.0 is the minimal value of rho density.
 
 # Given solution: (Modify here and if needed add more sympy.functions above with
 #                  notation sy_* to distinguish as symbolic functions)
@@ -90,6 +112,8 @@ rhol = lambdify((xs, ys, ts), rhos, "numpy")
 f1l = lambdify((xs, ys, ts), f1s, "numpy")
 f2l = lambdify((xs, ys, ts), f2s, "numpy")
 
+drhol_dx = lambdify((xs, ys, ts), simplify(diff(rhos,xs)), "numpy")
+drhol_dy = lambdify((xs, ys, ts), simplify(diff(rhos,ys)), "numpy")
 dul_dx = lambdify((xs, ys, ts), simplify(diff(us,xs)), "numpy")
 dul_dy = lambdify((xs, ys, ts), simplify(diff(us,ys)), "numpy")
 dvl_dx = lambdify((xs, ys, ts), simplify(diff(vs,xs)), "numpy")
@@ -108,7 +132,7 @@ def vtrue(x,t):
     return vl(x[...,0],x[...,1],t)
 
 def pitrue(x,t): # pressure increment
-    return 0.0*pl(x[...,0],x[...,1],t)
+    return np.zeros(x[...,0].shape)
 
 def ptrue(x,t):
     return pl(x[...,0],x[...,1],t)
@@ -129,6 +153,11 @@ def velocityFunctionLocal(x,t):
 
 
 # analytic derivatives
+def drhodxtrue(x,t):
+    return drhol_dx(x[...,0],x[...,1],t)
+def drhodytrue(x,t):
+    return drhol_dy(x[...,0],x[...,1],t)
+
 def dudxtrue(x,t):
     return dul_dx(x[...,0],x[...,1],t)
 def dudytrue(x,t):
@@ -148,6 +177,11 @@ def divVelocityFunction(x,t):
     return dudxtrue(x,t) + dvdytrue(x,t)
 
 # analytic gradients
+def gradrhotrue(x,t):
+    return np.vstack((drhodxtrue(x,t)[...,np.newaxis].transpose(),
+                      drhodytrue(x,t)[...,np.newaxis].transpose())
+                      ).transpose()
+
 def gradutrue(x,t):
     return np.array([dudxtrue(x,t), dudytrue(x,t)])
 
@@ -155,10 +189,14 @@ def gradvtrue(x,t):
     return np.array([dvdxtrue(x,t), dvdytrue(x,t)])
 
 def gradptrue(x,t):
-    return np.array([dpdxtrue(x,t), dpdytrue(x,t)])
+    return np.vstack((dpdxtrue(x,t)[...,np.newaxis].transpose(),
+                      dpdytrue(x,t)[...,np.newaxis].transpose())
+                      ).transpose()
 
 def gradpitrue(x,t): # pressure increment
-    return 0.0*np.array([dpdxtrue(x,t), dpdytrue(x,t)])
+    return np.vstack((np.zeros(x[...,0].shape)[...,np.newaxis].transpose(),
+                      np.zeros(x[...,0].shape)[...,np.newaxis].transpose())
+                      ).transpose()
 
 class AnalyticSolutionConverter:
     """
@@ -256,7 +294,7 @@ nLayersOfOverlapForParallel = 0
 
 # Time stepping for output
 # T=10.0
-# DT = 0.00625
+# DT = 0.05
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]

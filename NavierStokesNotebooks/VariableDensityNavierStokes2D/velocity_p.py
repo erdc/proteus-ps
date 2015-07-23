@@ -19,6 +19,7 @@ coefficients=NavierStokes.VelocityTransport2D(bdf=ctx.globalBDFTimeOrder,
                                               mu=ctx.mu,
                                               densityModelIndex=0,
                                               densityFunction=None, #set to ctx.rhotrue for exact density (uncoupled  flow)
+                                              densityGradFunction=None,  #set to ctx.gradrhotrue for exact grad density
                                               currentModelIndex=1,
                                               pressureIncrementModelIndex=2,
                                               pressureIncrementGradFunction=None, # set to ctx.gradpitrue for exact pressure increment

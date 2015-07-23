@@ -12,8 +12,6 @@ femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis, # u velocity 
 timeOrder = ctx.globalBDFTimeOrder
 
 from TimeIntegrationPS import NonConservativeBackwardEuler, NonConservativeVBDF
-# timeIntegration = NonConservativeBackwardEuler
-# timeIntegration = NonConservativeVBDF
 if timeOrder == 1:
     timeIntegration = NonConservativeBackwardEuler
 elif timeOrder == 2:
@@ -26,7 +24,7 @@ else:
 # runCFL = 0.5
 
 stepController  = FixedStep
-DT = ctx.DT
+DT = ctx.DT # overwritten by _so.py file
 
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
