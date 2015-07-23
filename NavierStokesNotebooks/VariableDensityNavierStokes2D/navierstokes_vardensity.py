@@ -20,32 +20,38 @@ quad_degree = 5  # exact for polynomials of this degree
 
 # Model Flags
 useStabilityTerms = True
-useVelocityComponents = True
+useVelocityComponents = True  # False uses post processed velocity,
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useRotationalModel = True #  Standard vs Rotational models in pressure update
 
-# actual time step for FixedStep
+# setup time variables
 T = 1.0
 DT = 0.05  # target time step size
 
-# spin up to DT from DT**2  doubling each time until we have DT then continue
-DTstep = DT*DT
-Tval = 0.0
-tnList = [0.0]
-while DTstep < DT:
-    Tval = Tval + DTstep
-    tnList.append(Tval)
-    DTstep *= 2.0
-remainingDTSteps = int(np.floor((T-tnList[-1])/DT))
-lastVal = tnList[-1]
-tnList[len(tnList):] =  [lastVal + (i+1)*DT for i in range(remainingDTSteps) ]
-if tnList[-1] < T :
-    tnList.append(T)
-nFrames = len(tnList)
+# setup tnList
+if globalBDFTimeOrder == 1:
+    nFrames = int(T/DT) + 1
+    tnList =  [ i*DT for i in range(nFrames) ]
+elif globalBDFTimeOrder == 2:
+    # spin up to DT from DT**2  doubling each time until we have DT then continue
+    DTstep = DT*DT
+    Tval = 0.0
+    tnList = [0.0]
+    while DTstep < DT:
+        Tval = Tval + DTstep
+        tnList.append(Tval)
+        DTstep *= 2.0
 
-# nFrames = int(T/DT) + 1
-# tnList =  [ i*DT for i in range(nFrames) ]
+    remainingDTSteps = int(np.floor((T-tnList[-1])/DT))
+    lastVal = tnList[-1]
+    tnList[len(tnList):] =  [lastVal + (i+1)*DT for i in range(remainingDTSteps) ]
+    if tnList[-1] < T :
+        tnList.append(T)
+    nFrames = len(tnList)
+else:
+    assert False, \
+      "Error: BDF time order = % is not supported.  It must be in {1,2}." % globalBDFTimeOrder
 
 # for outputting in file names without '.' and the like
 decimal_length = 6
@@ -79,7 +85,7 @@ xs,ys,ts = symbols('x y t')
 
 # viscosity coefficient
 mu = 1.0 # the viscosity coefficient
-chi = 1.0  # this is the minimal value of rho density.
+chi = 0.8  # 1.0 is the minimal value of rho density.
 
 # Given solution: (Modify here and if needed add more sympy.functions above with
 #                  notation sy_* to distinguish as symbolic functions)
