@@ -503,6 +503,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         self.c_p_last = {}  # pressure
         self.c_phi_last = {} # pressure increment phi
         if self.bdf is int(2):
+            self.c_p_lastlast = {}
             self.c_phi_lastlast = {}
         self.firstStep = True # manipulated in preStep()
 
@@ -609,15 +610,27 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             if ('u',0) in self.pressureModel.q:
                 grad_p_last = self.pressureModel.q[('grad(u)',0)] #grad(u) here is at time t^{k} so is _last in this context
                 self.c_p_last[grad_p_last.shape] = grad_p_last
+                if self.bdf is int(2):
+                    grad_p_lastlast = self.pressureModel.q[('grad(u)_last',0)]
+                    self.c_p_lastlast[grad_p_lastlast.shape] = grad_p_lastlast
             if ('u',0) in self.pressureModel.ebq:
                 grad_p_last = self.pressureModel.ebq[('grad(u)',0)]
                 self.c_p_last[grad_p_last.shape] = grad_p_last
+                if self.bdf is int(2):
+                    grad_p_lastlast = self.pressureModel.ebq[('grad(u)_last',0)]
+                    self.c_p_lastlast[grad_p_lastlast.shape] = grad_p_lastlast
             if ('u',0) in self.pressureModel.ebqe:
                 grad_p_last = self.pressureModel.ebqe[('grad(u)',0)]
                 self.c_p_last[grad_p_last.shape] = grad_p_last
+                if self.bdf is int(2):
+                    grad_p_lastlast = self.pressureModel.ebqe[('grad(u)_last',0)]
+                    self.c_p_lastlast[grad_p_lastlast.shape] = grad_p_lastlast
             if ('u',0) in self.pressureModel.ebq_global:
                 grad_p_last = self.pressureModel.ebq_global[('grad(u)',0)]
                 self.c_p_last[grad_p_last.shape] = grad_p_last
+                if self.bdf is int(2):
+                    grad_p_lastlast = self.pressureModel.ebq_global[('grad(u)_last',0)]
+                    self.c_p_lastlast[grad_p_lastlast.shape] = grad_p_lastlast
     def initializeMesh(self,mesh):
         """
         Give the TC object access to the mesh for any mesh-dependent information.
@@ -767,6 +780,11 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
 
         # extract grad_phi_lastlast  phi^{k-1}
         if self.bdf is int(2) and not self.firstStep:
+            if self.pressureGradFunction != None:
+                grad_p_lastlast = self.pressureGradFunction(c['x'],tLastLast)
+            else:#use grad of component u shape as key since it is same shape as gradient of pressure
+                grad_p_lastlast = self.c_p_lastlast[c[('grad(u)',0)].shape]
+
             if self.pressureIncrementGradFunction != None:
                 grad_phi_lastlast = self.pressureIncrementGradFunction(c['x'],tLastLast)
             else:#use velocity shape as key since it is same shape as gradient of pressure increment
@@ -778,11 +796,13 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         if self.bdf is int(1) or self.firstStep:
             rho_sharp = rho_last
             rho_t = (rho - rho_last)/dt # bdf1 time derivative
-            grad_psharp = grad_p_last + grad_phi_last
+            grad_p_sharp = grad_p_last + grad_phi_last
         elif self.bdf is int(2):
             rho_sharp = rho
             rho_t = b0*rho - b1*rho_last - b2*rho_lastlast #bdf2 time derivative  (see above for descriptions and definitions of b0 b1 and b2)
-            grad_psharp = grad_p_last + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
+            grad_p_sharp = grad_p_last + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
+            # grad_p_star = grad_p_last + dt/dt_last*( grad_p_last - grad_p_lastlast ) # second order extrapolation
+            # grad_p_sharp = grad_p_star + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
 
         # extrapolation of velocity
         if self.bdf is int(1) or self.firstStep:
@@ -814,7 +834,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )u = 0
         c[('m',eu)][:] = rho_sharp*u    # d/dt ( rho_sharp * u) = d/dt (m_0)
         c[('dm',eu,ui)][:] = rho_sharp  # dm^0_du
-        c[('r',eu)][:] = -self.f1ofx(c['x'][:],t) + grad_psharp[...,xi]
+        c[('r',eu)][:] = -self.f1ofx(c['x'][:],t) + grad_p_sharp[...,xi]
         c[('dr',eu,ui)][:] = 0.0
         if self.useStabilityTerms:
             c[('r',eu)][:] += 0.5*( rho_t + div_rho_vel_star )*u
@@ -832,7 +852,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )v = 0
         c[('m',ev)][:] = rho_sharp*v    # d/dt ( rho_sharp * v) = d/dt (m_0)
         c[('dm',ev,vi)][:] = rho_sharp  # dm^0_dv
-        c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_psharp[...,yi]
+        c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_p_sharp[...,yi]
         c[('dr',ev,vi)][:] = 0.0
         if self.useStabilityTerms:
             c[('r',ev)][:] += 0.5*( rho_t + div_rho_vel_star )*v
@@ -902,7 +922,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
 
     def attachModels(self,modelList):
         """
-        Attach the model for velocity and density
+        Attach the model for velocity and density to PressureIncrement model
         """
         self.model = modelList[self.currentModelIndex] # current model
         # will need grad_phi and grad_phi_last for bdf2 algorithm in velocity model
@@ -1254,7 +1274,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         """
         for ci in range(self.nc):
             cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
-            # cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
+            cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
@@ -1271,7 +1291,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         """
         for ci in range(self.nc):
             cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
-            # cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+            cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
         """
         Give the TC object access to the generalized interpolation point storage. These points are used  to project nonlinear potentials (phi).
@@ -1289,6 +1309,11 @@ class Pressure2D(TransportCoefficients.TC_base):
             self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
             # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
             self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
+            # self.model.ebq_global[('u_last',ci)][:] = self.model.ebq_global[('u',ci)]
+
+            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
+            # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
+            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
             # self.model.ebq_global[('u_last',ci)][:] = self.model.ebq_global[('u',ci)]
 
             # don't need grad(u)_last either since it will never be used.
