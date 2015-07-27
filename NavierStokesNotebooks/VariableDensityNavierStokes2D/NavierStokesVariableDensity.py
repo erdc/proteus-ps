@@ -879,9 +879,11 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
     def __init__(self,
                  bdf=1,
                  currentModelIndex=2,
+                 densityModelIndex=-1,
                  velocityModelIndex=-1,
                  velocityFunction=None,
-                 densityModelIndex=-1,
+                 pressureFunction=None,
+                 initializeUsingPressureFunction=False,
                  zeroMean=False,
                  chiValue=1.0):
         """Construct a coefficients object
@@ -910,9 +912,11 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         self.bdf=int(bdf)
         self.chiValue = chiValue
         self.currentModelIndex = currentModelIndex
+        self.densityModelIndex = densityModelIndex
         self.velocityModelIndex = velocityModelIndex
         self.velocityFunction = velocityFunction
-        self.densityModelIndex = densityModelIndex
+        self.pressureFunction = pressureFunction
+        self.initializeUsingPressureFunction = initializeUsingPressureFunction
         self.c_u = {}
         self.c_v = {}
         self.c_velocity = {}
@@ -1062,6 +1066,12 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                                                       self.model.mesh.nElements_owned)
             assert fabs(newmeanvalue) < 1.0e-8, "new mean should be zero but is "+`newmeanvalue`
         # add post processing adjustments here if possible.  They have already be solved for by this point.
+
+        if t>0 and firstStep and self.initializeUsingPressureFunction:
+            self.model.q[('u',0)][:] = self.pressureFunction(self.model.q['x'],t)-self.pressureFunction(self.model.q['x'],0)
+            self.model.ebqe[('u',0)] = self.pressureFunction(self.model.ebqe['x'],t)-self.pressureFunction(self.model.ebqe['x'],0)
+            self.model.u[0].dof[:] = self.pressureFunction(self.model.mesh.nodeArray,t)-self.pressureFunction(self.model.mesh.nodeArray,0)
+
 
         copyInstructions = {}
         return copyInstructions
