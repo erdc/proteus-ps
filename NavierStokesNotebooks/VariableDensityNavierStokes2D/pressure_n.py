@@ -54,9 +54,9 @@ l_atol_res = 0.001*ctx.pressure_atol_res
 tolFac = 0.0
 nl_atol_res = ctx.pressure_atol_res
 
-nonlinearSolverConvergenceTest = 'r'
+nonlinearSolverConvergenceTest      = 'r'
 levelNonlinearSolverConvergenceTest = 'r'
-linearSolverConvergenceTest             = 'r-true'
+linearSolverConvergenceTest         = 'r-true'
 
 periodicDirichletConditions=None
 
