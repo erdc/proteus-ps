@@ -6,7 +6,7 @@ import shelve # to open and read the database file
 
 import numpy as np
 
-usePlots = False
+usePlots = True
 
 if usePlots:
     import matplotlib
@@ -65,7 +65,7 @@ for i in range(num_filenames):
 # momentum0.db, momentum1.db, momentum2.db, etc
 
 numTimeSteps = [None]*num_filenames
-dt = [None]*num_filenames
+dt = [0.0]*num_filenames
 rho_maxL2Norm =[None]*num_filenames
 # rho_maxH1Norm = [None]*num_filenames
 rho_ell2L2Norm = [None]*num_filenames
@@ -73,7 +73,7 @@ rho_ell2L2Norm = [None]*num_filenames
 
 for i in range(num_filenames):
     numTimeSteps[i] = len(database[i]['timeValues'])-1 # subtract 1 to get the number of steps not the number of time values
-    dt[i] = database[i]['timeValues'][1] - database[i]['timeValues'][0]
+    dt[i] = np.max(np.array(database[i]['timeValues'])[1:-1]-np.array(database[i]['timeValues'])[0:-2])
 
     # extract data from database i
     rho_L2Error = np.array([0] + database[i]['errorData'][0][0]['error_u_L2'])
@@ -160,3 +160,25 @@ if num_filenames > 1:
     #     print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
     #             rho_ell2L2Norm[i],rate_rho_ell2L2Norm[i],\
     #             rho_ell2H1Norm[i],rate_rho_ell2H1Norm[i])
+
+# calculate rates of convergence and make a table
+if num_filenames > 1:
+
+    rate_rho_maxL2Norm = [0]*num_filenames
+    # rate_rho_maxH1Norm = [0]*num_filenames
+    rate_rho_ell2L2Norm = [0]*num_filenames
+    # rate_rho_ell2H1Norm = [0]*num_filenames
+    for i in range(1,num_filenames):
+        rate_rho_maxL2Norm[i] = np.log(rho_maxL2Norm[i]/rho_maxL2Norm[i-1])/np.log(float(dt[i])/dt[i-1])
+        # rate_rho_maxH1Norm[i] = -np.log(rho_maxH1Norm[i]/rho_maxH1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
+
+        rate_rho_ell2L2Norm[i] = np.log(rho_ell2L2Norm[i]/rho_ell2L2Norm[i-1])/np.log(float(dt[i])/dt[i-1])
+        # rate_rho_ell2H1Norm[i] = -np.log(rho_ell2H1Norm[i]/rho_ell2H1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
+
+
+
+    print "\nmax dt      rho_maxL2   rate    rho_l2L2    rate"
+    for i in range(num_filenames):
+        print "%1.3e   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
+                                                    rho_maxL2Norm[i],rate_rho_maxL2Norm[i],\
+                                                    rho_ell2L2Norm[i],rate_rho_ell2L2Norm[i])
