@@ -388,21 +388,13 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         else:
             assert False, "Error: self.bdf = %f is not supported" %self.bdf
 
-        #  bdf1:  rho_t + div( rho vel_star) - 0.5 rho div( vel_star ) = 0
-        #  bdf2:  rho_t + vel_star \cdot grad_rho - 0.5 rho div( vel_star ) = 0
+        #  rho_t + div( rho vel_star) - 0.5 rho div( vel_star ) = 0
         c[('m',0)][:] = rho
         c[('dm',0,0)][:] = 1.0
-        # if self.bdf is int(1) or self.firstStep:
         c[('f',0)][...,0] = rho*u_star
         c[('f',0)][...,1] = rho*v_star
         c[('df',0,0)][...,0] = u_star
         c[('df',0,0)][...,1] = v_star
-        # elif self.bdf is int(2):
-        #     c[('H',0)][:] = u_star*grad_rho[...,0] + v_star*grad_rho[...,1]
-        #     c[('dH',0,0)][...,0] = u_star #  dH d(u_x)
-        #     c[('dH',0,0)][...,1] = v_star #  dH d(u_y)
-        # else:
-        #     assert False, "Error: self.bdf = %f is not supported" %self.bdf
         if self.useStabilityTerms:
             c[('r',0)][:]    = -0.5*rho*div_vel_star
             c[('dr',0,0)][:] = -0.5*div_vel_star
@@ -718,7 +710,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('r',0)]   = reaction term for the 0th equation. This is where we will put the source term
         """
         xi=0; yi=1; # indices for first component or second component of dimension
-        eu=0; ev=1; # equation numbers  momentum u, momentum v, divergencefree
+        eu=0; ev=1; # equation numbers  momentum u, momentum v
         ui=0; vi=1; # variable name ordering
 
         # time management
@@ -747,8 +739,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         v_last = c[('u_last',vi)]
         grad_u_last = c[('grad(u)_last',ui)]
         grad_v_last = c[('grad(u)_last',vi)]
-
-        # velocities *_lastlast  will be extracted as needed below
 
         # extract rho, rho_last, rho_lastlast and grad_rho as needed
         if self.densityFunction != None:
