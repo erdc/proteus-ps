@@ -1067,7 +1067,9 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             assert fabs(newmeanvalue) < 1.0e-8, "new mean should be zero but is "+`newmeanvalue`
         # add post processing adjustments here if possible.  They have already be solved for by this point.
 
-        if t>0 and firstStep and self.initializeUsingPressureFunction:
+        # If self.initializeUsingPressureFunction (for debugging), then
+        # set the first step of pressure increment to be p_h^1 - p_h^0
+        if (self.initializeUsingPressureFunction and self.bdf is int(2) and firstStep and t>0):
             self.model.q[('u',0)][:] = self.pressureFunction(self.model.q['x'],t)-self.pressureFunction(self.model.q['x'],0)
             self.model.ebqe[('u',0)] = self.pressureFunction(self.model.ebqe['x'],t)-self.pressureFunction(self.model.ebqe['x'],0)
             self.model.u[0].dof[:] = self.pressureFunction(self.model.mesh.nodeArray,t)-self.pressureFunction(self.model.mesh.nodeArray,0)
