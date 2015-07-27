@@ -23,7 +23,9 @@ useStabilityTerms = True
 useVelocityComponents = True  # False uses post processed velocity,
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
-useRotationalModel = True #  Standard vs Rotational models in pressure update
+useRotationalModel = False #  Standard vs Rotational models in pressure update
+initializePressureIncrementUsingPressureFunction = True
+
 
 # setup time variables
 T = 1.0
