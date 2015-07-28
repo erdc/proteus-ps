@@ -696,6 +696,13 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
 
         copyInstructions = {}
         return copyInstructions
+    def postStep(self,t,firstStep=False):
+        """
+        Give the TC object an opportunity to modify itself after the time step.
+        """
+        pass
+        # copyInstructions = {}
+        # return copyInstructions
     def evaluate(self,t,c):
         """
         evaluate quadrature point values held in the dictionary c
