@@ -15,6 +15,7 @@ name = "density"
 coefficients=NavierStokes.DensityTransport2D(bdf=ctx.globalBDFTimeOrder,
                                              chiValue=ctx.chi,
                                              currentModelIndex=0,
+                                             densityFunction=ctx.rhotrue,
                                              velocityModelIndex=1,  #don't change this unless the order in so-file is changed
                                              velocityFunction=None, #or ctx.velocityFunction to use exact solution (uncoupled transport)
                                              divVelocityFunction=None, # or ctx.divVelocityFunction to use exact divergence solution

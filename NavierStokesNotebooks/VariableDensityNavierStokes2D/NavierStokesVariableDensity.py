@@ -257,7 +257,12 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         if (firstStep and t>0):
             self.model.q[('u',0)][:] = self.densityFunction(self.model.q['x'],t)
             self.model.ebqe[('u',0)] = self.densityFunction(self.model.ebqe['x'],t)
-            self.model.u[0].dof[:] = self.densityFunction(self.model.mesh.nodeArray,t)
+            for eN in range(self.model.mesh.nElements_global):
+                for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
+                    jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
+                    x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
+                    self.model.u[0].dof[jg]=self.densityFunction(x,t)
+            # self.model.u[0].dof[:] = self.densityFunction(self.model.mesh.nodeArray,t)
 
         copyInstructions = {}
         return copyInstructions
@@ -599,8 +604,14 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             self.model.q[('u',1)][:] = self.vFunction(self.model.q['x'],t)
             self.model.ebqe[('u',0)] = self.uFunction(self.model.ebqe['x'],t)
             self.model.ebqe[('u',1)] = self.vFunction(self.model.ebqe['x'],t)
-            self.model.u[0].dof[:] = self.uFunction(self.model.mesh.nodeArray,t)
-            self.model.u[1].dof[:] = self.vFunction(self.model.mesh.nodeArray,t)
+            for eN in range(self.model.mesh.nElements_global):
+                for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
+                    jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
+                    x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
+                    self.model.u[0].dof[jg]=self.uFunction(x,t)
+                    self.model.u[1].dof[jg]=self.vFunction(x,t)
+            # self.model.u[0].dof[:] = self.uFunction(self.model.mesh.nodeArray,t)
+            # self.model.u[1].dof[:] = self.vFunction(self.model.mesh.nodeArray,t)
 
         copyInstructions = {}
         return copyInstructions
@@ -910,9 +921,14 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
 
         # If self.initializeUsingPressureFunction (for debugging), then
         # set the first step of pressure increment to be p_h^1 - p_h^0
-        if (self.initializeUsingPressureFunction and self.bdf is int(2) and firstStep and t>0):
+        if (firstStep and t>0):
             self.model.q[('u',0)][:] = self.pressureFunction(self.model.q['x'],t)-self.pressureFunction(self.model.q['x'],0)
             self.model.ebqe[('u',0)] = self.pressureFunction(self.model.ebqe['x'],t)-self.pressureFunction(self.model.ebqe['x'],0)
+            # for eN in range(self.model.mesh.nElements_global):
+            #     for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
+            #         jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
+            #         x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
+            #         self.model.u[0].dof[jg]=self.pressureFunction(x,t)-self.pressureFunction(x,0)
             self.model.u[0].dof[:] = self.pressureFunction(self.model.mesh.nodeArray,t)-self.pressureFunction(self.model.mesh.nodeArray,0)
 
         copyInstructions = {}
@@ -1132,6 +1148,11 @@ class Pressure2D(TransportCoefficients.TC_base):
         if (firstStep and t>0):
             self.model.q[('u',0)][:] = self.pressureFunction(self.model.q['x'],t)
             self.model.ebqe[('u',0)] = self.pressureFunction(self.model.ebqe['x'],t)
+            # for eN in range(self.model.mesh.nElements_global):
+            #     for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
+            #         jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
+            #         x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
+            #         self.model.u[0].dof[jg]=self.pressureFunction(x,t)
             self.model.u[0].dof[:] = self.pressureFunction(self.model.mesh.nodeArray,t)
 
         copyInstructions = {}
@@ -1141,11 +1162,9 @@ class Pressure2D(TransportCoefficients.TC_base):
         Evaluate the coefficients after getting the specified velocity and density
         """
 
-        # current and previous pressure values
         p = c[('u',0)]
         p_last = c[('u_last',0)]
 
-        # extract pressure increment
         phi = self.c_phi[c[('u',0)].shape]
 
         u = self.c_u[c[('u',0)].shape]
