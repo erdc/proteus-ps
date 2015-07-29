@@ -12,16 +12,11 @@ name = "density"
 
 
 # from pnList in *_so.py  0 = density,  1 = (u,v), 2 = (pressureincrement),  3 = (pressure)
-coefficients=NavierStokes.DensityTransport2D(bdf=ctx.globalBDFTimeOrder,
-                                             chiValue=ctx.chi,
+coefficients=NavierStokes.DensityTransport2D(chiValue=ctx.chi,
                                              currentModelIndex=0,
                                              densityFunction=ctx.rhotrue,
                                              velocityModelIndex=1,  #don't change this unless the order in so-file is changed
-                                             velocityFunction=None, #or ctx.velocityFunction to use exact solution (uncoupled transport)
-                                             divVelocityFunction=None, # or ctx.divVelocityFunction to use exact divergence solution
-                                             useVelocityComponents=ctx.useVelocityComponents, #set to false to use 'velocity' (possible post-processed)
                                              pressureIncrementModelIndex=2,
-                                             pressureIncrementFunction=None,  # or ctx.pitrue
                                              useStabilityTerms=False)#ctx.useStabilityTerms)
 
 if ctx.opts.analytical:
