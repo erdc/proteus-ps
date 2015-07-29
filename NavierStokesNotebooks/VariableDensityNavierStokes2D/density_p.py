@@ -17,7 +17,7 @@ coefficients=NavierStokes.DensityTransport2D(chiValue=ctx.chi,
                                              densityFunction=ctx.rhotrue,
                                              velocityModelIndex=1,  #don't change this unless the order in so-file is changed
                                              pressureIncrementModelIndex=2,
-                                             useStabilityTerms=False)#ctx.useStabilityTerms)
+                                             useStabilityTerms=ctx.useStabilityTerms)
 
 if ctx.opts.analytical:
    analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.rhotrue)}
