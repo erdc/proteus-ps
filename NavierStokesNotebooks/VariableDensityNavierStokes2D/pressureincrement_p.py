@@ -13,14 +13,10 @@ name = "pressureincrement"
 #the object for evaluating the coefficients
 
 # from pnList in *_so.py  0 = density,  1 = (u,v),  2 = (pressureincrement),  3 = (pressure)
-coefficients=NavierStokes.PressureIncrement2D(bdf=ctx.globalBDFTimeOrder,
-                                              chiValue=ctx.chi,
+coefficients=NavierStokes.PressureIncrement2D(chiValue=ctx.chi,
                                               zeroMean=not ctx.useDirichletPressureBC,
                                               densityModelIndex=0,
                                               velocityModelIndex=1,
-                                              velocityFunction=None, # use ctx.velocityFunction for exact velocity
-                                              pressureFunction=ctx.ptrue,
-                                              initializeUsingPressureFunction=ctx.initializePressureIncrementUsingPressureFunction,
                                               currentModelIndex=2)
 
 if ctx.opts.analytical:
