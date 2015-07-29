@@ -18,7 +18,8 @@ coefficients=NavierStokes.PressureIncrement2D(chiValue=ctx.chi,
                                               densityModelIndex=0,
                                               velocityModelIndex=1,
                                               pressureFunction=ctx.ptrue,
-                                              currentModelIndex=2)
+                                              currentModelIndex=2,
+                                              setFirstTimeStepValues=ctx.setFirstTimeStepValues)
 
 if ctx.opts.analytical:
     analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.pitrue,ctx.gradpitrue)}

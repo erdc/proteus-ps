@@ -19,7 +19,8 @@ coefficients=NavierStokes.Pressure2D(mu=ctx.mu,
                                      pressureIncrementModelIndex=2,
                                      pressureFunction=ctx.ptrue,
                                      useRotationalModel=ctx.useRotationalModel,
-                                     currentModelIndex=3)
+                                     currentModelIndex=3,
+                                     setFirstTimeStepValues=ctx.setFirstTimeStepValues)
 
 if ctx.opts.analytical:
     analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.ptrue,ctx.gradptrue)}
