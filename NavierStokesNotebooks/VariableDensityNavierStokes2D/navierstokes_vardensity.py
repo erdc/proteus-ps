@@ -20,7 +20,7 @@ quad_degree = 5  # exact for polynomials of this degree between [1 .. 5]
 
 # Model Flags
 useStabilityTerms = True  # stability terms in density and velocity models
-globalBDFTimeOrder = 1 # 1 or 2 for time integration algorithms
+globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useRotationalModel = False #  Standard vs Rotational models in pressure update
 useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
@@ -28,7 +28,7 @@ setFirstTimeStepValues = True #
 
 # setup time variables
 T = 1.0
-DT = 0.1  # target time step size
+DT = 0.05  # target time step size
 
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
@@ -297,7 +297,7 @@ nLayersOfOverlapForParallel = 0
 
 # Time stepping for output
 # T=10.0
-# DT = 0.1
+# DT = 0.05
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]

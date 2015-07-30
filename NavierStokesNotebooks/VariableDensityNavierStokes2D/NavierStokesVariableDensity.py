@@ -607,37 +607,56 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
 
         # time management
         dt = self.model.timeIntegration.dt  # 0 = velocityModelIndex
+        # dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
+        # if self.firstStep:
+        dt_last = dt
+
+        dtInv = 1.0/dt
+        r = dt/dt_last
+        b0 = (1.0+2.0*r)/(1.0+r)*dtInv   # is self.model.timeIntegration.alpha_bdf as set in calculateCoefs() of timeIntegration.py
+        b1 = (1.0+r)*dtInv               # is -b0 as set in self.model.timeIntegration.calculateCoefs()
+        b2 = -r*r/(1.0+r)*dtInv          # is -b1 as set in self.model.timeIntegration.calculateCoefs()
+
         tLast = self.model.timeIntegration.tLast
+        tLastLast = tLast - dt_last
 
         rho = self.c_rho[c[('m',0)].shape]
         rho_last = self.c_rho_last[c[('m',0)].shape]
+        rho_lastlast = self.c_rho_lastlast[c[('m',0)].shape]
 
         grad_rho = self.c_rho[c[('grad(u)',0)].shape] # use velocity shape since it is same shape as gradient
 
         grad_p_last = self.c_p_last[c[('grad(u)',0)].shape]
+        grad_p_lastlast = self.c_p_lastlast[c[('grad(u)',0)].shape]
 
         grad_phi_last = self.c_phi_last[c[('grad(u)',0)].shape]
+        grad_phi_lastlast = self.c_phi_lastlast[c[('grad(u)',0)].shape]
 
         # current velocity and grad velocity
         u = c[('u',ui)]
         v = c[('u',vi)]
         u_last = c[('u_last',ui)]
         v_last = c[('u_last',vi)]
+        u_lastlast = c[('u_lastlast',ui)]
+        v_lastlast = c[('u_lastlast',vi)]
 
         grad_u = c[('grad(u)',ui)]
         grad_v = c[('grad(u)',vi)]
         grad_u_last = c[('grad(u)_last',ui)]
         grad_v_last = c[('grad(u)_last',vi)]
+        grad_u_lastlast = c[('grad(u)_lastlast',ui)]
+        grad_v_lastlast = c[('grad(u)_lastlast',vi)]
 
         div_vel_last = grad_u_last[...,xi] + grad_v_last[...,yi]
+        div_vel_lastlast = grad_u_lastlast[...,xi] + grad_v_lastlast[...,yi]
 
 
-        rho_sharp = rho_last
-        rho_t = (rho - rho_last)/dt # bdf1 time derivative
-        grad_p_sharp = grad_p_last + grad_phi_last
-        div_vel_star = div_vel_last
-        u_star = u_last
-        v_star = v_last
+        rho_sharp        = rho # rho
+        rho_t            = (rho - rho_last)/dt #b0*rho - b1*rho_last - b2*rho_lastlast
+        grad_p_sharp     = grad_p_last + b1/b0 * grad_phi_last + b2/b0 * grad_phi_lastlast #grad_p_last + grad_phi_last 
+        div_vel_star     = div_vel_last #+ dt/dt_last*( div_vel_last - div_vel_lastlast)
+        u_star           = u_last #+ dt/dt_last*( u_last - u_lastlast )
+        v_star           = v_last #+ dt/dt_last*( v_last - v_lastlast )
         div_rho_vel_star = grad_rho[...,xi]*u_star + grad_rho[...,yi]*v_star + rho*div_vel_star
 
         #equation eu = 0
@@ -885,7 +904,12 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
 
         # time management
         dt = self.model.timeIntegration.dt
-        b0 = 1.0/dt
+        dt_last = dt
+
+        # b0 = 1.0/dt
+        dtInv = 1.0/dt
+        r = dt/dt_last
+        b0 = (1.0+2.0*r)/(1.0+r)*dtInv   # is self.model.timeIntegration.alpha_bdf as set in calculateCoefs() of timeIntegration.py
         # b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
 
         chi = self.chiValue
