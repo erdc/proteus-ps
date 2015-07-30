@@ -12,14 +12,15 @@ femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis} # density spa
 # timeIntegration = TimeIntegration.BackwardEuler_cfl
 # timeIntegration = TimeIntegration.VBDF
 timeOrder = ctx.globalBDFTimeOrder
+timeIntegration = TimeIntegration.VBDF
 
-if timeOrder == 1:
-    timeIntegration = TimeIntegration.BackwardEuler
-    # timeIntegration = TimeIntegration.BackwardEuler_cfl
-elif timeOrder == 2:
-    timeIntegration = TimeIntegration.VBDF
-else:
-    assert False, "BDF order %d for time integration is not supported." % timeOrder
+# if timeOrder == 1:
+#     timeIntegration = TimeIntegration.BackwardEuler
+#     # timeIntegration = TimeIntegration.BackwardEuler_cfl
+# elif timeOrder == 2:
+#     timeIntegration = TimeIntegration.VBDF
+# else:
+#     assert False, "BDF order %d for time integration is not supported." % timeOrder
 
 # stepController  = StepControl.Min_dt_cfl_controller
 # runCFL= 0.99

@@ -651,9 +651,9 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         div_vel_lastlast = grad_u_lastlast[...,xi] + grad_v_lastlast[...,yi]
 
 
-        rho_sharp        = rho # rho
+        rho_sharp        = rho
         rho_t            = (rho - rho_last)/dt #b0*rho - b1*rho_last - b2*rho_lastlast
-        grad_p_sharp     = grad_p_last + b1/b0 * grad_phi_last + b2/b0 * grad_phi_lastlast #grad_p_last + grad_phi_last 
+        grad_p_sharp     = grad_p_last + b1/b0 * grad_phi_last + b2/b0 * grad_phi_lastlast #grad_p_last + grad_phi_last
         div_vel_star     = div_vel_last #+ dt/dt_last*( div_vel_last - div_vel_lastlast)
         u_star           = u_last #+ dt/dt_last*( u_last - u_lastlast )
         v_star           = v_last #+ dt/dt_last*( v_last - v_lastlast )
@@ -873,7 +873,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             meanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
                                                    self.model.q[('u',0)],
                                                    self.model.mesh.nElements_owned)/self.model.mesh.volume
-            self.model.q[('u',0)][:] = self.model.q[('u',0)] - meanvalue
+            self.model.q[('u',0)] -= meanvalue
             self.model.ebqe[('u',0)] -= meanvalue
             self.model.u[0].dof -= meanvalue
 
@@ -904,13 +904,12 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
 
         # time management
         dt = self.model.timeIntegration.dt
+        # dt_last = self.velocityModel.timeIntegration.dt_history[0] # velocity model has the timeIntegration all set up.
         dt_last = dt
-
-        # b0 = 1.0/dt
         dtInv = 1.0/dt
         r = dt/dt_last
-        b0 = (1.0+2.0*r)/(1.0+r)*dtInv   # is self.model.timeIntegration.alpha_bdf as set in calculateCoefs() of timeIntegration.py
-        # b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
+        # b0 = 1.0/dt
+        b0 = (1.0+2.0*r)/(1.0+r)*dtInv # use this instead of alpha_bdf since we have no timeIntegration in this model
 
         chi = self.chiValue
 
