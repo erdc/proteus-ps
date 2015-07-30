@@ -27,8 +27,8 @@ useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ...
 setFirstTimeStepValues = False #
 
 # setup time variables
-T = 0.125
-DT = 0.00625  # target time step size
+T = 1.0
+DT = 0.1  # target time step size
 
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
@@ -297,7 +297,7 @@ nLayersOfOverlapForParallel = 0
 
 # Time stepping for output
 # T=10.0
-# DT = 0.00625
+# DT = 0.1
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
