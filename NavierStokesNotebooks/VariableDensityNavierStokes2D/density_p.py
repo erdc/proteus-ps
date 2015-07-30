@@ -12,8 +12,7 @@ name = "density"
 
 
 # from pnList in *_so.py  0 = density,  1 = (u,v), 2 = (pressureincrement),  3 = (pressure)
-coefficients=NavierStokes.DensityTransport2D(chiValue=ctx.chi,
-                                             currentModelIndex=0,
+coefficients=NavierStokes.DensityTransport2D(currentModelIndex=0,
                                              densityFunction=ctx.rhotrue,
                                              velocityModelIndex=1,  #don't change this unless the order in so-file is changed
                                              pressureIncrementModelIndex=2,

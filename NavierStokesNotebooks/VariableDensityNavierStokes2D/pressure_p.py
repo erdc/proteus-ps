@@ -14,7 +14,6 @@ name = "pressure"
 #the object for evaluating the coefficients
 # from pnList in *_so.py  0 = density,  1 = (u,v), 2 = (pressureincrement),  3 = (pressure)
 coefficients=NavierStokes.Pressure2D(mu=ctx.mu,
-                                     chiValue=ctx.chi,
                                      velocityModelIndex=1,
                                      pressureIncrementModelIndex=2,
                                      pressureFunction=ctx.ptrue,
