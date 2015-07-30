@@ -24,7 +24,7 @@ globalBDFTimeOrder = 1 # 1 or 2 for time integration algorithms
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useRotationalModel = False #  Standard vs Rotational models in pressure update
 useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
-setFirstTimeStepValues = False #
+setFirstTimeStepValues = True #
 
 # setup time variables
 T = 1.0

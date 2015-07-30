@@ -265,15 +265,21 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         rho = c[('u',0)]
 
         dt = self.model.timeIntegration.dt
-        tLast = self.model.timeIntegration.tLast
+        # dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
+        # if self.firstStep:
+        dt_last = dt
 
         u_last = self.c_u_last[c[('m',0)].shape]
         v_last = self.c_v_last[c[('m',0)].shape]
-        div_vel_last = self.c_grad_u_last[c[('f',0)].shape][...,0] + self.c_grad_v_last[c[('f',0)].shape][...,1]
+        u_lastlast = self.c_u_lastlast[c[('m',0)].shape]
+        v_lastlast = self.c_v_lastlast[c[('m',0)].shape]
 
-        u_star = u_last
-        v_star = v_last
-        div_vel_star = div_vel_last
+        div_vel_last = self.c_grad_u_last[c[('f',0)].shape][...,0] + self.c_grad_v_last[c[('f',0)].shape][...,1]
+        div_vel_lastlast = self.c_grad_u_lastlast[c[('f',0)].shape][...,0] + self.c_grad_v_lastlast[c[('f',0)].shape][...,1]
+
+        u_star = u_last + dt/dt_last*( u_last - u_lastlast )
+        v_star = v_last + dt/dt_last*( v_last - v_lastlast )
+        div_vel_star = div_vel_last + dt/dt_last*(div_vel_last - div_vel_lastlast )
 
         #  rho_t + div( rho vel_star) - 0.5 rho div( vel_star ) = 0
         c[('m',0)][:] = rho
