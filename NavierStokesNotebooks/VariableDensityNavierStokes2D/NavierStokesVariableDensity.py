@@ -33,7 +33,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                  useVelocityComponents=True,
                  chiValue=1.0,  # only needed for the scaling adjustment in case of post processed velocity
                  pressureIncrementModelIndex=-1,
-                 pressureIncrementFunction=None,
                  useStabilityTerms=False,
                  setFirstTimeStepValues=True):
         """Construct a coefficients object
@@ -71,7 +70,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         self.useVelocityComponents = useVelocityComponents
         self.chiValue = chiValue
         self.pressureIncrementModelIndex=pressureIncrementModelIndex
-        self.pressureIncrementFunction=pressureIncrementFunction
         self.c_u_last = {}
         self.c_v_last = {}
         self.c_u_lastlast = {}
@@ -844,6 +842,15 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             # grad_p_star = grad_p_last + dt/dt_last*( grad_p_last - grad_p_lastlast ) # second order extrapolation
             # grad_p_sharp = grad_p_star + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
 
+
+        # if the pressure Gradient function is given, then we should ignore the
+        # adjustment given by pressure increment and just use grad_p_exact(t)
+        if self.pressureGradFunction is not None:
+            grad_p_sharp = self.pressureGradFunction(c['x'],t)
+        if self.densityFunction is not None:
+            rho_sharp = self.densityFunction(c['x'],t)
+
+
         # extrapolation of velocity
         if self.bdf is int(1) or self.firstStep:
             # first order extrapolation
@@ -857,15 +864,15 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             u_lastlast = c[('u_lastlast',ui)]
             v_lastlast = c[('u_lastlast',vi)]
             # use second order extrapolation of velocity
-            u_star = u_last #+ dt/dt_last*( u_last - u_lastlast ) # TODO: note could use r instead of dt/dt_last here to speed it up a bit
-            v_star = v_last #+ dt/dt_last*( v_last - v_lastlast )
+            u_star = u_last + dt/dt_last*( u_last - u_lastlast ) # TODO: note could use r instead of dt/dt_last here to speed it up a bit
+            v_star = v_last + dt/dt_last*( v_last - v_lastlast )
             if self.useStabilityTerms:
                 grad_u_lastlast = c[('grad(u)_lastlast',ui)]
                 grad_v_lastlast = c[('grad(u)_lastlast',vi)]
                 div_vel_last = grad_u_last[...,xi] + grad_v_last[...,yi]
                 div_vel_lastlast = grad_u_lastlast[...,xi] + grad_v_lastlast[...,yi]
                 # use second order extrapolation of div velocity
-                div_vel_star = div_vel_last #+ dt/dt_last*( div_vel_last - div_vel_lastlast)
+                div_vel_star = div_vel_last + dt/dt_last*( div_vel_last - div_vel_lastlast)
                 div_rho_vel_star = grad_rho[...,xi]*u_star + grad_rho[...,yi]*v_star + rho*div_vel_star
 
 
