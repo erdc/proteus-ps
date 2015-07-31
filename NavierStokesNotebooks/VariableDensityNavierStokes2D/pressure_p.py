@@ -13,16 +13,13 @@ name = "pressure"
 
 #the object for evaluating the coefficients
 # from pnList in *_so.py  0 = density,  1 = (u,v), 2 = (pressureincrement),  3 = (pressure)
-coefficients=NavierStokes.Pressure2D(bdf=ctx.globalBDFTimeOrder,
-                                     mu=ctx.mu,
-                                     chiValue=ctx.chi,
+coefficients=NavierStokes.Pressure2D(mu=ctx.mu,
                                      velocityModelIndex=1,
-                                     velocityFunction=None, # use ctx.velocityFunction for exact velocity
-                                     useVelocityComponents=ctx.useVelocityComponents,
                                      pressureIncrementModelIndex=2,
-                                     pressureIncrementFunction=None,  # use ctx.gradpitrue for exact pressure increment (=0)
+                                     pressureFunction=ctx.ptrue,
                                      useRotationalModel=ctx.useRotationalModel,
-                                     currentModelIndex=3)
+                                     currentModelIndex=3,
+                                     setFirstTimeStepValues=ctx.setFirstTimeStepValues)
 
 if ctx.opts.analytical:
     analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.ptrue,ctx.gradptrue)}

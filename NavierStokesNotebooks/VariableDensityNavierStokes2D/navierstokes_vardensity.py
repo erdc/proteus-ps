@@ -16,16 +16,15 @@ opts = Context.Options([
 nd = 2
 
 # Numerics
-quad_degree = 5  # exact for polynomials of this degree
+quad_degree = 5  # exact for polynomials of this degree between [1 .. 5]
 
 # Model Flags
 useStabilityTerms = False  # stability terms in density and velocity models
-useVelocityComponents = True  # False uses post processed velocity,
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useRotationalModel = False #  Standard vs Rotational models in pressure update
-initializePressureIncrementUsingPressureFunction = False # set firstStep value to be p_h^1- p_h^0
 useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
+setFirstTimeStepValues = True #
 
 # setup time variables
 T = 1.0
@@ -87,7 +86,7 @@ xs,ys,ts = symbols('x y t')
 
 # viscosity coefficient
 mu = 1.0 # the viscosity coefficient
-chi = 0.8  # 1.0 is the minimal value of rho density.
+chi = 1.0  # 1.0 is the minimal value of rho density.
 
 # Given solution: (Modify here and if needed add more sympy.functions above with
 #                  notation sy_* to distinguish as symbolic functions)
