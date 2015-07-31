@@ -404,8 +404,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 div_vel_star = div_vel_last
         elif self.bdf is int(2):
             # use second order extrapolation of velocity
-            u_star = u_last #+ dt/dt_last*( u_last - u_lastlast )
-            v_star = v_last #+ dt/dt_last*( v_last - v_lastlast )
+            u_star = u_last + dt/dt_last*( u_last - u_lastlast )
+            v_star = v_last + dt/dt_last*( v_last - v_lastlast )
             if self.useStabilityTerms:
                 div_vel_star = div_vel_last + dt/dt_last*(div_vel_last - div_vel_lastlast )
         else:
@@ -839,7 +839,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             grad_p_sharp = grad_p_last + grad_phi_last
         elif self.bdf is int(2):
             rho_sharp = rho
-            rho_t = (rho - rho_last)/dt # b0*rho - b1*rho_last - b2*rho_lastlast #bdf2 time derivative  (see above for descriptions and definitions of b0 b1 and b2)
+            rho_t = b0*rho - b1*rho_last - b2*rho_lastlast #bdf2 time derivative  (see above for descriptions and definitions of b0 b1 and b2)
             grad_p_sharp = grad_p_last + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
             # grad_p_star = grad_p_last + dt/dt_last*( grad_p_last - grad_p_lastlast ) # second order extrapolation
             # grad_p_sharp = grad_p_star + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
