@@ -27,6 +27,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                  currentModelIndex=0,
                  densityFunction=None,
                  velocityModelIndex=-1,
+                 uFunction=None,
+                 vFunction=None,
                  pressureIncrementModelIndex=-1,
                  useStabilityTerms=False,
                  setFirstTimeStepValues=True):
@@ -58,6 +60,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         self.currentModelIndex = currentModelIndex
         self.densityFunction=densityFunction
         self.velocityModelIndex = velocityModelIndex
+        self.uFunction=uFunction
+        self.vFunction=vFunction
         self.pressureIncrementModelIndex=pressureIncrementModelIndex
         self.c_u_last = {}
         self.c_v_last = {}
@@ -248,13 +252,18 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         Give the TC object an opportunity to modify itself before the time step.
         """
         if (self.setFirstTimeStepValues and firstStep and t>0):
-            self.model.q[('u',0)][:] = self.densityFunction(self.model.q['x'],t)
-            self.model.ebqe[('u',0)] = self.densityFunction(self.model.ebqe['x'],t)
+            # self.model.q[('u',0)][:] = self.densityFunction(self.model.q['x'],t)
+            # self.model.ebqe[('u',0)] = self.densityFunction(self.model.ebqe['x'],t)
             for eN in range(self.model.mesh.nElements_global):
                 for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
                     jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
                     x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
                     self.model.u[0].dof[jg]=self.densityFunction(x,t)
+            self.model.calculateSolutionAtQuadrature()
+            self.evaluate(t,self.model.q)
+            # self.evaluate(t,self.model.ebq)
+            self.evaluate(t,self.model.ebqe)
+            # self.evaluate(t,self.model.ebq_global)
 
         copyInstructions = {}
         return copyInstructions
@@ -269,6 +278,10 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         # if self.firstStep:
         dt_last = dt
 
+        if self.uFunction is not None:
+            u_true = self.uFunction(c['x'][:],t)
+            v_true = self.vFunction(c['x'][:],t)
+
         u_last = self.c_u_last[c[('m',0)].shape]
         v_last = self.c_v_last[c[('m',0)].shape]
         u_lastlast = self.c_u_lastlast[c[('m',0)].shape]
@@ -277,8 +290,13 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         div_vel_last = self.c_grad_u_last[c[('f',0)].shape][...,0] + self.c_grad_v_last[c[('f',0)].shape][...,1]
         div_vel_lastlast = self.c_grad_u_lastlast[c[('f',0)].shape][...,0] + self.c_grad_v_lastlast[c[('f',0)].shape][...,1]
 
-        u_star = u_last + dt/dt_last*( u_last - u_lastlast )
-        v_star = v_last + dt/dt_last*( v_last - v_lastlast )
+        if self.uFunction is not None:
+            u_star = u_true
+            v_star = v_true
+        else:
+            u_star = u_last #+ dt/dt_last*( u_last - u_lastlast )
+            v_star = v_last #+ dt/dt_last*( v_last - v_lastlast )
+
         div_vel_star = div_vel_last + dt/dt_last*(div_vel_last - div_vel_lastlast )
 
         #  rho_t + div( rho vel_star) - 0.5 rho div( vel_star ) = 0
@@ -573,10 +591,10 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         Give the TC object an opportunity to modify itself before the time step.
         """
         if (self.setFirstTimeStepValues and firstStep and t>0):
-            self.model.q[('u',0)][:] = self.uFunction(self.model.q['x'],t)
-            self.model.q[('u',1)][:] = self.vFunction(self.model.q['x'],t)
-            self.model.ebqe[('u',0)] = self.uFunction(self.model.ebqe['x'],t)
-            self.model.ebqe[('u',1)] = self.vFunction(self.model.ebqe['x'],t)
+            # self.model.q[('u',0)][:] = self.uFunction(self.model.q['x'],t)
+            # self.model.q[('u',1)][:] = self.vFunction(self.model.q['x'],t)
+            # self.model.ebqe[('u',0)] = self.uFunction(self.model.ebqe['x'],t)
+            # self.model.ebqe[('u',1)] = self.vFunction(self.model.ebqe['x'],t)
             for eN in range(self.model.mesh.nElements_global):
                 for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
                     jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
@@ -585,6 +603,11 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                     self.model.u[1].dof[jg]=self.vFunction(x,t)
             # self.model.u[0].dof[:] = self.uFunction(self.model.mesh.nodeArray,t)
             # self.model.u[1].dof[:] = self.vFunction(self.model.mesh.nodeArray,t)
+            self.model.calculateSolutionAtQuadrature()
+            self.evaluate(t,self.model.q)
+            # self.evaluate(t,self.model.ebq)
+            self.evaluate(t,self.model.ebqe)
+            # self.evaluate(t,self.model.ebq_global)
 
         copyInstructions = {}
         return copyInstructions
@@ -886,14 +909,19 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         # If self.initializeUsingPressureFunction (for debugging), then
         # set the first step of pressure increment to be p_h^1 - p_h^0
         if (self.setFirstTimeStepValues and firstStep and t>0):
-            self.model.q[('u',0)][:] = self.pressureFunction(self.model.q['x'],t)-self.pressureFunction(self.model.q['x'],0)
-            self.model.ebqe[('u',0)] = self.pressureFunction(self.model.ebqe['x'],t)-self.pressureFunction(self.model.ebqe['x'],0)
+            # self.model.q[('u',0)][:] = self.pressureFunction(self.model.q['x'],t)-self.pressureFunction(self.model.q['x'],0)
+            # self.model.ebqe[('u',0)] = self.pressureFunction(self.model.ebqe['x'],t)-self.pressureFunction(self.model.ebqe['x'],0)
             # for eN in range(self.model.mesh.nElements_global):
             #     for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
             #         jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
             #         x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
             #         self.model.u[0].dof[jg]=self.pressureFunction(x,t)-self.pressureFunction(x,0)
             self.model.u[0].dof[:] = self.pressureFunction(self.model.mesh.nodeArray,t)-self.pressureFunction(self.model.mesh.nodeArray,0)
+            self.model.calculateSolutionAtQuadrature()
+            self.evaluate(t,self.model.q)
+            # self.evaluate(t,self.model.ebq)
+            self.evaluate(t,self.model.ebqe)
+            # self.evaluate(t,self.model.ebq_global)
 
         copyInstructions = {}
         return copyInstructions
@@ -1115,14 +1143,19 @@ class Pressure2D(TransportCoefficients.TC_base):
         Give the TC object an opportunity to modify itself before the time step.
         """
         if (self.setFirstTimeStepValues and firstStep and t>0):
-            self.model.q[('u',0)][:] = self.pressureFunction(self.model.q['x'],t)
-            self.model.ebqe[('u',0)] = self.pressureFunction(self.model.ebqe['x'],t)
+            # self.model.q[('u',0)][:] = self.pressureFunction(self.model.q['x'],t)
+            # self.model.ebqe[('u',0)] = self.pressureFunction(self.model.ebqe['x'],t)
             # for eN in range(self.model.mesh.nElements_global):
             #     for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
             #         jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
             #         x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
             #         self.model.u[0].dof[jg]=self.pressureFunction(x,t)
             self.model.u[0].dof[:] = self.pressureFunction(self.model.mesh.nodeArray,t)
+            self.model.calculateSolutionAtQuadrature()
+            self.evaluate(t,self.model.q)
+            # self.evaluate(t,self.model.ebq)
+            self.evaluate(t,self.model.ebqe)
+            # self.evaluate(t,self.model.ebq_global)
 
         copyInstructions = {}
         return copyInstructions

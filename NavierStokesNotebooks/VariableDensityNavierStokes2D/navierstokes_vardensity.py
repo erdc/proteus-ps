@@ -19,7 +19,7 @@ nd = 2
 quad_degree = 5  # exact for polynomials of this degree between [1 .. 5]
 
 # Model Flags
-useStabilityTerms = True  # stability terms in density and velocity models
+useStabilityTerms = False  # stability terms in density and velocity models
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useRotationalModel = False #  Standard vs Rotational models in pressure update

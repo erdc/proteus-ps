@@ -15,6 +15,8 @@ name = "density"
 coefficients=NavierStokes.DensityTransport2D(currentModelIndex=0,
                                              densityFunction=ctx.rhotrue,
                                              velocityModelIndex=1,  #don't change this unless the order in so-file is changed
+                                             uFunction=None,#ctx.utrue,
+                                             vFunction=None,#ctx.vtrue,
                                              pressureIncrementModelIndex=2,
                                              useStabilityTerms=ctx.useStabilityTerms,
                                              setFirstTimeStepValues = ctx.setFirstTimeStepValues)
