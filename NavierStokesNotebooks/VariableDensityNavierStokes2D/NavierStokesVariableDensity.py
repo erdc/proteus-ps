@@ -26,6 +26,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
     def __init__(self,
                  bdf=1,
                  currentModelIndex=0,
+                 densityFunction=None,
                  velocityModelIndex=-1,
                  velocityFunction=None,
                  divVelocityFunction=None,
@@ -33,7 +34,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                  chiValue=1.0,  # only needed for the scaling adjustment in case of post processed velocity
                  pressureIncrementModelIndex=-1,
                  pressureIncrementFunction=None,
-                 useStabilityTerms=False):
+                 useStabilityTerms=False,
+                 setFirstTimeStepValues=True):
         """Construct a coefficients object
 
         :param velocityModelIndex: The index into the proteus model list
@@ -62,6 +64,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                                                reaction = {0:{0:'linear'}} if useStabilityTerms else {} ) # for the stability term
         self.bdf=int(bdf)
         self.currentModelIndex = currentModelIndex
+        self.densityFunction = densityFunction
         self.velocityModelIndex = velocityModelIndex
         self.velocityFunction = velocityFunction
         self.divVelocityFunction = divVelocityFunction
@@ -78,9 +81,9 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         self.c_grad_v_last = {}
         self.c_grad_u_lastlast = {}
         self.c_grad_v_lastlast = {}
-        # self.c_grad_velocity_last = {}
         self.useStabilityTerms = useStabilityTerms
         self.firstStep = True # manipulated in preStep()
+        self.setFirstTimeStepValues = setFirstTimeStepValues
 
     def attachModels(self,modelList):
         """
@@ -309,6 +312,26 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             # self.model.ebq_global[('grad(u)_last',ci)][:] = self.model.ebq_global[('grad(u)',ci)]
         copyInstructions = {}
         return copyInstructions
+    def postStep(self,t,firstStep=False):
+        """
+        Give the TC object an opportunity to modify itself before the time step.
+        """
+        if (self.setFirstTimeStepValues and firstStep and t>0):
+            # self.model.q[('u',0)][:] = self.densityFunction(self.model.q['x'],t)
+            # self.model.ebqe[('u',0)] = self.densityFunction(self.model.ebqe['x'],t)
+            for eN in range(self.model.mesh.nElements_global):
+                for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
+                    jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
+                    x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
+                    self.model.u[0].dof[jg]=self.densityFunction(x,t)
+            self.model.calculateSolutionAtQuadrature()
+            self.evaluate(t,self.model.q)
+            # self.evaluate(t,self.model.ebq)
+            self.evaluate(t,self.model.ebqe)
+            # self.evaluate(t,self.model.ebq_global)
+
+        copyInstructions = {}
+        return copyInstructions
     def evaluate(self,t,c):
         """
         Evaluate the coefficients after getting the specified velocity
@@ -381,8 +404,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 div_vel_star = div_vel_last
         elif self.bdf is int(2):
             # use second order extrapolation of velocity
-            u_star = u_last + dt/dt_last*( u_last - u_lastlast )
-            v_star = v_last + dt/dt_last*( v_last - v_lastlast )
+            u_star = u_last #+ dt/dt_last*( u_last - u_lastlast )
+            v_star = v_last #+ dt/dt_last*( v_last - v_lastlast )
             if self.useStabilityTerms:
                 div_vel_star = div_vel_last + dt/dt_last*(div_vel_last - div_vel_lastlast )
         else:
@@ -444,11 +467,14 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                  densityModelIndex=-1,
                  densityFunction=None,
                  densityGradFunction=None,
+                 uFunction=None,
+                 vFunction=None,
                  pressureIncrementModelIndex=-1,
                  pressureIncrementGradFunction=None,
                  pressureModelIndex=-1,
                  pressureGradFunction=None,
-                 useStabilityTerms=False):
+                 useStabilityTerms=False,
+                 setFirstTimeStepValues=True):
 
         sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
                           np.array([0,1],dtype='i')),
@@ -483,6 +509,8 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         self.densityModelIndex = densityModelIndex
         self.densityFunction = densityFunction
         self.densityGradFunction = densityGradFunction
+        self.uFunction = uFunction
+        self.vFunction = vFunction
         self.pressureModelIndex = pressureModelIndex
         self.pressureGradFunction = pressureGradFunction
         self.pressureIncrementModelIndex = pressureIncrementModelIndex
@@ -498,6 +526,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             self.c_p_lastlast = {}
             self.c_phi_lastlast = {}
         self.firstStep = True # manipulated in preStep()
+        self.setFirstTimeStepValues=setFirstTimeStepValues
 
 
     def attachModels(self,modelList):
@@ -698,11 +727,25 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         return copyInstructions
     def postStep(self,t,firstStep=False):
         """
-        Give the TC object an opportunity to modify itself after the time step.
+        Give the TC object an opportunity to modify itself before the time step.
         """
-        pass
-        # copyInstructions = {}
-        # return copyInstructions
+        if (self.setFirstTimeStepValues and firstStep and t>0):
+            for eN in range(self.model.mesh.nElements_global):
+                for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
+                    jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
+                    x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
+                    self.model.u[0].dof[jg]=self.uFunction(x,t)
+                    self.model.u[1].dof[jg]=self.vFunction(x,t)
+            # self.model.u[0].dof[:] = self.uFunction(self.model.mesh.nodeArray,t)
+            # self.model.u[1].dof[:] = self.vFunction(self.model.mesh.nodeArray,t)
+            self.model.calculateSolutionAtQuadrature()
+            self.evaluate(t,self.model.q)
+            # self.evaluate(t,self.model.ebq)
+            self.evaluate(t,self.model.ebqe)
+            # self.evaluate(t,self.model.ebq_global)
+
+        copyInstructions = {}
+        return copyInstructions
     def evaluate(self,t,c):
         """
         evaluate quadrature point values held in the dictionary c
@@ -796,7 +839,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             grad_p_sharp = grad_p_last + grad_phi_last
         elif self.bdf is int(2):
             rho_sharp = rho
-            rho_t = b0*rho - b1*rho_last - b2*rho_lastlast #bdf2 time derivative  (see above for descriptions and definitions of b0 b1 and b2)
+            rho_t = (rho - rho_last)/dt # b0*rho - b1*rho_last - b2*rho_lastlast #bdf2 time derivative  (see above for descriptions and definitions of b0 b1 and b2)
             grad_p_sharp = grad_p_last + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
             # grad_p_star = grad_p_last + dt/dt_last*( grad_p_last - grad_p_lastlast ) # second order extrapolation
             # grad_p_sharp = grad_p_star + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
@@ -814,15 +857,15 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             u_lastlast = c[('u_lastlast',ui)]
             v_lastlast = c[('u_lastlast',vi)]
             # use second order extrapolation of velocity
-            u_star = u_last + dt/dt_last*( u_last - u_lastlast ) # TODO: note could use r instead of dt/dt_last here to speed it up a bit
-            v_star = v_last + dt/dt_last*( v_last - v_lastlast )
+            u_star = u_last #+ dt/dt_last*( u_last - u_lastlast ) # TODO: note could use r instead of dt/dt_last here to speed it up a bit
+            v_star = v_last #+ dt/dt_last*( v_last - v_lastlast )
             if self.useStabilityTerms:
                 grad_u_lastlast = c[('grad(u)_lastlast',ui)]
                 grad_v_lastlast = c[('grad(u)_lastlast',vi)]
                 div_vel_last = grad_u_last[...,xi] + grad_v_last[...,yi]
                 div_vel_lastlast = grad_u_lastlast[...,xi] + grad_v_lastlast[...,yi]
                 # use second order extrapolation of div velocity
-                div_vel_star = div_vel_last + dt/dt_last*( div_vel_last - div_vel_lastlast)
+                div_vel_star = div_vel_last #+ dt/dt_last*( div_vel_last - div_vel_lastlast)
                 div_rho_vel_star = grad_rho[...,xi]*u_star + grad_rho[...,yi]*v_star + rho*div_vel_star
 
 
@@ -880,9 +923,9 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                  velocityModelIndex=-1,
                  velocityFunction=None,
                  pressureFunction=None,
-                 initializeUsingPressureFunction=False,
                  zeroMean=False,
-                 chiValue=1.0):
+                 chiValue=1.0,
+                 setFirstTimeStepValues=True):
         """Construct a coefficients object
 
         :param velocityModelIndex: The index into the proteus model list
@@ -913,13 +956,13 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         self.velocityModelIndex = velocityModelIndex
         self.velocityFunction = velocityFunction
         self.pressureFunction = pressureFunction
-        self.initializeUsingPressureFunction = initializeUsingPressureFunction
         self.c_u = {}
         self.c_v = {}
         self.c_velocity = {}
         self.c_rho = {}
         self.firstStep = True # manipulated in preStep()
         self.zeroMean = zeroMean
+        self.setFirstTimeStepValues=setFirstTimeStepValues
 
     def attachModels(self,modelList):
         """
@@ -1066,11 +1109,18 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
 
         # If self.initializeUsingPressureFunction (for debugging), then
         # set the first step of pressure increment to be p_h^1 - p_h^0
-        if (self.initializeUsingPressureFunction and self.bdf is int(2) and firstStep and t>0):
-            self.model.q[('u',0)][:] = self.pressureFunction(self.model.q['x'],t)-self.pressureFunction(self.model.q['x'],0)
-            self.model.ebqe[('u',0)] = self.pressureFunction(self.model.ebqe['x'],t)-self.pressureFunction(self.model.ebqe['x'],0)
+        if (self.setFirstTimeStepValues and firstStep and t>0):
+            # for eN in range(self.model.mesh.nElements_global):
+            #     for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
+            #         jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
+            #         x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
+            #         self.model.u[0].dof[jg]=self.pressureFunction(x,t)-self.pressureFunction(x,0)
             self.model.u[0].dof[:] = self.pressureFunction(self.model.mesh.nodeArray,t)-self.pressureFunction(self.model.mesh.nodeArray,0)
-
+            self.model.calculateSolutionAtQuadrature()
+            self.evaluate(t,self.model.q)
+            # self.evaluate(t,self.model.ebq)
+            self.evaluate(t,self.model.ebqe)
+            # self.evaluate(t,self.model.ebq_global)
 
         copyInstructions = {}
         return copyInstructions
@@ -1085,7 +1135,10 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         if self.bdf is int(1) or self.firstStep:
             b0 = 1.0/dt
         elif self.bdf is int(2):
-            b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
+            dt_last = self.velocityModel.timeIntegration.dt_history[0] # velocity model has the timeIntegration all set up.
+            dtInv = 1.0/dt
+            r = dt/dt_last
+            b0 = (1.0+2.0*r)/(1.0+r)*dtInv # use this instead of alpha_bdf since we have no timeIntegration in this model
 
         # find minimal density value set it to be chi
         if self.densityModelIndex>0:
@@ -1146,8 +1199,10 @@ class Pressure2D(TransportCoefficients.TC_base):
                  useVelocityComponents=True,
                  pressureIncrementModelIndex=-1,
                  pressureIncrementFunction=None,
+                 pressureFunction=None,
                  useRotationalModel=True,
-                 chiValue=1.0):
+                 chiValue=1.0,
+                 setFirstTimeStepValues=True):
         """Construct a coefficients object
 
         :param velocityModelIndex: The index into the proteus model list
@@ -1178,6 +1233,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         self.useVelocityComponents = useVelocityComponents
         self.pressureIncrementModelIndex = pressureIncrementModelIndex
         self.pressureIncrementFunction = pressureIncrementFunction
+        self.pressureFunction = pressureFunction
         self.useRotationalModel = useRotationalModel
         self.chiValue = chiValue
         if self.useRotationalModel:
@@ -1186,6 +1242,7 @@ class Pressure2D(TransportCoefficients.TC_base):
             self.c_velocity = {}
         self.c_phi = {}
         self.firstStep = True # manipulated in preStep()
+        self.setFirstTimeStepValues = setFirstTimeStepValues
 
     def attachModels(self,modelList):
         """
@@ -1329,6 +1386,25 @@ class Pressure2D(TransportCoefficients.TC_base):
             # when we do need grad_pressure^k, we are on velocity model on the next time
             # step so that 'grad(u)' is grad_pressure^k.
 
+
+        copyInstructions = {}
+        return copyInstructions
+    def postStep(self,t,firstStep=False):
+        """
+        Give the TC object an opportunity to modify itself before the time step.
+        """
+        if (self.setFirstTimeStepValues and firstStep and t>0):
+            # for eN in range(self.model.mesh.nElements_global):
+            #     for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
+            #         jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
+            #         x = self.model.u[0].femSpace.dofMap.lagrangeNodesArray[jg]
+            #         self.model.u[0].dof[jg]=self.pressureFunction(x,t)
+            self.model.u[0].dof[:] = self.pressureFunction(self.model.mesh.nodeArray,t)
+            self.model.calculateSolutionAtQuadrature()
+            self.evaluate(t,self.model.q)
+            # self.evaluate(t,self.model.ebq)
+            self.evaluate(t,self.model.ebqe)
+            # self.evaluate(t,self.model.ebq_global)
 
         copyInstructions = {}
         return copyInstructions
