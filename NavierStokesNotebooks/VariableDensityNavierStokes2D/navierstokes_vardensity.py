@@ -30,7 +30,8 @@ setFirstTimeStepValues = True # interpolate the first step as well as the 0th st
 # setup time variables
 T = 1.0
 DT = 0.05  # target time step size
-
+DT *=0.5
+DT *=0.5
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
     nFrames = int(T/DT) + 1
@@ -283,10 +284,10 @@ if unitCircle:
 
 
 # numerical tolerances
-density_atol_res = max(1.0e-8,0.01*he**2)
-velocity_atol_res = max(1.0e-8,0.01*he**2)
-phi_atol_res = max(1.0e-8,0.01*he**2)
-pressure_atol_res = max(1.0e-8,0.01*he**2)
+density_atol_res = 1.0e-10
+velocity_atol_res = 1.0e-10
+phi_atol_res = 1.0e-10
+pressure_atol_res = 1.0e-10
 
 
 parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node
