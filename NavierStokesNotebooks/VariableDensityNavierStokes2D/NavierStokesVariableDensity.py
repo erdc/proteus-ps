@@ -327,6 +327,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             # self.evaluate(t,self.model.ebq)
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
+            self.model.timeIntegration.calculateElementCoefficients(self.model.q)
 
         copyInstructions = {}
         return copyInstructions
@@ -741,7 +742,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             # self.evaluate(t,self.model.ebq)
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
-
+            self.model.timeIntegration.calculateElementCoefficients(self.model.q)
         copyInstructions = {}
         return copyInstructions
     def evaluate(self,t,c):
@@ -875,7 +876,8 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 div_vel_star = div_vel_last + dt/dt_last*( div_vel_last - div_vel_lastlast)
                 div_rho_vel_star = grad_rho[...,xi]*u_star + grad_rho[...,yi]*v_star + rho*div_vel_star
 
-
+        u_star = u
+        v_star = v
         #equation eu = 0
         # rho_sharp*u_t + rho(u_star u_x + v_star u_y ) + p_sharp_x - f1 + div(-mu grad(u))
         #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )u = 0
