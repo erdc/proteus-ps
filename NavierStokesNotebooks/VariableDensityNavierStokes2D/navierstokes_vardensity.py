@@ -30,8 +30,8 @@ setFirstTimeStepValues = True # interpolate the first step as well as the 0th st
 # setup time variables
 T = 1.0
 DT = 0.05  # target time step size
-#DT *=0.5
-#DT *=0.5
+DT *=0.5
+DT *=0.5
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
     nFrames = int(T/DT) + 1

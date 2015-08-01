@@ -286,28 +286,14 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         Give the TC object an opportunity to modify itself before the time step.
         """
         self.firstStep = firstStep # save for in evaluate
+        if self.firstStep:
+            for ci in range(self.nc):
+                self.model.q[('u_lastlast',ci)][:] = self.model.q[('u',ci)]
+                self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u',ci)]
 
-        for ci in range(self.nc):
-            if not self.firstStep and self.bdf is int(2):
-                self.model.q[('u_lastlast',ci)][:] = self.model.q[('u_last',ci)]
-                # self.model.ebq[('u_lastlast',ci)][:] = self.model.ebq[('u_last',ci)]
-                self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u_last',ci)]
-                # self.model.ebq_global[('u_lastlast',ci)][:] = self.model.ebq_global[('u_last',ci)]
+                self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
+                self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
 
-                # self.model.q[('grad(u)_lastlast',ci)][:] = self.model.q[('grad(u)_last',ci)]
-                # self.model.ebq[('grad(u)_lastlast',ci)][:] = self.model.ebq[('grad(u)_last',ci)]
-                # self.model.ebqe[('grad(u)_lastlast',ci)][:] = self.model.ebqe[('grad(u)_last',ci)]
-                # self.model.ebq_global[('grad(u)_lastlast',ci)][:] = self.model.ebq_global[('grad(u)_last',ci)]
-
-            self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
-            # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
-            self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
-            # self.model.ebq_global[('u_last',ci)][:] = self.model.ebq_global[('u',ci)]
-
-            # self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-            # self.model.ebq[('grad(u)_last',ci)][:] = self.model.ebq[('grad(u)',ci)]
-            # self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
-            # self.model.ebq_global[('grad(u)_last',ci)][:] = self.model.ebq_global[('grad(u)',ci)]
         copyInstructions = {}
         return copyInstructions
     def postStep(self,t,firstStep=False):
@@ -315,8 +301,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         Give the TC object an opportunity to modify itself before the time step.
         """
         if (self.setFirstTimeStepValues and firstStep and t>0):
-            # self.model.q[('u',0)][:] = self.densityFunction(self.model.q['x'],t)
-            # self.model.ebqe[('u',0)] = self.densityFunction(self.model.ebqe['x'],t)
             for eN in range(self.model.mesh.nElements_global):
                 for j in self.model.u[0].femSpace.referenceFiniteElement.localFunctionSpace.range_dim:
                     jg = self.model.u[0].femSpace.dofMap.l2g[eN,j]
@@ -324,10 +308,15 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     self.model.u[0].dof[jg]=self.densityFunction(x,t)
             self.model.calculateSolutionAtQuadrature()
             self.evaluate(t,self.model.q)
-            # self.evaluate(t,self.model.ebq)
             self.evaluate(t,self.model.ebqe)
-            # self.evaluate(t,self.model.ebq_global)
             self.model.timeIntegration.calculateElementCoefficients(self.model.q)
+
+        for ci in range(self.nc):
+            self.model.q[('u_lastlast',ci)][:] = self.model.q[('u_last',ci)]
+            self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u_last',ci)]
+
+            self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
+            self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
 
         copyInstructions = {}
         return copyInstructions
@@ -409,7 +398,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 div_vel_star = div_vel_last + dt/dt_last*(div_vel_last - div_vel_lastlast )
         else:
             assert False, "Error: self.bdf = %f is not supported" %self.bdf
-
         #  rho_t + div( rho vel_star) - 0.5 rho div( vel_star ) = 0
         c[('m',0)][:] = rho
         c[('dm',0,0)][:] = 1.0
@@ -698,29 +686,20 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         """
         self.firstStep = firstStep # save for use in evaluate
 
-        for ci in range(self.nc):
-            if self.bdf is int(2) and not self.firstStep:
+        if self.firstStep:
+            for ci in range(self.nc):
+                self.model.q[('u_lastlast',ci)][:] = self.model.q[('u',ci)]
+                self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u',ci)]
+
+                self.model.q[('grad(u)_lastlast',ci)][:] = self.model.q[('grad(u)',ci)]
+                self.model.ebqe[('grad(u)_lastlast',ci)][:] = self.model.ebqe[('grad(u)',ci)]
+
                 # deep copy so we have a cached value instead of pointer to current values
-                self.model.q[('u_lastlast',ci)][:] = self.model.q[('u_last',ci)]
-                # self.model.ebq[('u_lastlast',ci)][:] = self.model.ebq[('u_last',ci)]
-                self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u_last',ci)]
-                # self.model.ebq_global[('u_lastlast',ci)][:] = self.model.ebq_global[('u_last',ci)]
+                self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
+                self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
 
-                self.model.q[('grad(u)_lastlast',ci)][:] = self.model.q[('grad(u)_last',ci)]
-                # self.model.ebq[('grad(u)_lastlast',ci)][:] = self.model.ebq[('grad(u)_last',ci)]
-                self.model.ebqe[('grad(u)_lastlast',ci)][:] = self.model.ebqe[('grad(u)_last',ci)]
-                # self.model.ebq_global[('grad(u)_lastlast',ci)][:] = self.model.ebq_global[('grad(u)_last',ci)]
-
-            # deep copy so we have a cached value instead of pointer to current values
-            self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
-            # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
-            self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
-            # self.model.ebq_global[('u_last',ci)][:] = self.model.ebq_global[('u',ci)]
-
-            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-            # self.model.ebq[('grad(u)_last',ci)][:] = self.model.ebq[('grad(u)',ci)]
-            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
-            # self.model.ebq_global[('grad(u)_last',ci)][:] = self.model.ebq_global[('grad(u)',ci)]
+                self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
+                self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
 
         copyInstructions = {}
         return copyInstructions
@@ -743,6 +722,20 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
             self.model.timeIntegration.calculateElementCoefficients(self.model.q)
+        for ci in range(self.nc):
+            # deep copy so we have a cached value instead of pointer to current values
+            self.model.q[('u_lastlast',ci)][:] = self.model.q[('u_last',ci)]
+            self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u_last',ci)]
+
+            self.model.q[('grad(u)_lastlast',ci)][:] = self.model.q[('grad(u)_last',ci)]
+            self.model.ebqe[('grad(u)_lastlast',ci)][:] = self.model.ebqe[('grad(u)_last',ci)]
+
+            # deep copy so we have a cached value instead of pointer to current values
+            self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
+            self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
+
+            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
+            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
         copyInstructions = {}
         return copyInstructions
     def evaluate(self,t,c):
@@ -876,8 +869,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 div_vel_star = div_vel_last + dt/dt_last*( div_vel_last - div_vel_lastlast)
                 div_rho_vel_star = grad_rho[...,xi]*u_star + grad_rho[...,yi]*v_star + rho*div_vel_star
 
-        u_star = u
-        v_star = v
         #equation eu = 0
         # rho_sharp*u_t + rho(u_star u_x + v_star u_y ) + p_sharp_x - f1 + div(-mu grad(u))
         #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )u = 0
@@ -1072,27 +1063,10 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         self.firstStep = firstStep # save for use in evaluate()
 
-        for ci in range(self.nc):
-            # The only time we need phi^{k} and phi^{k-1} are when we are on step {k+1} in
-            # the velocity update.  But then phi^{k} is the current solution 'u' to pressureIncrement
-            # and phi^{k-1} is 'u_last' since we have moved ahead one time step but haven't reached
-            # pressureIncrement yet to move them over.
-            #
-            # So for bdf1 we only need
-            # pressureIncrementModel.q['grad(u)']      representing grad phi^{k}
-            # and for bdf2 we also need
-            # pressureIncrementModel.q['grad(u)_last']    representing grad phi^{k-1}
-            #
-            if not self.firstStep and self.bdf is int(2):
-                # self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
-                # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
-                # self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
-                # self.model.ebq_global[('u_last',ci)][:] = self.model.ebq_global[('u',ci)]
-
+        if self.firstStep:
+            for ci in range(self.nc):
                 self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-                # self.model.ebq[('grad(u)_last',ci)][:] = self.model.ebq[('grad(u)',ci)]
                 self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
-                # self.model.ebq_global[('grad(u)_last',ci)][:] = self.model.ebq_global[('grad(u)',ci)]
 
         copyInstructions = {}
         return copyInstructions
@@ -1131,6 +1105,9 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
 
+        for ci in range(self.nc):
+            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
+            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
         copyInstructions = {}
         return copyInstructions
     def evaluate(self,t,c):
@@ -1378,23 +1355,13 @@ class Pressure2D(TransportCoefficients.TC_base):
         """
         self.firstStep = firstStep
 
-        for ci in range(self.nc):
-            # don't need to store pressure_lastlast at all since it is never needed in algorithm
+        if self.firstStep:
+            for ci in range(self.nc):
+                self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
+                self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
 
-            self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
-            # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
-            self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
-            # self.model.ebq_global[('u_last',ci)][:] = self.model.ebq_global[('u',ci)]
-
-            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-            # self.model.ebq[('u_last',ci)][:] = self.model.ebq[('u',ci)]
-            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
-            # self.model.ebq_global[('u_last',ci)][:] = self.model.ebq_global[('u',ci)]
-
-            # don't need grad(u)_last either since it will never be used.
-            # when we do need grad_pressure^k, we are on velocity model on the next time
-            # step so that 'grad(u)' is grad_pressure^k.
-
+                self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
+                self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
 
         copyInstructions = {}
         return copyInstructions
@@ -1414,6 +1381,13 @@ class Pressure2D(TransportCoefficients.TC_base):
             # self.evaluate(t,self.model.ebq)
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
+
+        for ci in range(self.nc):
+            self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
+            self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
+
+            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
+            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
 
         copyInstructions = {}
         return copyInstructions
