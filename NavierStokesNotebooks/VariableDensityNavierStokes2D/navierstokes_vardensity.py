@@ -283,10 +283,10 @@ if unitCircle:
 
 
 # numerical tolerances
-density_atol_res = max(1.0e-8,0.01*he**2)
-velocity_atol_res = max(1.0e-8,0.01*he**2)
-phi_atol_res = max(1.0e-8,0.01*he**2)
-pressure_atol_res = max(1.0e-8,0.01*he**2)
+density_atol_res = 1.0e-10
+velocity_atol_res = 1.0e-10
+phi_atol_res = 1.0e-10
+pressure_atol_res = 1.0e-10
 
 
 parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node
