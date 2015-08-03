@@ -327,6 +327,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             # self.evaluate(t,self.model.ebq)
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
+            self.model.timeIntegration.calculateElementCoefficients(self.model.q)
 
         copyInstructions = {}
         return copyInstructions
@@ -741,6 +742,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             # self.evaluate(t,self.model.ebq)
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
+            self.model.timeIntegration.calculateElementCoefficients(self.model.q)
 
         copyInstructions = {}
         return copyInstructions
