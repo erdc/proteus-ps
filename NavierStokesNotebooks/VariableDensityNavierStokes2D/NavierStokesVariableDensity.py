@@ -20,7 +20,7 @@ class HistoryManipulation:
         beginning of each new time stage.
 
     """
-    def __init__(self, modelList, bdf):
+    def __init__(self, modelList=None, bdf=1):
         self.densityModel = modelList[0]
         self.density_nc = 1
         self.velocityModel = modelList[1]

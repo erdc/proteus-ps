@@ -19,7 +19,7 @@ nd = 2
 quad_degree = 5  # exact for polynomials of this degree
 
 # Model Flags
-useStabilityTerms = False  # stability terms in density and velocity models
+useStabilityTerms = True  # stability terms in density and velocity models
 useVelocityComponents = True  # False uses post processed velocity,
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
@@ -29,7 +29,7 @@ setFirstTimeStepValues = True # interpolate the first step as well as the 0th st
 
 # setup time variables
 T = 1.0
-DT = 0.05  # target time step size
+DT = 0.1  # target time step size
 
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
@@ -298,7 +298,7 @@ nLayersOfOverlapForParallel = 0
 
 # Time stepping for output
 # T=10.0
-# DT = 0.05
+# DT = 0.1
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
