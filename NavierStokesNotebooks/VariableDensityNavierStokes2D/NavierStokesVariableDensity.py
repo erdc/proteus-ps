@@ -13,6 +13,126 @@ from copy import deepcopy, copy # for cacheing _last values of variables
 from proteus.Profiling import logEvent as log
 
 
+class HistoryManipulation:
+    """
+        Encapsulate the manipulation of time history storage.  This is called in
+        the first model AttachModels() and then is run in the preStep at the
+        beginning of each new time stage.
+
+    """
+    def __init__(self, modelList, bdf):
+        self.densityModel = modelList[0]
+        self.density_nc = 1
+        self.velocityModel = modelList[1]
+        self.velocity_nc = 2 # dim
+        self.pressureIncrementModel = modelList[2]
+        self.pressureIncrement_nc = 1
+        self.pressureModel = modelList[3]
+        self.pressure_nc = 1
+        self.bdf = bdf
+
+    def initializeHistory(self):
+        """
+            Initialize the solutions before first step so that we will have
+
+            u = solution at time t^{1}
+            u_last = solution at time t^{0}
+            u_lastlast = solution at time t^{0}
+        """
+        for ci in range(self.density_nc):
+            if self.bdf is int(2):
+                self.densityModel.q[('u_lastlast',ci)][:] = self.densityModel.q[('u',ci)]
+                self.densityModel.ebqe[('u_lastlast',ci)][:] = self.densityModel.ebqe[('u',ci)]
+            self.densityModel.q[('u_last',ci)][:] = self.densityModel.q[('u',ci)]
+            self.densityModel.ebqe[('u_last',ci)][:] = self.densityModel.ebqe[('u',ci)]
+
+        for ci in range(self.velocity_nc):
+            if self.bdf is int(2):
+                self.velocityModel.q[('u_lastlast',ci)][:] = self.velocityModel.q[('u',ci)]
+                self.velocityModel.ebqe[('u_lastlast',ci)][:] = self.velocityModel.ebqe[('u',ci)]
+            self.velocityModel.q[('u_last',ci)][:] = self.velocityModel.q[('u',ci)]
+            self.velocityModel.ebqe[('u_last',ci)][:] = self.velocityModel.ebqe[('u',ci)]
+            if self.bdf is int(2):
+                self.velocityModel.q[('grad(u)_lastlast',ci)][:] = self.velocityModel.q[('grad(u)',ci)]
+                self.velocityModel.ebqe[('grad(u)_lastlast',ci)][:] = self.velocityModel.ebqe[('grad(u)',ci)]
+            self.velocityModel.q[('grad(u)_last',ci)][:] = self.velocityModel.q[('grad(u)',ci)]
+            self.velocityModel.ebqe[('grad(u)_last',ci)][:] = self.velocityModel.ebqe[('grad(u)',ci)]
+
+        for ci in range(self.pressureIncrement_nc):
+            self.pressureIncrementModel.q[('u_last',ci)][:] = self.pressureIncrementModel.q[('u',ci)]
+            self.pressureIncrementModel.ebqe[('u_last',ci)][:] = self.pressureIncrementModel.ebqe[('u',ci)]
+            if self.bdf is int(2):
+                self.pressureIncrementModel.q[('grad(u)_lastlast',ci)][:] = self.pressureIncrementModel.q[('grad(u)',ci)]
+                self.pressureIncrementModel.ebqe[('grad(u)_lastlast',ci)][:] = self.pressureIncrementModel.ebqe[('grad(u)',ci)]
+            self.pressureIncrementModel.q[('grad(u)_last',ci)][:] = self.pressureIncrementModel.q[('grad(u)',ci)]
+            self.pressureIncrementModel.ebqe[('grad(u)_last',ci)][:] = self.pressureIncrementModel.ebqe[('grad(u)',ci)]
+
+        for ci in range(self.pressure_nc):
+            if self.bdf is int(2):
+                self.pressureModel.q[('u_lastlast',ci)][:] = self.pressureModel.q[('u',ci)]
+                self.pressureModel.ebqe[('u_lastlast',ci)][:] = self.pressureModel.ebqe[('u',ci)]
+            self.pressureModel.q[('u_last',ci)][:] = self.pressureModel.q[('u',ci)]
+            self.pressureModel.ebqe[('u_last',ci)][:] = self.pressureModel.ebqe[('u',ci)]
+            if self.bdf is int(2):
+                self.pressureModel.q[('grad(u)_lastlast',ci)][:] = self.pressureModel.q[('grad(u)',ci)]
+                self.pressureModel.ebqe[('grad(u)_lastlast',ci)][:] = self.pressureModel.ebqe[('grad(u)',ci)]
+            self.pressureModel.q[('grad(u)_last',ci)][:] = self.pressureModel.q[('grad(u)',ci)]
+            self.pressureModel.ebqe[('grad(u)_last',ci)][:] = self.pressureModel.ebqe[('grad(u)',ci)]
+
+    def updateHistory(self):
+        """
+            Transfer the solutions backward so that they represent the previous
+            time step values.  After this call on time t^{n}, we have:
+
+              u = solution at time t^{n}
+              u_last = solution at time t^{n-1}
+              u_lastlast = solution at time t^{n-2}
+        """
+
+        for ci in range(self.density_nc):
+            if self.bdf is int(2):
+                self.densityModel.q[('u_lastlast',ci)][:] = self.densityModel.q[('u_last',ci)]
+                self.densityModel.ebqe[('u_lastlast',ci)][:] = self.densityModel.ebqe[('u_last',ci)]
+            self.densityModel.q[('u_last',ci)][:] = self.densityModel.q[('u',ci)]
+            self.densityModel.ebqe[('u_last',ci)][:] = self.densityModel.ebqe[('u',ci)]
+
+        for ci in range(self.velocity_nc):
+            if self.bdf is int(2):
+                self.velocityModel.q[('u_lastlast',ci)][:] = self.velocityModel.q[('u_last',ci)]
+                self.velocityModel.ebqe[('u_lastlast',ci)][:] = self.velocityModel.ebqe[('u_last',ci)]
+            self.velocityModel.q[('u_last',ci)][:] = self.velocityModel.q[('u',ci)]
+            self.velocityModel.ebqe[('u_last',ci)][:] = self.velocityModel.ebqe[('u',ci)]
+            if self.bdf is int(2):
+                self.velocityModel.q[('grad(u)_lastlast',ci)][:] = self.velocityModel.q[('grad(u)_last',ci)]
+                self.velocityModel.ebqe[('grad(u)_lastlast',ci)][:] = self.velocityModel.ebqe[('grad(u)_last',ci)]
+            self.velocityModel.q[('grad(u)_last',ci)][:] = self.velocityModel.q[('grad(u)',ci)]
+            self.velocityModel.ebqe[('grad(u)_last',ci)][:] = self.velocityModel.ebqe[('grad(u)',ci)]
+
+        for ci in range(self.pressureIncrement_nc):
+            if self.bdf is int(2):
+                self.pressureIncrementModel.q[('u_lastlast',ci)][:] = self.pressureIncrementModel.q[('u_last',ci)]
+                self.pressureIncrementModel.ebqe[('u_lastlast',ci)][:] = self.pressureIncrementModel.ebqe[('u_last',ci)]
+            self.pressureIncrementModel.q[('u_last',ci)][:] = self.pressureIncrementModel.q[('u',ci)]
+            self.pressureIncrementModel.ebqe[('u_last',ci)][:] = self.pressureIncrementModel.ebqe[('u',ci)]
+            if self.bdf is int(2):
+                self.pressureIncrementModel.q[('grad(u)_lastlast',ci)][:] = self.pressureIncrementModel.q[('grad(u)_last',ci)]
+                self.pressureIncrementModel.ebqe[('grad(u)_lastlast',ci)][:] = self.pressureIncrementModel.ebqe[('grad(u)_last',ci)]
+            self.pressureIncrementModel.q[('grad(u)_last',ci)][:] = self.pressureIncrementModel.q[('grad(u)',ci)]
+            self.pressureIncrementModel.ebqe[('grad(u)_last',ci)][:] = self.pressureIncrementModel.ebqe[('grad(u)',ci)]
+
+        for ci in range(self.pressure_nc):
+            if self.bdf is int(2):
+                self.pressureModel.q[('u_lastlast',ci)][:] = self.pressureModel.q[('u_last',ci)]
+                self.pressureModel.ebqe[('u_lastlast',ci)][:] = self.pressureModel.ebqe[('u_last',ci)]
+            self.pressureModel.q[('u_last',ci)][:] = self.pressureModel.q[('u',ci)]
+            self.pressureModel.ebqe[('u_last',ci)][:] = self.pressureModel.ebqe[('u',ci)]
+            if self.bdf is int(2):
+                self.pressureModel.q[('grad(u)_lastlast',ci)][:] = self.pressureModel.q[('grad(u)_last',ci)]
+                self.pressureModel.ebqe[('grad(u)_lastlast',ci)][:] = self.pressureModel.ebqe[('grad(u)_last',ci)]
+            self.pressureModel.q[('grad(u)_last',ci)][:] = self.pressureModel.q[('grad(u)',ci)]
+            self.pressureModel.ebqe[('grad(u)_last',ci)][:] = self.pressureModel.ebqe[('grad(u)',ci)]
+
+
 class DensityTransport2D(TransportCoefficients.TC_base):
     r"""
     The coefficients for conservative mass transport
@@ -59,7 +179,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                                                variableNames = ['rho'],
                                                mass = {0:{0:'linear'}},
                                                advection = {0:{0:'linear'}},
-                                               #hamiltonian = {0:{0:'linear'}},
                                                reaction = {0:{0:'linear'}} if useStabilityTerms else {} ) # for the stability term
         self.bdf=int(bdf)
         self.currentModelIndex = currentModelIndex
@@ -105,6 +224,11 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         conservativeFlux = {0:'pwl-bdm-opt'} - same as pwl-bdm but optimized in a special way to be more
                                                effective.
         """
+
+        #Initialize the HistoryManipulation class for all of the models
+        self.HistoryManipulation = HistoryManipulation(modelList=modelList, bdf=self.bdf)
+
+        # densiy model work
         self.model = modelList[self.currentModelIndex] # current model
         self.model.points_quadrature.add(('u_last',0))
         self.model.points_elementBoundaryQuadrature.add(('u_last',0))
@@ -124,7 +248,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             self.velocityModel = modelList[self.velocityModelIndex]
             self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
             if ('velocity',0) in self.pressureIncrementModel.q:
-                vel_last = self.pressureIncrementModel.q[('velocity',0)] # velocity is from previous time step so is called _last here
+                vel_last = self.pressureIncrementModel.q[('velocity',0)]
                 self.c_velocity_last[vel_last.shape] = vel_last
                 if self.useStabilityTerms:
                     grad_u_last = self.velocityModel.q[('grad(u)',0)]
@@ -161,83 +285,83 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
             if ('u',0) in self.velocityModel.q:
-                u_last = self.velocityModel.q[('u',0)] # velocity is from last time step so is called _last here
-                v_last = self.velocityModel.q[('u',1)]
+                u_last = self.velocityModel.q[('u_last',0)]
+                v_last = self.velocityModel.q[('u_last',1)]
                 self.c_u_last[u_last.shape] = u_last
                 self.c_v_last[v_last.shape] = v_last
                 if self.useStabilityTerms:
-                    grad_u_last = self.velocityModel.q[('grad(u)',0)]
-                    grad_v_last = self.velocityModel.q[('grad(u)',1)]
+                    grad_u_last = self.velocityModel.q[('grad(u)_last',0)]
+                    grad_v_last = self.velocityModel.q[('grad(u)_last',1)]
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
                 if self.bdf is int(2):
-                    u_lastlast = self.velocityModel.q[('u_last',0)]
-                    v_lastlast = self.velocityModel.q[('u_last',1)]
+                    u_lastlast = self.velocityModel.q[('u_lastlast',0)]
+                    v_lastlast = self.velocityModel.q[('u_lastlast',1)]
                     self.c_u_lastlast[u_lastlast.shape] = u_lastlast
                     self.c_v_lastlast[v_lastlast.shape] = v_lastlast
                     if self.useStabilityTerms:
-                        grad_u_lastlast = self.velocityModel.q[('grad(u)_last',0)]
-                        grad_v_lastlast = self.velocityModel.q[('grad(u)_last',1)]
+                        grad_u_lastlast = self.velocityModel.q[('grad(u)_lastlast',0)]
+                        grad_v_lastlast = self.velocityModel.q[('grad(u)_lastlast',1)]
                         self.c_grad_u_lastlast[grad_u_lastlast.shape] = grad_u_lastlast
                         self.c_grad_v_lastlast[grad_v_lastlast.shape] = grad_v_lastlast
             if ('u',0) in self.velocityModel.ebq:
-                u_last = self.velocityModel.ebq[('u',0)]
-                v_last = self.velocityModel.ebq[('u',1)]
+                u_last = self.velocityModel.ebq[('u_last',0)]
+                v_last = self.velocityModel.ebq[('u_last',1)]
                 self.c_u_last[u_last.shape] = u_last
                 self.c_v_last[v_last.shape] = v_last
                 if self.useStabilityTerms:
-                    grad_u_last = self.velocityModel.ebq[('grad(u)',0)]
-                    grad_v_last = self.velocityModel.ebq[('grad(u)',1)]
+                    grad_u_last = self.velocityModel.ebq[('grad(u)_last',0)]
+                    grad_v_last = self.velocityModel.ebq[('grad(u)_last',1)]
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
                 if self.bdf is int(2):
-                    u_lastlast = self.velocityModel.ebq[('u_last',0)]
-                    v_lastlast = self.velocityModel.ebq[('u_last',1)]
+                    u_lastlast = self.velocityModel.ebq[('u_lastlast',0)]
+                    v_lastlast = self.velocityModel.ebq[('u_lastlast',1)]
                     self.c_u_lastlast[u_lastlast.shape] = u_lastlast
                     self.c_v_lastlast[v_lastlast.shape] = v_lastlast
                     if self.useStabilityTerms:
-                        grad_u_lastlast = self.velocityModel.ebq[('grad(u)_last',0)]
-                        grad_v_lastlast = self.velocityModel.ebq[('grad(u)_last',1)]
+                        grad_u_lastlast = self.velocityModel.ebq[('grad(u)_lastlast',0)]
+                        grad_v_lastlast = self.velocityModel.ebq[('grad(u)_lastlast',1)]
                         self.c_grad_u_lastlast[grad_u_lastlast.shape] = grad_u_lastlast
                         self.c_grad_v_lastlast[grad_v_lastlast.shape] = grad_v_lastlast
             if ('u',0) in self.velocityModel.ebqe:
-                u_last = self.velocityModel.ebqe[('u',0)]
-                v_last = self.velocityModel.ebqe[('u',1)]
+                u_last = self.velocityModel.ebqe[('u_last',0)]
+                v_last = self.velocityModel.ebqe[('u_last',1)]
                 self.c_u_last[u_last.shape] = u_last
                 self.c_v_last[v_last.shape] = v_last
                 if self.useStabilityTerms:
-                    grad_u_last = self.velocityModel.ebqe[('grad(u)',0)]
-                    grad_v_last = self.velocityModel.ebqe[('grad(u)',1)]
+                    grad_u_last = self.velocityModel.ebqe[('grad(u)_last',0)]
+                    grad_v_last = self.velocityModel.ebqe[('grad(u)_last',1)]
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
                 if self.bdf is int(2):
-                    u_lastlast = self.velocityModel.ebqe[('u_last',0)]
-                    v_lastlast = self.velocityModel.ebqe[('u_last',1)]
+                    u_lastlast = self.velocityModel.ebqe[('u_lastlast',0)]
+                    v_lastlast = self.velocityModel.ebqe[('u_lastlast',1)]
                     self.c_u_lastlast[u_lastlast.shape] = u_lastlast
                     self.c_v_lastlast[v_lastlast.shape] = v_lastlast
                     if self.useStabilityTerms:
-                        grad_u_lastlast = self.velocityModel.ebqe[('grad(u)_last',0)]
-                        grad_v_lastlast = self.velocityModel.ebqe[('grad(u)_last',1)]
+                        grad_u_lastlast = self.velocityModel.ebqe[('grad(u)_lastlast',0)]
+                        grad_v_lastlast = self.velocityModel.ebqe[('grad(u)_lastlast',1)]
                         self.c_grad_u_lastlast[grad_u_lastlast.shape] = grad_u_lastlast
                         self.c_grad_v_lastlast[grad_v_lastlast.shape] = grad_v_lastlast
             if ('u',0) in self.velocityModel.ebq_global:
-                u_last = self.velocityModel.ebq_global[('u',0)]
-                v_last = self.velocityModel.ebq_global[('u',1)]
+                u_last = self.velocityModel.ebq_global[('u_last',0)]
+                v_last = self.velocityModel.ebq_global[('u_last',1)]
                 self.c_u_last[u_last.shape] = u_last
                 self.c_v_last[v_last.shape] = v_last
                 if self.useStabilityTerms:
-                    grad_u_last = self.velocityModel.ebq_global[('grad(u)',0)]
-                    grad_v_last = self.velocityModel.ebq_global[('grad(u)',1)]
+                    grad_u_last = self.velocityModel.ebq_global[('grad(u)_last',0)]
+                    grad_v_last = self.velocityModel.ebq_global[('grad(u)_last',1)]
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
                 if self.bdf is int(2):
-                    u_lastlast = self.velocityModel.ebq_global[('u_last',0)]
-                    v_lastlast = self.velocityModel.ebq_global[('u_last',1)]
+                    u_lastlast = self.velocityModel.ebq_global[('u_lastlast',0)]
+                    v_lastlast = self.velocityModel.ebq_global[('u_lastlast',1)]
                     self.c_u_lastlast[u_lastlast.shape] = u_lastlast
                     self.c_v_lastlast[v_lastlast.shape] = v_lastlast
                     if self.useStabilityTerms:
-                        grad_u_lastlast = self.velocityModel.ebq_global[('grad(u)_last',0)]
-                        grad_v_lastlast = self.velocityModel.ebq_global[('grad(u)_last',1)]
+                        grad_u_lastlast = self.velocityModel.ebq_global[('grad(u)_lastlast',0)]
+                        grad_v_lastlast = self.velocityModel.ebq_global[('grad(u)_lastlast',1)]
                         self.c_grad_u_lastlast[grad_u_lastlast.shape] = grad_u_lastlast
                         self.c_grad_v_lastlast[grad_v_lastlast.shape] = grad_v_lastlast
     def initializeMesh(self,mesh):
@@ -286,13 +410,12 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         Give the TC object an opportunity to modify itself before the time step.
         """
         self.firstStep = firstStep # save for in evaluate
-        if self.firstStep:
-            for ci in range(self.nc):
-                self.model.q[('u_lastlast',ci)][:] = self.model.q[('u',ci)]
-                self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u',ci)]
 
-                self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
-                self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
+        # Transfer the solutions to the new time step representation
+        if self.firstStep:
+            self.HistoryManipulation.initializeHistory()
+        else:
+            self.HistoryManipulation.updateHistory()
 
         copyInstructions = {}
         return copyInstructions
@@ -308,17 +431,9 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     self.model.u[0].dof[jg]=self.densityFunction(x,t)
             self.model.calculateSolutionAtQuadrature()
             self.evaluate(t,self.model.q)
-            # self.evaluate(t,self.model.ebq)
             self.evaluate(t,self.model.ebqe)
-            # self.evaluate(t,self.model.ebq_global)
             self.model.timeIntegration.calculateElementCoefficients(self.model.q)
 
-        for ci in range(self.nc):
-            self.model.q[('u_lastlast',ci)][:] = self.model.q[('u_last',ci)]
-            self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u_last',ci)]
-
-            self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
-            self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
 
         copyInstructions = {}
         return copyInstructions
@@ -591,56 +706,56 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 "pressure increment model index out of range 0," + repr(len(modelList))
             self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
             if ('u',0) in self.pressureIncrementModel.q:
-                grad_phi_last = self.pressureIncrementModel.q[('grad(u)',0)]  #grad(u) here is at time t^{k} so is _last now
+                grad_phi_last = self.pressureIncrementModel.q[('grad(u)_last',0)]
                 self.c_phi_last[grad_phi_last.shape] = grad_phi_last
                 if self.bdf is int(2):
-                    grad_phi_lastlast = self.pressureIncrementModel.q[('grad(u)_last',0)]  # grad(u)_last here is at time t^{k-1} so is _lastlast now
+                    grad_phi_lastlast = self.pressureIncrementModel.q[('grad(u)_lastlast',0)]
                     self.c_phi_lastlast[grad_phi_lastlast.shape] = grad_phi_lastlast
             if ('u',0) in self.pressureIncrementModel.ebq:
-                grad_phi_last = self.pressureIncrementModel.ebq[('grad(u)',0)]
+                grad_phi_last = self.pressureIncrementModel.ebq[('grad(u)_last',0)]
                 self.c_phi_last[grad_phi_last.shape] = grad_phi_last
                 if self.bdf is int(2):
-                    grad_phi_lastlast = self.pressureIncrementModel.ebq[('grad(u)_last',0)]
+                    grad_phi_lastlast = self.pressureIncrementModel.ebq[('grad(u)_lastlast',0)]
                     self.c_phi_lastlast[grad_phi_lastlast.shape] = grad_phi_lastlast
             if ('u',0) in self.pressureIncrementModel.ebqe:
-                grad_phi_last = self.pressureIncrementModel.ebqe[('grad(u)',0)]
+                grad_phi_last = self.pressureIncrementModel.ebqe[('grad(u)_last',0)]
                 self.c_phi_last[grad_phi_last.shape] = grad_phi_last
                 if self.bdf is int(2):
-                    grad_phi_lastlast = self.pressureIncrementModel.ebqe[('grad(u)_last',0)]
+                    grad_phi_lastlast = self.pressureIncrementModel.ebqe[('grad(u)_lastlast',0)]
                     self.c_phi_lastlast[grad_phi_lastlast.shape] = grad_phi_lastlast
             if ('u',0) in self.pressureIncrementModel.ebq_global:
-                grad_phi_last = self.pressureIncrementModel.ebq_global[('grad(u)',0)]
+                grad_phi_last = self.pressureIncrementModel.ebq_global[('grad(u)_last',0)]
                 self.c_phi_last[grad_phi_last.shape] = grad_phi_last
                 if self.bdf is int(2):
-                    grad_phi_lastlast = self.pressureIncrementModel.ebq_global[('grad(u)_last',0)]
+                    grad_phi_lastlast = self.pressureIncrementModel.ebq_global[('grad(u)_lastlast',0)]
                     self.c_phi_lastlast[grad_phi_lastlast.shape] = grad_phi_lastlast
         if (self.pressureModelIndex >= 0 and self.pressureGradFunction is None):
             assert self.pressureModelIndex < len(modelList), \
                 "pressure model index out of range 0," + repr(len(modelList))
             self.pressureModel = modelList[self.pressureModelIndex]
             if ('u',0) in self.pressureModel.q:
-                grad_p_last = self.pressureModel.q[('grad(u)',0)] #grad(u) here is at time t^{k} so is _last in this context
+                grad_p_last = self.pressureModel.q[('grad(u)_last',0)]
                 self.c_p_last[grad_p_last.shape] = grad_p_last
                 if self.bdf is int(2):
-                    grad_p_lastlast = self.pressureModel.q[('grad(u)_last',0)]
+                    grad_p_lastlast = self.pressureModel.q[('grad(u)_lastlast',0)]
                     self.c_p_lastlast[grad_p_lastlast.shape] = grad_p_lastlast
             if ('u',0) in self.pressureModel.ebq:
-                grad_p_last = self.pressureModel.ebq[('grad(u)',0)]
+                grad_p_last = self.pressureModel.ebq[('grad(u)_last',0)]
                 self.c_p_last[grad_p_last.shape] = grad_p_last
                 if self.bdf is int(2):
-                    grad_p_lastlast = self.pressureModel.ebq[('grad(u)_last',0)]
+                    grad_p_lastlast = self.pressureModel.ebq[('grad(u)_lastlast',0)]
                     self.c_p_lastlast[grad_p_lastlast.shape] = grad_p_lastlast
             if ('u',0) in self.pressureModel.ebqe:
-                grad_p_last = self.pressureModel.ebqe[('grad(u)',0)]
+                grad_p_last = self.pressureModel.ebqe[('grad(u)_last',0)]
                 self.c_p_last[grad_p_last.shape] = grad_p_last
                 if self.bdf is int(2):
-                    grad_p_lastlast = self.pressureModel.ebqe[('grad(u)_last',0)]
+                    grad_p_lastlast = self.pressureModel.ebqe[('grad(u)_lastlast',0)]
                     self.c_p_lastlast[grad_p_lastlast.shape] = grad_p_lastlast
             if ('u',0) in self.pressureModel.ebq_global:
-                grad_p_last = self.pressureModel.ebq_global[('grad(u)',0)]
+                grad_p_last = self.pressureModel.ebq_global[('grad(u)_last',0)]
                 self.c_p_last[grad_p_last.shape] = grad_p_last
                 if self.bdf is int(2):
-                    grad_p_lastlast = self.pressureModel.ebq_global[('grad(u)_last',0)]
+                    grad_p_lastlast = self.pressureModel.ebq_global[('grad(u)_lastlast',0)]
                     self.c_p_lastlast[grad_p_lastlast.shape] = grad_p_lastlast
     def initializeMesh(self,mesh):
         """
@@ -689,21 +804,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         """
         self.firstStep = firstStep # save for use in evaluate
 
-        if self.firstStep:
-            for ci in range(self.nc):
-                self.model.q[('u_lastlast',ci)][:] = self.model.q[('u',ci)]
-                self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u',ci)]
-
-                self.model.q[('grad(u)_lastlast',ci)][:] = self.model.q[('grad(u)',ci)]
-                self.model.ebqe[('grad(u)_lastlast',ci)][:] = self.model.ebqe[('grad(u)',ci)]
-
-                # deep copy so we have a cached value instead of pointer to current values
-                self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
-                self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
-
-                self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-                self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
-
         copyInstructions = {}
         return copyInstructions
     def postStep(self,t,firstStep=False):
@@ -721,24 +821,9 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             # self.model.u[1].dof[:] = self.vFunction(self.model.mesh.nodeArray,t)
             self.model.calculateSolutionAtQuadrature()
             self.evaluate(t,self.model.q)
-            # self.evaluate(t,self.model.ebq)
             self.evaluate(t,self.model.ebqe)
-            # self.evaluate(t,self.model.ebq_global)
             self.model.timeIntegration.calculateElementCoefficients(self.model.q)
-        for ci in range(self.nc):
-            # deep copy so we have a cached value instead of pointer to current values
-            self.model.q[('u_lastlast',ci)][:] = self.model.q[('u_last',ci)]
-            self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u_last',ci)]
 
-            self.model.q[('grad(u)_lastlast',ci)][:] = self.model.q[('grad(u)_last',ci)]
-            self.model.ebqe[('grad(u)_lastlast',ci)][:] = self.model.ebqe[('grad(u)_last',ci)]
-
-            # deep copy so we have a cached value instead of pointer to current values
-            self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
-            self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
-
-            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
         copyInstructions = {}
         return copyInstructions
     def evaluate(self,t,c):
@@ -1030,10 +1115,12 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         Give the TC object access to the element quadrature storage
         """
-        if self.bdf is int(2):
-            for ci in range(self.nc):
-                # cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
-                cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
+        for ci in range(self.nc):
+            cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
+            cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
+            if self.bdf is int(2):
+                cq[('u_lastlast',ci)] = deepcopy(cq[('u',ci)])
+                cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)',ci)])
 
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
@@ -1050,10 +1137,12 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         Give the TC object access to the exterior element boundary quadrature storage
         """
-        if self.bdf is int(2):
-            for ci in range(self.nc):
-                # cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
-                cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+        for ci in range(self.nc):
+            cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
+            cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+            if self.bdf is int(2):
+                cebqe[('u_lastlast',ci)] = deepcopy(cebqe[('u',ci)])
+                cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)',ci)])
 
 
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
@@ -1066,13 +1155,6 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         Move the current values to values_last to keep cached set of values for bdf1 algorithm
         """
         self.firstStep = firstStep # save for use in evaluate()
-
-        if self.firstStep:
-            for ci in range(self.nc):
-                self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-                # self.model.ebq[('grad(u)_last',ci)][:] = self.model.ebq[('grad(u)',ci)]
-                self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
-                # self.model.ebq_global[('grad(u)_last',ci)][:] = self.model.ebq_global[('grad(u)',ci)]
 
         copyInstructions = {}
         return copyInstructions
@@ -1094,6 +1176,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                                                       self.model.q[('u',0)],
                                                       self.model.mesh.nElements_owned)
             assert fabs(newmeanvalue) < 1.0e-8, "new mean should be zero but is "+`newmeanvalue`
+
         # add post processing adjustments here if possible.  They have already be solved for by this point.
 
         # If self.initializeUsingPressureFunction (for debugging), then
@@ -1111,9 +1194,6 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
 
-        for ci in range(self.nc):
-            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
         copyInstructions = {}
         return copyInstructions
     def evaluate(self,t,c):
@@ -1333,6 +1413,9 @@ class Pressure2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
             cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
+            if self.bdf is int(2):
+                cq[('u_lastlast',ci)] = deepcopy(cq[('u',ci)])
+                cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)',ci)])
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
@@ -1350,6 +1433,9 @@ class Pressure2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
             cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+            if self.bdf is int(2):
+                cebqe[('u_lastlast',ci)] = deepcopy(cebqe[('u',ci)])
+                cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)',ci)])
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
         """
         Give the TC object access to the generalized interpolation point storage. These points are used  to project nonlinear potentials (phi).
@@ -1360,14 +1446,6 @@ class Pressure2D(TransportCoefficients.TC_base):
         Give the TC object an opportunity to modify itself before the time step.
         """
         self.firstStep = firstStep
-
-        if self.firstStep:
-            for ci in range(self.nc):
-                self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
-                self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
-
-                self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-                self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
 
         copyInstructions = {}
         return copyInstructions
@@ -1387,13 +1465,6 @@ class Pressure2D(TransportCoefficients.TC_base):
             # self.evaluate(t,self.model.ebq)
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
-
-        for ci in range(self.nc):
-            self.model.q[('u_last',ci)][:] = self.model.q[('u',ci)]
-            self.model.ebqe[('u_last',ci)][:] = self.model.ebqe[('u',ci)]
-
-            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
 
         copyInstructions = {}
         return copyInstructions
@@ -1421,11 +1492,7 @@ class Pressure2D(TransportCoefficients.TC_base):
                 if self.bdf is int(1) or self.firstStep:
                     b0 = 1.0/dt
                 elif self.bdf is int(2):
-                    b0 = self.model.timeIntegration.alpha_bdf  # = beta_0
-                    # dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
-                    # r = dt/dt_last
-                    # dtInv = 1.0/dt
-                    # b0 = (1.0+2.0*r)/(1.0+r)*dtInv  # = self.model.timeIntegration.alpha_bdf  # = beta_0
+                    b0 = self.velocityModel.timeIntegration.alpha_bdf  # = beta_0
                 Invb0chi = 1.0/(chi*b0)
 
             # extract velocity components
