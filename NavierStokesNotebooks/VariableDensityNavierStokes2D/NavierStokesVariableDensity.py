@@ -260,7 +260,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
         elif (self.useVelocityComponents and self.velocityModelIndex >= 0 and
-                self.velocityFunction is None):
+                4self.velocityFunction is None):
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
@@ -413,7 +413,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             self.evaluate(t,self.model.q)
             self.evaluate(t,self.model.ebqe)
             self.model.timeIntegration.calculateElementCoefficients(self.model.q)
-            self.model.timeIntegration.calculateElementCoefficients(self.model.ebqe)
 
 
         copyInstructions = {}
@@ -804,7 +803,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             self.evaluate(t,self.model.q)
             self.evaluate(t,self.model.ebqe)
             self.model.timeIntegration.calculateElementCoefficients(self.model.q)
-            self.model.timeIntegration.calculateElementCoefficients(self.model.ebqe)
 
         copyInstructions = {}
         return copyInstructions
