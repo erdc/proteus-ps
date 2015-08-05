@@ -260,7 +260,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
         elif (self.useVelocityComponents and self.velocityModelIndex >= 0 and
-                4self.velocityFunction is None):
+                self.velocityFunction is None):
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
             self.velocityModel = modelList[self.velocityModelIndex]
