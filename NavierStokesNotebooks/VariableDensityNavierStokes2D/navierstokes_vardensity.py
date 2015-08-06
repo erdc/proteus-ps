@@ -19,15 +19,16 @@ nd = 2
 quad_degree = 5  # exact for polynomials of this degree
 
 # Model Flags
-useStabilityTerms = True  # stability terms in density and velocity models
-useVelocityComponents = True  # False uses post processed velocity,
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
-useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useRotationalModel = False #  Standard vs Rotational models in pressure update
-useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
-setFirstTimeStepValues = True # interpolate the first step as well as the 0th step from exact solutions
+useStabilityTerms = True  # stability terms in density and velocity models
 useNonlinearAdvection = False # switches between extrapolated and fully nonlinear advection in velocity model
 useNumericalFluxEbqe = True # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
+useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
+useVelocityComponents = True  # False uses post processed velocity,
+useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
+setFirstTimeStepValues = True # interpolate the first step as well as the 0th step from exact solutions
+
 
 # setup time variables
 T = 1.0
