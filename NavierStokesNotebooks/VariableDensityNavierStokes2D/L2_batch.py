@@ -46,7 +46,7 @@ simFlagsList[1]['storeTimes']     = ['Last']
 # Pressure
 simFlagsList[3]['errorQuantities']=['u']
 simFlagsList[3]['errorTypes']= ['numericalSolution'] #compute error in soln and glob. mass bal
-simFlagsList[3]['errorNorms']= ['L2','H1semi'] #compute L2 norm in space or H1 or ...
+simFlagsList[3]['errorNorms']= ['L2'] #compute 'L2' norm in space or 'H1' or 'H1semi' ...
 simFlagsList[3]['errorTimes']= ['All'] #'All', 'Last'
 simFlagsList[3]['echo']=True
 simFlagsList[3]['dataFile']       = simFlagsList[3]['simulationName'] + "_BDF%1d_dt_0_%s_%s.db" %(int(float(ctx.globalBDFTimeOrder)),ctx.DT_string,comm.rank())
