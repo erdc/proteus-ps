@@ -26,10 +26,12 @@ useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure inc
 useRotationalModel = False #  Standard vs Rotational models in pressure update
 useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
 setFirstTimeStepValues = True # interpolate the first step as well as the 0th step from exact solutions
+useNonlinearAdvection = False # switches between extrapolated and fully nonlinear advection in velocity model
+useNumericalFluxEbqe = True # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
 
 # setup time variables
 T = 1.0
-DT = 0.1  # target time step size
+DT = 0.05  # target time step size
 
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
@@ -298,7 +300,7 @@ nLayersOfOverlapForParallel = 0
 
 # Time stepping for output
 # T=10.0
-# DT = 0.1
+# DT = 0.05
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
