@@ -21,7 +21,7 @@ class HistoryManipulation:
         beginning of each new time stage.
 
     """
-    def __init__(self, modelList=None, bdf=1):
+    def __init__(self, modelList=None, bdf=1, useNumericalFluxEbqe=False):
         self.densityModel = modelList[0]
         self.density_nc = 1
         self.velocityModel = modelList[1]
@@ -31,6 +31,7 @@ class HistoryManipulation:
         self.pressureModel = modelList[3]
         self.pressure_nc = 1
         self.bdf = bdf
+        self.useNumericalFluxEbqe = useNumericalFluxEbqe
 
     def initializeHistory(self):
         """
@@ -40,15 +41,15 @@ class HistoryManipulation:
             u_last = solution at time t^{0}
             u_lastlast = solution at time t^{0}
         """
-        for modelc in [self.densityModel.q, self.densityModel.ebqe]:
+        for modelc in [self.densityModel.q, self.densityModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.densityModel.ebqe]:
             for ci in range(self.density_nc):
                 if self.bdf is int(2):
                     modelc[('u_lastlast',ci)][:] = modelc[('u',ci)]
-                    # modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)',ci)]
+                    modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)',ci)]
                 modelc[('u_last',ci)][:] = modelc[('u',ci)]
-                # modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
+                modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
 
-        for modelc in [self.velocityModel.q, self.velocityModel.ebqe]:
+        for modelc in [self.velocityModel.q, self.velocityModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.velocityModel.ebqe]:
             for ci in range(self.velocity_nc):
                 if self.bdf is int(2):
                     modelc[('u_lastlast',ci)][:] = modelc[('u',ci)]
@@ -56,15 +57,15 @@ class HistoryManipulation:
                 modelc[('u_last',ci)][:] = modelc[('u',ci)]
                 modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
 
-        for modelc in [self.pressureIncrementModel.q, self.pressureIncrementModel.ebqe]:
+        for modelc in [self.pressureIncrementModel.q, self.pressureIncrementModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.pressureIncrementModel.ebqe]:
             for ci in range(self.pressureIncrement_nc):
                 if self.bdf is int(2):
-                    # modelc[('u_lastlast',ci)][:] = modelc[('u',ci)]
+                    modelc[('u_lastlast',ci)][:] = modelc[('u',ci)]
                     modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)',ci)]
                 modelc[('u_last',ci)][:] = modelc[('u',ci)]
                 modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
 
-        for modelc in [self.pressureModel.q, self.pressureModel.ebqe]:
+        for modelc in [self.pressureModel.q, self.pressureModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.pressureModel.ebqe]:
             for ci in range(self.pressure_nc):
                 if self.bdf is int(2):
                     modelc[('u_lastlast',ci)][:] = modelc[('u',ci)]
@@ -81,13 +82,15 @@ class HistoryManipulation:
               u_last = solution at time t^{n-1}
               u_lastlast = solution at time t^{n-2}
         """
-        for modelc in [self.densityModel.q, self.densityModel.ebqe]:
+        for modelc in [self.densityModel.q, self.densityModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.densityModel.ebqe]:
             for ci in range(self.density_nc):
                 if self.bdf is int(2):
                     modelc[('u_lastlast',ci)][:] = modelc[('u_last',ci)]
+                    modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)_last',ci)]
                 modelc[('u_last',ci)][:] = modelc[('u',ci)]
+                modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
 
-        for modelc in [self.velocityModel.q, self.velocityModel.ebqe]:
+        for modelc in [self.velocityModel.q, self.velocityModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.velocityModel.ebqe]:
             for ci in range(self.velocity_nc):
                 if self.bdf is int(2):
                     modelc[('u_lastlast',ci)][:] = modelc[('u_last',ci)]
@@ -95,14 +98,15 @@ class HistoryManipulation:
                 modelc[('u_last',ci)][:] = modelc[('u',ci)]
                 modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
 
-        for modelc in [self.pressureIncrementModel.q, self.pressureIncrementModel.ebqe]:
+        for modelc in [self.pressureIncrementModel.q, self.pressureIncrementModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.pressureIncrementModel.ebqe]:
             for ci in range(self.pressureIncrement_nc):
                 if self.bdf is int(2):
+                    modelc[('u_lastlast',ci)][:] = modelc[('u_last',ci)]
                     modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)_last',ci)]
                 modelc[('u_last',ci)][:] = modelc[('u',ci)]
                 modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
 
-        for modelc in [self.pressureModel.q, self.pressureModel.ebqe]:
+        for modelc in [self.pressureModel.q, self.pressureModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.pressureModel.ebqe]:
             for ci in range(self.pressure_nc):
                 if self.bdf is int(2):
                     modelc[('u_lastlast',ci)][:] = modelc[('u_last',ci)]
@@ -134,7 +138,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                  chiValue=1.0,  # only needed for the scaling adjustment in case of post processed velocity
                  pressureIncrementModelIndex=-1,
                  useStabilityTerms=False,
-                 setFirstTimeStepValues=True):
+                 setFirstTimeStepValues=True,
+                 useNumericalFluxEbqe=False):
         """Construct a coefficients object
 
         :param velocityModelIndex: The index into the proteus model list
@@ -181,6 +186,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         self.useStabilityTerms = useStabilityTerms
         self.firstStep = True # manipulated in preStep()
         self.setFirstTimeStepValues = setFirstTimeStepValues
+        self.useNumericalFluxEbqe = useNumericalFluxEbqe
 
     def attachModels(self,modelList):
         """
@@ -206,17 +212,26 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         """
 
         #Initialize the HistoryManipulation class for all of the models
-        self.HistoryManipulation = HistoryManipulation(modelList=modelList, bdf=self.bdf)
+        self.HistoryManipulation = HistoryManipulation(modelList=modelList,
+                                                       bdf=self.bdf,
+                                                       useNumericalFluxEbqe=self.useNumericalFluxEbqe)
 
         # densiy model work
         self.model = modelList[self.currentModelIndex] # current model
-        self.model.points_quadrature.add(('u_last',0))
-        self.model.points_elementBoundaryQuadrature.add(('u_last',0))
-        self.model.numericalFlux.ebqe[('u_last',0)] = self.model.ebqe[('u_last',0)]
-        if self.bdf is int(2):
-            self.model.points_quadrature.add(('u_lastlast',0))
-            self.model.points_elementBoundaryQuadrature.add(('u_lastlast',0))
-            self.model.numericalFlux.ebqe[('u_lastlast',0)] = self.model.ebqe[('u_lastlast',0)]
+        for ci in range(self.nc):
+            self.model.points_quadrature.add(('u_last',ci))
+            self.model.numericalFlux.ebqe[('u_last',ci)]=self.model.ebqe[('u_last',ci)]
+            self.model.points_elementBoundaryQuadrature.add(('u_last',ci))
+            self.model.vectors_quadrature.add(('grad(u)_last',ci))
+            self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',ci))
+            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=self.model.ebqe[('grad(u)_last',ci)]
+            if self.bdf is int(2):
+                self.model.points_quadrature.add(('u_lastlast',ci))
+                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=self.model.ebqe[('u_lastlast',ci)]
+                self.model.points_elementBoundaryQuadrature.add(('u_lastlast',ci))
+                self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
+                self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
+                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
 
         if (not self.useVelocityComponents and self.velocityModelIndex >=0
             and self.pressureIncrementModelIndex >= 0 and self.velocityFunction is None):
@@ -355,10 +370,10 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         """
         for ci in range(self.nc):
             cq[('u_last',ci)] = deepcopy(cq[('u',ci)])
-            #cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
+            cq[('grad(u)_last',ci)] = deepcopy(cq[('grad(u)',ci)])
             if self.bdf is int(2):
                 cq[('u_lastlast',ci)] = deepcopy(cq[('u',ci)])
-                # #cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)_last',ci)])
+                cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)_last',ci)])
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
@@ -375,10 +390,10 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         """
         for ci in range(self.nc):
             cebqe[('u_last',ci)] = deepcopy(cebqe[('u',ci)])
-            #cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+            cebqe[('grad(u)_last',ci)] = deepcopy(cebqe[('grad(u)',ci)])
             if self.bdf is int(2):
                 cebqe[('u_lastlast',ci)] = deepcopy(cebqe[('u',ci)])
-                # #cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)',ci)])
+                cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)',ci)])
 
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
         """
@@ -479,7 +494,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 if self.useStabilityTerms:
                     div_vel_lastlast = self.c_grad_u_lastlast[c[('f',0)].shape][...,0] + self.c_grad_v_lastlast[c[('f',0)].shape][...,1]
 
-
         # choose the velocity to be used for transport
         if self.bdf is int(1) or self.firstStep:
             # use first order extrapolation of velocity
@@ -559,7 +573,8 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                  pressureModelIndex=-1,
                  pressureGradFunction=None,
                  useStabilityTerms=False,
-                 setFirstTimeStepValues=True):
+                 setFirstTimeStepValues=True,
+                 useNonlinearAdvection=False):
 
         sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
                           np.array([0,1],dtype='i')),
@@ -575,14 +590,23 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                          variableNames=['u','v'], # defines variable reference order [0, 1]
                          mass = {eu:{ui:'linear'},  # du/dt
                                  ev:{vi:'linear'}}, # dv/dt
-                         hamiltonian = {eu:{ui:'linear'},  # rho*(u u_x + v u_y)   convection term
+                         hamiltonian = {eu:{ui:'nonlinear'},  # rho*(u u_x + v u_y)   convection term
+                                        ev:{vi:'nonlinear'}}  # rho*(u v_x + v v_y)   convection term
+                                       if useNonlinearAdvection else
+                                       {eu:{ui:'linear'},  # rho*(u u_x + v u_y)   convection term
                                         ev:{vi:'linear'}}, # rho*(u v_x + v v_y)   convection term
                          diffusion = {eu:{ui:{ui:'constant'}},  # - \mu * \grad u
                                       ev:{vi:{vi:'constant'}}}, # - \mu * \grad v
                          potential = {eu:{ui:'u'},
                                       ev:{vi:'u'}}, # define the potential for the diffusion term to be the solution itself
-                         reaction  = {eu:{ui:'constant'},  # -f1(x) + d/dx p^\# + (stability terms) * u
-                                      ev:{vi:'constant'}}, # -f2(x) + d/dy p^\# + (stability terms) * v
+                         reaction  = {eu:{ui:'constant'},  # -f1(x) + d/dx p^\#
+                                      ev:{vi:'constant'}}  # -f2(x) + d/dy p^\#
+                                     if not useStabilityTerms else
+                                     {eu:{ui:'linear'},  # -f1(x) + d/dx p^\# + (stability terms u extrapolated * u
+                                      ev:{vi:'linear'}}  # -f2(x) + d/dy p^\# + (stability terms v extrapolated) * v
+                                     if not useNonlinearAdvection else
+                                     {eu:{ui:'nonlinear'},  # -f1(x) + d/dx p^\# + (stability terms u) * u
+                                      ev:{vi:'nonlinear'}}, # -f2(x) + d/dy p^\# + (stability terms v) * v
                          sparseDiffusionTensors=sdInfo,
                          useSparseDiffusion = True),
         self.vectorComponents=[ui,vi]  # for plotting and hdf5 output only
@@ -612,7 +636,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             self.c_phi_lastlast = {}
         self.firstStep = True # manipulated in preStep()
         self.setFirstTimeStepValues=setFirstTimeStepValues
-
+        self.useNonlinearAdvection=useNonlinearAdvection
 
     def attachModels(self,modelList):
         """
@@ -621,16 +645,16 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         self.model = modelList[self.currentModelIndex] # current model
         for ci in range(self.nc):
             self.model.points_quadrature.add(('u_last',ci))
-            self.model.vectors_quadrature.add(('grad(u)_last',ci))
             self.model.numericalFlux.ebqe[('u_last',ci)]=self.model.ebqe[('u_last',ci)]
             self.model.points_elementBoundaryQuadrature.add(('u_last',ci))
+            self.model.vectors_quadrature.add(('grad(u)_last',ci))
             self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',ci))
             self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=self.model.ebqe[('grad(u)_last',ci)]
             if self.bdf is int(2):
                 self.model.points_quadrature.add(('u_lastlast',ci))
-                self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
                 self.model.numericalFlux.ebqe[('u_lastlast',ci)]=self.model.ebqe[('u_lastlast',ci)]
                 self.model.points_elementBoundaryQuadrature.add(('u_lastlast',ci))
+                self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
                 self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
                 self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
         if (self.densityModelIndex >= 0 and self.densityFunction is None):
@@ -912,30 +936,40 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         if self.densityFunction is not None:
             rho_sharp = self.densityFunction(c['x'],t)
 
+        # choose velocity advection
+        if self.useNonlinearAdvection:
+            # nonlinear advection
+            u_star = u
+            v_star = v
+            div_vel_star = grad_u[...,0] + grad_v[...,1]
+        else: # use extrapolation of velocity
+            if self.bdf is int(1) or self.firstStep:
+                # first order extrapolation
+                u_star = u_last
+                v_star = v_last
+            elif self.bdf is int(2):
+                u_lastlast = c[('u_lastlast',ui)]
+                v_lastlast = c[('u_lastlast',vi)]
+                # use second order extrapolation of velocity
+                u_star = u_last + dt/dt_last*( u_last - u_lastlast )
+                v_star = v_last + dt/dt_last*( v_last - v_lastlast )
 
-        # extrapolation of velocity
-        if self.bdf is int(1) or self.firstStep:
-            # first order extrapolation
-            u_star = u_last
-            v_star = v_last
-            if self.useStabilityTerms:
+        # when doing nonlinear, we will use extrapolated div_vel_star instead of making
+        # it also nonlinear.  Thus the only nonlinear parts are in terms of u and v.
+        if self.useStabilityTerms:
+            if self.bdf is int(1) or self.firstStep:
                 div_vel_star = grad_u_last[...,xi] + grad_v_last[...,yi]
-                div_rho_vel_star = grad_rho[...,xi]*u_star + grad_rho[...,yi]*v_star + rho*div_vel_star
-        elif self.bdf is int(2):
-            # TODO:  decide whether or not to use post processed velocities here...
-            u_lastlast = c[('u_lastlast',ui)]
-            v_lastlast = c[('u_lastlast',vi)]
-            # use second order extrapolation of velocity
-            u_star = u_last + dt/dt_last*( u_last - u_lastlast ) # TODO: note could use r instead of dt/dt_last here to speed it up a bit
-            v_star = v_last + dt/dt_last*( v_last - v_lastlast )
-            if self.useStabilityTerms:
+            elif self.bdf is int(2):
                 grad_u_lastlast = c[('grad(u)_lastlast',ui)]
                 grad_v_lastlast = c[('grad(u)_lastlast',vi)]
                 div_vel_last = grad_u_last[...,xi] + grad_v_last[...,yi]
                 div_vel_lastlast = grad_u_lastlast[...,xi] + grad_v_lastlast[...,yi]
                 # use second order extrapolation of div velocity
                 div_vel_star = div_vel_last + dt/dt_last*( div_vel_last - div_vel_lastlast)
-                div_rho_vel_star = grad_rho[...,xi]*u_star + grad_rho[...,yi]*v_star + rho*div_vel_star
+
+        # set the stability div(rho_vel)
+        if self.useStabilityTerms:
+            div_rho_vel_star = grad_rho[...,xi]*u_star + grad_rho[...,yi]*v_star + rho*div_vel_star
 
 
         #equation eu = 0
@@ -947,7 +981,10 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('dr',eu,ui)][:] = 0.0
         if self.useStabilityTerms:
             c[('r',eu)][:] += 0.5*( rho_t + div_rho_vel_star )*u
-            c[('dr',eu,ui)][:] += 0.5*( rho_t + div_rho_vel_star )
+            if self.useNonlinearAdvection:
+                c[('dr',eu,ui)][:] += 0.5*( rho_t + div_rho_vel_star ) + 0.5*grad_rho[...,xi]*u
+            else:
+                c[('dr',eu,ui)][:] += 0.5*( rho_t + div_rho_vel_star )
         c[('H',eu)][:] = rho*( u_star*grad_u[...,xi] + v_star*grad_u[...,yi] )
         c[('dH',eu,ui)][...,xi] = rho*u_star #  dH d(u_x)
         c[('dH',eu,ui)][...,yi] = rho*v_star #  dH d(u_y)
@@ -965,7 +1002,10 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('dr',ev,vi)][:] = 0.0
         if self.useStabilityTerms:
             c[('r',ev)][:] += 0.5*( rho_t + div_rho_vel_star )*v
-            c[('dr',ev,vi)][:] += 0.5*( rho_t + div_rho_vel_star )
+            if self.useNonlinearAdvection:
+                c[('dr',ev,vi)][:] += 0.5*( rho_t + div_rho_vel_star ) + 0.5*grad_rho[...,yi]*v
+            else:
+                c[('dr',ev,vi)][:] += 0.5*( rho_t + div_rho_vel_star )
         c[('H',ev)][:] = rho*( u_star*grad_v[...,xi] + v_star*grad_v[...,yi] ) # add rho term
         c[('dH',ev,vi)][...,xi] = rho*u_star #  dH d(v_x)
         c[('dH',ev,vi)][...,yi] = rho*v_star #  dH d(v_y)
@@ -1042,10 +1082,21 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         # representing times t^{k} and t^{k-1} respectively.  Since velocity is before
         # pressure increment, we haven't had a chance to move the phi's to be consistent
         # notation on the new time step so we must handle this inconsistency here.
-        if self.bdf is int(2):
-            self.model.vectors_quadrature.add(('grad(u)_last',0))
-            self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',0))
-            self.model.numericalFlux.ebqe[('grad(u)_last',0)] = self.model.ebqe[('grad(u)_last',0)]
+        for ci in range(self.nc):
+            self.model.points_quadrature.add(('u_last',ci))
+            self.model.numericalFlux.ebqe[('u_last',ci)]=self.model.ebqe[('u_last',ci)]
+            self.model.points_elementBoundaryQuadrature.add(('u_last',ci))
+            self.model.vectors_quadrature.add(('grad(u)_last',ci))
+            self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',ci))
+            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=self.model.ebqe[('grad(u)_last',ci)]
+            if self.bdf is int(2):
+                self.model.points_quadrature.add(('u_lastlast',ci))
+                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=self.model.ebqe[('u_lastlast',ci)]
+                self.model.points_elementBoundaryQuadrature.add(('u_lastlast',ci))
+                self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
+                self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
+                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
+
         if (self.velocityModelIndex >= 0 and self.velocityFunction is None):
             assert self.velocityModelIndex < len(modelList), \
                 "velocity model index out of  range 0," + repr(len(modelList))
@@ -1320,9 +1371,21 @@ class Pressure2D(TransportCoefficients.TC_base):
 
         """
         self.model = modelList[self.currentModelIndex] # current model
-        self.model.points_quadrature.add(('u_last',0))
-        self.model.points_elementBoundaryQuadrature.add(('u_last',0))
-        self.model.numericalFlux.ebqe[('u_last',0)] = self.model.ebqe[('u_last',0)]  # why do we need this line? srp july 15, 2015
+        for ci in range(self.nc):
+            self.model.points_quadrature.add(('u_last',ci))
+            self.model.numericalFlux.ebqe[('u_last',ci)]=self.model.ebqe[('u_last',ci)]
+            self.model.points_elementBoundaryQuadrature.add(('u_last',ci))
+            self.model.vectors_quadrature.add(('grad(u)_last',ci))
+            self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',ci))
+            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=self.model.ebqe[('grad(u)_last',ci)]
+            if self.bdf is int(2):
+                self.model.points_quadrature.add(('u_lastlast',ci))
+                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=self.model.ebqe[('u_lastlast',ci)]
+                self.model.points_elementBoundaryQuadrature.add(('u_lastlast',ci))
+                self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
+                self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
+                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
+
         if ( self.useRotationalModel and not self.useVelocityComponents and
              self.pressureIncrementModelIndex >= 0 and self.velocityFunction is None ):
             assert self.pressureIncrementModelIndex < len(modelList), \
