@@ -574,7 +574,8 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                  pressureGradFunction=None,
                  useStabilityTerms=False,
                  setFirstTimeStepValues=True,
-                 useNonlinearAdvection=False):
+                 useNonlinearAdvection=False,
+                 usePressureExtrapolations=False):
 
         sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
                           np.array([0,1],dtype='i')),
@@ -637,6 +638,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         self.firstStep = True # manipulated in preStep()
         self.setFirstTimeStepValues=setFirstTimeStepValues
         self.useNonlinearAdvection=useNonlinearAdvection
+        self.usePressureExtrapolations=usePressureExtrapolations
 
     def attachModels(self,modelList):
         """
@@ -926,17 +928,22 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             else:#use velocity shape as key since it is same shape as gradient of pressure increment
                 grad_phi_lastlast = self.c_phi_lastlast[c[('grad(u)',0)].shape]
 
+        # order of pressure extrapolation first or second order (should be the same as in pressure model)
+        if self.bdf is int(1) or self.firstStep or not self.usePressureExtrapolations:
+            grad_p_star = grad_p_last
+        elif self.bdf is int(2) and self.usePressureExtrapolations:
+            grad_p_star = grad_p_last + dt/dt_last*(grad_p_last - grad_p_lastlast)
 
         # choose the density to use on the mass term,  bdf1 is rho_last,  bdf2 is current rho
         # as well as the other various element (not velocity) that differ between bdf1 and bdf2
         if self.bdf is int(1) or self.firstStep:
             rho_sharp = rho_last
             rho_t = (rho - rho_last)/dt # bdf1 time derivative
-            grad_p_sharp = grad_p_last + grad_phi_last
+            grad_p_sharp = grad_p_star + grad_phi_last
         elif self.bdf is int(2):
             rho_sharp = rho
             rho_t = b0*rho - b1*rho_last - b2*rho_lastlast #bdf2 time derivative  (see above for descriptions and definitions of b0 b1 and b2)
-            grad_p_sharp = grad_p_last + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
+            grad_p_sharp = grad_p_star + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
             # grad_p_star = grad_p_last + dt/dt_last*( grad_p_last - grad_p_lastlast ) # second order extrapolation
             # grad_p_sharp = grad_p_star + b1/b0 * grad_phi_last + b2/b0 *grad_phi_lastlast
 
@@ -1309,7 +1316,8 @@ class Pressure2D(TransportCoefficients.TC_base):
                  pressureFunction=None,
                  useRotationalModel=True,
                  chiValue=1.0,
-                 setFirstTimeStepValues=True):
+                 setFirstTimeStepValues=True,
+                 usePressureExtrapolations=False):
         """Construct a coefficients object
 
         :param velocityModelIndex: The index into the proteus model list
@@ -1350,6 +1358,7 @@ class Pressure2D(TransportCoefficients.TC_base):
         self.c_phi = {}
         self.firstStep = True # manipulated in preStep()
         self.setFirstTimeStepValues = setFirstTimeStepValues
+        self.usePressureExtrapolations = usePressureExtrapolations
 
     def attachModels(self,modelList):
         """
@@ -1389,6 +1398,8 @@ class Pressure2D(TransportCoefficients.TC_base):
                 self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
                 self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
                 self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
+        if (self.usePressureExtrapolations and self.velocityModelIndex >= 0):
+            self.velocityModel = modelList[self.velocityModelIndex]
 
         if ( self.useRotationalModel and not self.useVelocityComponents and
              self.pressureIncrementModelIndex >= 0 and self.velocityFunction is None ):
@@ -1520,9 +1531,19 @@ class Pressure2D(TransportCoefficients.TC_base):
         Evaluate the coefficients after getting the specified velocity and density
         """
 
+
         # current and previous pressure values
         p = c[('u',0)]
         p_last = c[('u_last',0)]
+
+        # order of pressure extrapolation first or second order (should be the same as in pressure model)
+        if self.bdf is int(1) or self.firstStep or not self.usePressureExtrapolations:
+            p_star = p_last
+        elif self.bdf is int(2) and self.usePressureExtrapolations:
+            dt = self.model.timeIntegration.dt
+            dt_last = self.velocityModel.timeIntegration.dt_history[0]
+            p_lastlast = c[('u_lastlast',0)]
+            p_star = p_last + dt/dt_last*(p_last - p_lastlast)
 
         # extract pressure increment
         if self.pressureIncrementFunction != None:
@@ -1553,7 +1574,7 @@ class Pressure2D(TransportCoefficients.TC_base):
                 u = Invb0chi*self.c_velocity[c[('f',0)].shape][...,0] # adjust post processed velocity to be physical units by mult by dt/chi
                 v = Invb0chi*self.c_velocity[c[('f',0)].shape][...,1] # adjust post processed velocity to be physical units by mult by dt/chi
 
-        # set coefficients   p - p_last - phi + div (mu u) = 0
+        # set coefficients   p - p_star - phi + div (mu u) = 0
         #G&S11,p941,remark 5.5
         if self.useRotationalModel:
             c[('f',0)][...,0] = self.mu*u
@@ -1566,5 +1587,5 @@ class Pressure2D(TransportCoefficients.TC_base):
             c[('df',0,0)][...,0] = 0.0
             c[('df',0,0)][...,1] = 0.0
         #G&S11,p92, eq 3.10
-        c[('r',0)][:] = p - p_last - phi
+        c[('r',0)][:] = p - p_star - phi
         c[('dr',0,0)][:] = 1.0
