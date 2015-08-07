@@ -118,7 +118,7 @@ sed 's/DT = 0\.[0-9]*/DT = 0.1/g' navierstokes_vardensity.py > tmp.py && mv -f t
 mpiexec -np 4 parun navierstokes_vardensity_so.py -O petsc.options.superlu_dist -l5 -G -b L2_batch.py -C "parallel=True analytical=True" -D navierstokes_bdf2_1_dt_0_100000_results > bdf2_1_dt_0_100000.out&
 
 sed 's/DT = 0\.[0-9]*/DT = 0.05/g' navierstokes_vardensity.py > tmp.py && mv -f tmp.py navierstokes_vardensity.py
-mpiexec -np 4 parun navierstokes_vardensity_so.py -O petsc.options.superlu_dist-l5 -G -b L2_batch.py -C "parallel=True analytical=True" -D navierstokes_bdf2_2_dt_0_050000_results > bdf2_2_dt_0_050000.out&
+mpiexec -np 4 parun navierstokes_vardensity_so.py -O petsc.options.superlu_dist -l5 -G -b L2_batch.py -C "parallel=True analytical=True" -D navierstokes_bdf2_2_dt_0_050000_results > bdf2_2_dt_0_050000.out&
 
 sed 's/DT = 0\.[0-9]*/DT = 0.025/g' navierstokes_vardensity.py > tmp.py && mv -f tmp.py navierstokes_vardensity.py
 mpiexec -np 4 parun navierstokes_vardensity_so.py -O petsc.options.superlu_dist -l5 -G -b L2_batch.py -C "parallel=True analytical=True" -D navierstokes_bdf2_3_dt_0_025000_results > bdf2_3_dt_0_025000.out&
