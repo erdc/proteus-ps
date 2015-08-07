@@ -539,9 +539,13 @@ using any monotone hyperbolic scheme of appropriate order.
                        \rho_h^{k}, & \mbox{BDF1} \\
                        \rho_h^{k+1}, & \mbox{BDF2} 
                       \end{cases}\\
+  p_h^{*,k+1} &= \begin{cases}
+                p_h^{k}, & \mbox{BDF1}\\
+                p_h^{k} + \frac{\tau^{k}}{\tau^{k-1}}\left( p_h^k - p_h^{k-1} \right), & \mbox{BDF2}
+                \end{cases}\\
   p_h^{\sharp} &= \begin{cases}
-                  p_h^{k} + \phi^{k}, & \mbox{BDF1}\\ 
-                  p_h^{k} + \frac{\beta_1}{\beta_0}\phi^{k} + \frac{\beta_2}{\beta_0}\phi_h^{k-1}, & \mbox{BDF2} 
+                  p_h^{*,k+1} + \phi^{k}, & \mbox{BDF1}\\ 
+                  p_h^{*,k+1} + \frac{\beta_1}{\beta_0}\phi^{k} + \frac{\beta_2}{\beta_0}\phi_h^{k-1}, & \mbox{BDF2} 
                  \end{cases}
 \end{align}
 and solve for $\ub_h^{k+1}\in\X_h$ that satisfies for all $\vb_h\in\X_h$
@@ -561,7 +565,7 @@ with $\int_{\Omega}\phi_h^{k+1}d\x = 0$.  Notice that we have incorporated the n
 
 \item Solve for $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h$
 \begin{equation}
-  \dprod{p_h^{k+1}}{r_h} = \dprod{p_h^k + \phi_h^{k+1}}{r_h} + \dprod{\mu \ub_h^{k+1}}{\nabla r_h}.
+  \dprod{p_h^{k+1}}{r_h} = \dprod{p_h^{*,k+1} + \phi_h^{k+1}}{r_h} + \dprod{\mu \ub_h^{k+1}}{\nabla r_h}.
 \end{equation}
 \end{enumerate}
 
@@ -694,6 +698,92 @@ with $\int_{\Omega}\phi_h^{k+1}d\x = 0$.  Notice that we have incorporated the n
     \end{tabular}
   \end{center}
 \end{table}
+
+
+
+
+
+\section{Constant Density Incompressible Navier Stokes in Standard Form Convergence Theorems}
+
+The numerical solution $(\ub^k, \ut^k,p^k)$ of the constant density incompressible Navier-Stokes algorithm in standard form using BDF2 time derivative has the following error estimates hold, Theorems (3.1)-(3.5) of \cite{guermond1997resultat}.
+
+\begin{theorem}\label{thm:guermondthm3.1}
+If $\ub(t,x)\in W^{1,\infty}\left(0,T;\; H_0^1(\Omega)^d \cap H^{\ell+1}(\Omega)^d  \right) \cap H^2\left(0,T;\; H^1(\Omega)^d\right)$ and $p\in W^{1,\infty}\left(0,T;\; H^{\ell}(\Omega) \right)\cap H^2\left(0,T;\; L^2(\Omega)\right)$, then
+  \begin{equation}
+    \left\| \left(\ub(t) - \ub^k \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} + \left\| \left(\ub(t) - \ut^k \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} \lesssim \tau + h^{\ell+1}
+  \end{equation}
+\end{theorem}
+
+\begin{theorem}\label{thm:guermondthm3.2}
+If $\ub(t,x)\in W^{2,\infty}\left(0,T;\; H_0^1(\Omega)^d \cap H^{\ell+1}(\Omega)^d  \right) \cap H^3\left(0,T;\; H^1(\Omega)^d\right)$ and $p\in W^{2,\infty}\left(0,T;\; H^{\ell}(\Omega) \right)\cap H^3\left(0,T;\; L^2(\Omega)\right)$, then there exist $c_s>0$ and $h_s>0$ such that for $h\in (0,h_s]$ and $\tau \leq c_s /\left(1+|\log(h^{-1})| \right)^{1/2}$ in 2 dimensions or $\tau \leq c_s h^{1/2}$ in 3 dimensions we have
+  \begin{equation}
+    \left\| \left(\ub(t) - \ut^k \right)_{\tau} \right\|_{\ell^{\infty}\left(H^1(\Omega)^d\right)} + \left\| \left(p(t) - p^k \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)\right)} \lesssim \tau + h^{\ell}
+  \end{equation}
+\end{theorem}
+
+\begin{theorem}\label{thm:guermondthm3.3}
+Under the regularity hypothesis of Theorem~\ref{thm:guermondthm3.1} and its restrictions on $\tau$ and $h$, the error bounds also hold
+    \begin{equation}
+      \left\| \left(\ub(t) - \ub^k \right)_{\tau} \right\|_{\ell^{2}\left(L^2(\Omega)^d\right)} + \left\| \left(\ub(t) - \ut^k \right)_{\tau} \right\|_{\ell^{2}\left(L^2(\Omega)^d\right)} \lesssim \tau^2 + h^{\ell+1}
+    \end{equation}
+\end{theorem}
+
+If we want improved error bounds for $\ell^{\infty}\left( L^2(\Omega)^d \right)$ norm, we must add more regularity as follows:
+\begin{theorem}\label{thm:guermondthm3.4}
+If $\ub(t,x)\in W^{3,\infty}\left(0,T;\; H_0^1(\Omega)^d \cap H^{\ell+1}(\Omega)^d  \right) \cap H^4\left(0,T;\; H^1(\Omega)^d\right)$ and $p\in W^{2,\infty}\left(0,T;\; H^{\ell}(\Omega) \right)\cap H^4\left(0,T;\; L^2(\Omega)\right)$, with the restrictions on $\tau$ and $h$ of Theorem~\ref{thm:guermondthm3.1}, then
+  \begin{equation}
+    \left\| \left(\ub(t) - \ub^k \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} + \left\| \left(\ub(t) - \ut^k \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} \lesssim \tau^{7/4} + \tau^{3/4}h^{\ell} + h^{\ell+1}
+  \end{equation}
+\end{theorem}
+
+The estimates on the pressure norm of Theorem~\ref{thm:guermondthm3.2} can be improved by introducing a discrete norm as follows.  Let $(v_h,q_h) \in X_h\times M_h$ and define $B_h \in \mathcal{L}(X_h,M_h)$ be the discrete divergence operator $(B_h v_h, q_h) = (v_h, B_h^T q_h) = -(\nabla\cdot v_h, q_h)$.  Then define the discrete norm for $v_h \in X_h$ as $\|v_h\|_{\mathcal{A}_h} = \sup_{w_h \in X_h} (\nabla v_h, \nabla w_h)/ \|w_h\|_{L^2(\Omega)}$ and for $q\in L^2(\Omega)$, let $\|q\|_{B_h, \mathcal{A}_h} = \sup_{v_h\in X_h} (q, \nabla\cdot v_h)/ \|v_h\|_{\mathcal{A}_h}$.
+
+\begin{theorem}\label{thm:guermondthm3.5}
+Under the regularity hypothesis of Theorem~\ref{thm:guermondthm3.4} and its restrictions on $\tau$ and $h$, the error bounds also hold
+    \begin{equation}
+      \left\| \left(p(t) - p^k \right)_{\tau} \right\|_{\ell^{2}\left(\|\cdot\|_{B_h, \mathcal{A}_h}\right)} \lesssim \tau^{3/2} + h^{\ell}
+    \end{equation}
+\end{theorem}
+
+
+
+\section{Constant Density Incompressible Navier Stokes in Rotational Form Convergence Theorems}
+
+\begin{theorem}
+Given that the true solution is smooth enough, the numerical solution, $(\ub^k, \ut^k, p^k)$, of the constant density incompressible Navier-Stokes algorithm using the second order approximation in time, pressure correction scheme in rotational form gives the following convergence estimates:
+\begin{align*}
+\left\| \left(\ub(t) - \ub^k\right)_{\tau} \right\|_{\ell^2\left([L^2(\Omega)]^d \right)} + \left\| \left(\ub(t) - \ut^k\right)_{\tau} \right\|_{\ell^2\left([L^2(\Omega)]^d \right)} &\lesssim \tau^2\\
+\left\| \left(\ub(t) - \ub^k\right)_{\tau} \right\|_{\ell^2\left([H^1(\Omega)]^d \right)} + \left\| \left(\ub(t) - \ut^k\right)_{\tau} \right\|_{\ell^2\left([H^1(\Omega)]^d \right)} + \left\| \left(p(t) - p^k\right)_{\tau} \right\|_{\ell^2\left([L^2(\Omega)]^d \right)} &\lesssim \tau^{3/2}
+\end{align*}
+
+\end{theorem}
+\begin{proof}
+See Theorem 4.1 of \cite{guermond2004error} for details
+\end{proof}
+
+
+\section{Variable Density Incompressible Navier Stokes in Standard Form Convergence Theorems}
+
+\begin{theorem}
+If $\rho \in W^{1,\infty}\left(0,T; \; W^{1,\infty}(\Omega) \right)$, $\ub \in W^{1,\infty}\left(0,T;\; H^1_0(\Omega)^d\cap H^{\ell+1}(\Omega^d) \right)$ and $p\in W^{1,\infty}\left( H^{\ell}(\Omega)\right)$ and there exist $\chi, \eta >0 $ such that for all $k$, $\chi \leq \min_{\x} \rho^k(\x)$ and $\sup_{\x} \rho^k(\x) \leq \eta$. Assume (to decouple the density from velocity) that we can construct a sequence $(\rho^k)_k$ from a sequence $(\ub^k)_k$ of velocities in such a way that
+\begin{align}
+  \|(\rho - &\rho^k)_{\tau}\|^2_{\ell^{\infty}(H^1)} + \left\| \left( \rho_t - \frac{\rho^k - \rho^{k-1}}{\tau} \right)_{\tau} \right\|^2_{\ell^{\infty}(L^2)}\\
+  &\leq c(\lambda)(\tau + h^{\ell+1})^2 + \lambda \left\| \Pi_h\ub(t^k) - \ub^k  \right\|^2_{H^1} + c(\lambda)\left\|\sqrt{\rho^k} \left(\Pi_h\ub(t^k) - \ub^k\right)\right\|^2_{L^2}
+  \end{align}
+  where $\lambda>0$ can be chose as small as is needed. And finally, we assume that the initial approximation of data 
+  \begin{equation}
+    \|\rho(t^0) - \rho^0\|_{L^{\infty}} + \|\ub(t^0)-\ub^{0}\|_{L^2} + h\|\ub(t^0) - \ub^0\| + h\|p(t^0) - p^0\| \lesssim h^{\ell+1}
+  \end{equation}
+  holds.  Then the incremental BDF1 variable density algorithm has the following error estimates
+  \begin{align}
+    \|(\ub - \ub^k)_{\tau}\|_{\ell^{\infty}(L^2(\Omega)^d)} &\lesssim \tau + h^{\ell+1}\\
+    \|(\ub - \ub^k)_{\tau}\|_{\ell^{2}(H^1(\Omega)^d)} &\lesssim \tau + h^{\ell}\\
+    \|(p - p^k)_{\tau}\|_{\ell^{2}(L^2(\Omega))} & \lesssim \tau + h^{\ell}  \mbox{  (not stated or proven but should be true)}
+  \end{align}
+\end{theorem}
+\begin{proof}
+  See proof of Theorem 4.2 of \cite{guermond2011error}.
+\end{proof}
 
 
 \appendix
