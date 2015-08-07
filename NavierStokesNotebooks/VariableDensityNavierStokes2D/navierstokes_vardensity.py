@@ -26,13 +26,13 @@ useNonlinearAdvection = False # switches between extrapolated and fully nonlinea
 useNumericalFluxEbqe = True # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useVelocityComponents = True  # False uses post processed velocity,
-useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
-setFirstTimeStepValues = True # interpolate the first step as well as the 0th step from exact solutions
-
+useScaleUpTimeStepsBDF2 = True  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
+setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
+usePressureExtrapolations = False # use p_star instead of p_last in velocity and pressure model
 
 # setup time variables
 T = 1.0
-DT = 0.05  # target time step size
+DT = 0.1  # target time step size
 
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
@@ -301,7 +301,7 @@ nLayersOfOverlapForParallel = 0
 
 # Time stepping for output
 # T=10.0
-# DT = 0.05
+# DT = 0.1
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]

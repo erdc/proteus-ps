@@ -24,7 +24,8 @@ coefficients=NavierStokes.Pressure2D(bdf=ctx.globalBDFTimeOrder,
                                      useRotationalModel=ctx.useRotationalModel,
                                      currentModelIndex=3,
                                      pressureFunction=ctx.ptrue,
-                                     setFirstTimeStepValues=ctx.setFirstTimeStepValues)
+                                     setFirstTimeStepValues=ctx.setFirstTimeStepValues,
+                                     usePressureExtrapolations=ctx.usePressureExtrapolations)
 
 if ctx.opts.analytical:
     analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.ptrue,ctx.gradptrue)}
