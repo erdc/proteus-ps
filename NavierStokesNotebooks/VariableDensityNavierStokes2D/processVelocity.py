@@ -149,16 +149,17 @@ if num_filenames > 1:
 
 
     print "\nAdaptive Time Stepping Calculation:"
-    print "\nnumTS   vel_maxL2   rate    vel_maxH1   rate"
+    print "\nnumTS   vel_maxL2   rate    vel_l2L2    rate"
     for i in range(num_filenames):
         print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
                                                     vel_maxL2Norm[i],rate_vel_maxL2Norm[i],\
-                                                    vel_maxH1Norm[i],rate_vel_maxH1Norm[i])
-    print "\nnumTS   vel_l2L2    rate    vel_l2H1    rate"
+                                                    vel_ell2H1Norm[i],rate_vel_ell2H1Norm[i])
+    print "\nnumTS   vel_maxH1   rate    vel_l2H1    rate"
     for i in range(num_filenames):
         print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
                 vel_ell2L2Norm[i],rate_vel_ell2L2Norm[i],\
-                vel_ell2H1Norm[i],rate_vel_ell2H1Norm[i])
+                vel_maxH1Norm[i],rate_vel_maxH1Norm[i])
+
 
 
 # calculate rates of convergence and make a table
@@ -177,13 +178,13 @@ if num_filenames > 1:
 
 
     print "\n\nUniform Time Stepping Calculation:"
-    print "\nmax dt     vel_maxL2   rate    vel_maxH1   rate"
+    print "\nmax dt      vel_maxL2   rate    vel_l2L2    rate"
     for i in range(num_filenames):
-        print "%1.3e  %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
+        print "%1.3e   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
                                                     vel_maxL2Norm[i],rate_vel_maxL2Norm[i],\
-                                                    vel_maxH1Norm[i],rate_vel_maxH1Norm[i])
-    print "\nmax dt      vel_l2L2    rate    vel_l2H1    rate"
+                                                    vel_ell2H1Norm[i],rate_vel_ell2H1Norm[i])
+    print "\nmax dt      vel_maxH1   rate    vel_l2H1    rate"
     for i in range(num_filenames):
         print "%1.3e   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
                 vel_ell2L2Norm[i],rate_vel_ell2L2Norm[i],\
-                vel_ell2H1Norm[i],rate_vel_ell2H1Norm[i])
+                vel_maxH1Norm[i],rate_vel_maxH1Norm[i])
