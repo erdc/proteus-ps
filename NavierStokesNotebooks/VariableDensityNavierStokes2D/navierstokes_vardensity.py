@@ -20,7 +20,7 @@ quad_degree = 5  # exact for polynomials of this degree
 
 # Model Flags
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
-useRotationalModel = False #  Standard vs Rotational models in pressure update
+useRotationalModel = True #  Standard vs Rotational models in pressure update
 useStabilityTerms = True  # stability terms in density and velocity models
 useNonlinearAdvection = False # switches between extrapolated and fully nonlinear advection in velocity model
 useNumericalFluxEbqe = True # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
@@ -29,6 +29,9 @@ useVelocityComponents = True  # False uses post processed velocity,
 useScaleUpTimeStepsBDF2 = True  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
 setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
 usePressureExtrapolations = False # use p_star instead of p_last in velocity and pressure model
+
+# Spatial Discretization  he = he_coeff*2*Pi/150.0
+he_coeff = 0.75 # default to match Guermond paper: 0.75
 
 # setup time variables
 T = 1.0
@@ -233,7 +236,8 @@ if unitCircle:
     radius = 1.0
     center_x = 0.0
     center_y = 0.0
-    he = 0.75*2.0*pi/150.0  # h size for edges of circle
+
+    he = he_coeff*2.0*pi/150.0  # h size for edges of circle
 
     # no need to modify past here
     nvertices = nsegments = int(ceil(2.0*pi/he))
