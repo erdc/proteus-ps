@@ -132,7 +132,7 @@ or the $\ell^2$ norm in time, denoted
   \left\| \left( \ub - \ub_h \right)_{\tau} \right\|^2_{\ell^{2}(X)} :=  \sum_{k=1}^{N} \tau^{k}\| \ub(t^{k}) - \ub_h^{k}\|^2_{X}.
 \end{equation}
 
-We denote by $X_h$ the finite element space subordinate to $\mathcal{T}_h$ for the velocity.  $W_h$ will be the space for density and $M_h$ the space for pressure.  Typically we will use the Taylor-Hood space $X_h \times M_h = \left(\mathbb{P}^2\left(\mathcal{T}_h\right)\right)^d\times \mathbb{P}^1\left(\mathcal{T}_h\right)$ which satisfies the inf-sup condition for velocity-pressure coupling, but any set of finite element spaces satisfying the inf-sup condition can be used.  We will also typically choose $W_h = \mathbb{P}^2\left(\mathcal{T}_h\right)$.  We likewise denote the subspace $M_h^0\subset M_h$ to be the set of functions with zero mean, ie $M_h^0 := \{ f_h\in M_h \:|\: \sum_{T\in\mathcal{T}_h}\int_{T}f_h dx = 0\}$.
+We denote by $X_h$ the finite element space subordinate to $\mathcal{T}_h$ for the velocity vector field.  $W_h$ will be the space for density and $M_h$ the space for pressure.  Typically we will use the Taylor-Hood space $X_h \times M_h = \left(\mathbb{P}^2\left(\mathcal{T}_h\right)\right)^d\times \mathbb{P}^1\left(\mathcal{T}_h\right)$ which satisfies the LBB inf-sup condition for velocity-pressure coupling, but any set of finite element spaces satisfying the inf-sup condition can be used.  We will also typically choose $W_h = \mathbb{P}^2\left(\mathcal{T}_h\right)$.  We likewise denote the subspace $M_h^0\subset M_h$ to be the set of functions in $M_h$ with zero mean, ie $M_h^0 := \{ f_h\in M_h \:|\: \sum_{T\in\mathcal{T}_h}\int_{T}f_h dx = 0\}$.
 
 The algorithms described below will describe methods of finding or updating the solutions at time $t^{k+1}$
 \begin{equation}(\rho^{k+1}_h, \ub^{k+1}_{h}, p^{k+1}_h) \in W_h\times\X_h\times M_h  \end{equation}
@@ -141,7 +141,7 @@ given the solutions at previous time steps.  We will use first (BDF1) and second
 \subsection{Backward Difference Formulae}
 The BDF class of derivative approximations can be described generally using the following notation: An m-th order (BDF-m) approximation of the first derivative in time  uses a linear combination of the previous m time step solutions. It is convenient to use the operator $D_{\tau,m}$ to represent the BDF-m operation of first derivative in time, mainly
 \begin{equation}
- \left.\frac{\partial}{\partial t}f(t,\x)\right|_{t=t^{k+1}} =  D_{\tau,m}f^{k+1} + \mathcal{O}\left((\tau^{k+1})^m\right)
+ \left.\frac{\partial f}{\partial t}(t,\x)\right|_{t=t^{k+1}} =  D_{\tau,m}f^{k+1} + \mathcal{O}\left(\tau^m\right)
 \end{equation}
 and
 \begin{equation}
@@ -166,7 +166,7 @@ then let $\beta_0 = \frac{1+2r}{(1+r)}$, $\beta_1 = 1+r$, $\beta_2 = -\frac{r^2}
 \begin{equation}  
   D_{\tau,2} f^{k+1} = \frac{1+2r}{(1+r)\tau^{k+1}}f^{k+1} - \frac{1+r}{\tau^{k+1}}f^{k} + \frac{r^2}{(1+r)\tau^{k+1}}f^{k-1}.
 \end{equation}
-It is a simple calculation to show that this adaptive algorithm reduces to the uniform version above with uniform time steps as $r=1$.  There are higher order BDF formulae, but we will not use them here.
+It is a simple calculation to show that this adaptive algorithm reduces to the uniform version above with uniform time steps, ie $r=1$.  There are higher order BDF formulae, but we will not use them here.
 
 The adaptive BDF1 and BDF2 algorithms have truncation errors $\mathcal{O}\left(\tau^{k+1}\right)$ or $\mathcal{O}\left(\left(\tau^{k}+\tau^{k+1} \right)\tau^{k+1} \right)$ respectively, where as the uniform algorithms are $\mathcal{O}(\tau)$ and $\mathcal{O}(\tau^{2})$ respectively.
   
@@ -175,30 +175,74 @@ The adaptive BDF1 and BDF2 algorithms have truncation errors $\mathcal{O}\left(\
 %
 %
 \section{Projection Schemes}
+Before moving onto the improved models, we present the basic idea of the projection scheme as introduced by Chorin and Temam.  The key is noting the Helmholtz decomposition of square integrable functions into divergence free and curl free parts
+\begin{equation}
+\left[ L^2(\Omega)\right]^d = H \oplus \nabla H^1(\Omega)
+\end{equation}
+where
+\begin{equation}
+H = \{ \vb\in \left[ L^2(\Omega)\right]^d \:|\: \nabla\cdot \vb = 0, \left.\vb\cdot\n \right|_{\partial\Omega} = 0  \}.
+\end{equation}
+
+Dropping the nonlinear advection terms for ease of exposition, dividing through by density $\rho$, and using the kinematic viscosity, $\nu = \mu/\rho$, we solve for $(\ub^{k+1}, \ut^{k+1}, p^{k+1})$ as solution of 
+\begin{equation}
+\begin{cases}
+  \ub_t - \nu\Delta\ub + \nabla p = f,& \Omega\times[0,T]\\
+  \nabla\cdot \ub = 0,& \Omega\times[0,T]\\
+  \left.\ub\right|_{\partial\Omega} = 0,\hspace{2mm} \left.\ub\right|_{t=0} = \ub_0,& \Omega
+\end{cases}
+\end{equation}
+in the following manner:
+\begin{description}
+  \item[Step 1] Viscous Prediction:  Find $\ut^{k+1}$ that satisfies
+  \begin{equation}
+    \frac{1}{\tau}\left(\ut^{k+1} - \ub^{k} \right) - \nu \Delta \ut^{k+1} = f^{k+1},  \hspace{2mm} \left.\ut^{k+1}\right|_{\partial\Omega} = 0.
+  \end{equation}
+  
+  \item[Step 2] Projection:  Find $\ub^{k+1}, \phi^{k+1}$ that satisfy
+  \begin{equation}
+    \begin{cases}
+    \frac{1}{\tau}\left(\ub^{k+1} - \ut^{k+1} \right) + \nabla \phi^{k+1} = 0 \\
+    \nabla\cdot \ub^{k+1} = 0, \hspace{2mm} \left.\ub^{k+1}\cdot\n \right|_{\partial\Omega} = 0
+    \end{cases}
+  \end{equation}
+  
+  \item[Step 3] Pressure Correction: Find $p^{k+1}$ that satisfies
+  \begin{equation}
+    p^{k+1} = \phi^{k+1}
+  \end{equation} 
+\end{description}
+
+Notice that the second step is precisely the Helmholtz decomposition of $\ut^{k+1} = \ub^{k+1} + \nabla(\tau \phi^{k+1})$ with $\ub^{k+1}\in H$ and $\tau \phi^{k+1}\in H^1(\Omega)$.  Thus $\ub^{k+1} = P_{H}\ut^{k+1}$ is the projection of our velocity $\ut^{k+1}$ onto the divergence free subspace $H$.
+
+Often the method of solving this system is to algebraically eliminate the velocity $\ub^{k+1}$ and then solve the system for $(\ut^{k+1},\phi^{k+1}, p^{k+1})$.  The second step becomes find $\phi^{k+1}$ such that
+\begin{equation}
+  -\Delta\phi^{k+1} = -\tau \nabla\cdot \ut^{k+1}, \hspace{2mm} \left.\frac{\partial \phi^{k+1}}{\partial\n}\right|_{\partial\Omega} = 0
+\end{equation}
+for which there are many fast Poisson solvers available. If desired, the divergence free velocity can then be backed out $\ub^{k+1} = \ut^{k+1} -\tau \nabla\phi^{k+1}$.
 
 
 %
 %
 %
 \section{Penalty-like Perturbation of Continuous Equations}
-The standard approach to creating splittings has been to think about the splitting operator as a projection scheme, where we have the two sequences of velocities $\{\ub^{k}\}$ and $\{\tilde{\ub}^{k}\}$ and the pressure increment $\{\phi^{k}\}$ that represent the standard Helmholtz decomposition of $L^{2}$ velocity fields into solenoidal and irrotational components
+The standard approach to creating splittings has been to think about the splitting operator as a projection scheme where we have the two sequences of velocities $\{\ub^{k}\}$ and $\{\ut^{k}\}$ and the pressure increment $\{\phi^{k}\}$ that represent the Helmholtz decomposition of $L^{2}$ velocity fields into solenoidal and irrotational components
 \begin{equation}
-  \tilde{\ub}^{k} = \ub^{k} + \frac{\rho}{\tau}\nabla \phi^{k}.
+  \ut^{k} = \ub^{k} + \frac{\tau}{\rho}\nabla \phi^{k}.
 \end{equation}
-Thus we can view $\ub^{k}$ as the projection of our velocity field $\tilde{\ub}^{k}$ onto the divergence free subset of velocity fields.  This works just fine in the case of constant density but for variable density it is not so simple as we cannot just pull the density out of the divergence and end up with a variable coefficient laplacian equation to solve each time step.
-
+Thus we can view $\ub^{k}$ as the projection of our velocity field $\ut^{k}$ onto the divergence free subset of velocity fields.  This works well in the case of constant density but for variable density it is not so simple.  The literature is full of methods to try to solve the resulting non constant coefficient problem that comes from implementing this projection scheme with variable density,
 \begin{equation}
-  -\nabla\cdot\left(\frac{1}{\rho^{k+1}} \nabla\phi \right) = F,  \hspace{1cm} \left.\partial_n \phi\right|_{\partial\Omega} = 0
+  -\nabla\cdot\left(\frac{1}{\rho^{k+1}} \nabla\phi \right) = F,  \hspace{1cm} \left.\partial_n \phi\right|_{\partial\Omega} = 0.
 \end{equation}  
-This can be badly conditioned and rather more difficult to assemble and solve than the constant coefficient version.  Also, here it is clear to see why uniform lower bounds on the density $\rho^{k+1}$ must be maintained.
+This can be badly conditioned and rather more difficult to assemble and solve than the constant coefficient version.  In this form, it is also clear to see why uniform lower bounds on the density $\rho^{k+1}$ must be maintained for the conditioning.
 
 We instead look at the constant density projection scheme in terms of an $\epsilon$ perturbation of the original system. Thus the formerly stated projection part becomes a penalty-like adjustment that is easily generalized to the variable density framework.
 
-The incremental pressure correction algorithm, an improvement on the original Chorin/Temam algorithm for constant density, can be expressed solely in terms of the non-solenoidal velocity $\tilde{\ub}^{k}$ and pressure $p^{k}$ in the form
+The incremental pressure correction algorithm, an improvement on the original Chorin/Temam algorithm for constant density, can be expressed solely in terms of the non-solenoidal velocity $\ut^{k}$ and pressure $p^{k}$ in the form
 \begin{equation}
   \begin{cases}
-    \rho\left(\frac{\tilde{\ub}^{k+1} - \tilde{\ub}^{k}}{\tau} + \tilde{\ub}^{k}\cdot\nabla\tilde{\ub}^{k+1} \right) - \mu\Delta\tilde{\ub}^{k+1} + \nabla\left(p^{k} + \phi^{k}  \right) = \fb^{k+1}, & \left.\tilde{\ub}^{k}\right|_{\partial\Omega} = 0\\
-    \nabla\cdot\tilde{\ub}^{k+1} - \frac{\tau}{\rho}\Delta\phi^{n+1}=0, &\left.\partial_\n \phi\right|_{\partial\Omega} = 0\\
+    \rho\left(\frac{\ut^{k+1} - \ut^{k}}{\tau} + \ut^{k}\cdot\nabla\ut^{k+1} \right) - \mu\Delta\ut^{k+1} + \nabla\left(p^{k} + \phi^{k}  \right) = \fb^{k+1}, & \left.\ut^{k}\right|_{\partial\Omega} = 0\\
+    \nabla\cdot\ut^{k+1} - \frac{\tau}{\rho}\Delta\phi^{n+1}=0, &\left.\partial_\n \phi\right|_{\partial\Omega} = 0\\
     p^{k+1} = p^{k} + \phi^{k+1}
   \end{cases}
 \end{equation}
@@ -516,7 +560,7 @@ so that
 %
 %
 %
-\section{General BDF1 and BDF2 Algorithm with Possible Variable Time Step}\label{sec:GeneralAlgorithm}
+\section{General BDF1 and BDF2 Algorithm with Variable Time Steps}\label{sec:generalalgorithm}
 
 
 
@@ -650,41 +694,10 @@ with $\int_{\Omega}\phi_h^{k+1}d\x = 0$.  Notice that we have incorporated the n
 %   \end{center}
 % \end{table}
 
-\begin{table}[h!]
-  \begin{center}
-    \caption{Velocity Error Max Norm in Time BDF1}
-    \begin{tabular}{c|c|l|c|l|c}
-      dt & numTS &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{H^1}$ &  Rate\\
-      \hline
-      0.1     & 00050 & 9.122e-03 &   -  & 3.885e-02 &  -  \\
-      0.05    & 00100 & 3.844e-03 & 1.25 & 1.646e-02 & 1.24\\
-      0.025   & 00200 & 1.719e-03 & 1.16 & 7.370e-03 & 1.16\\
-      0.0125  & 00400 & 8.156e-04 & 1.08 & 3.495e-03 & 1.08\\
-      0.00625 & 00800 & 4.002e-04 & 1.03 & 1.713e-03 & 1.03
-    \end{tabular}
-  \end{center}
-\end{table}
-
 
 \begin{table}[h!]
   \begin{center}
-    \caption{Velocity Error $\ell^2$ Norm in Time BDF1}
-    \begin{tabular}{c|c|l|c|l|c}
-      dt & numTS &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate  &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(H^1)}$  &  Rate\\
-      \hline
-      0.1     & 00050 & 1.390e-02 &   -  & 6.001e-02 &  -  \\
-      0.05    & 00100 & 5.974e-03 & 1.22 & 2.608e-02 & 1.20\\
-      0.025   & 00200 & 2.695e-03 & 1.15 & 1.184e-02 & 1.14\\
-      0.0125  & 00400 & 1.283e-03 & 1.07 & 5.645e-03 & 1.07\\
-      0.00625 & 00800 & 6.305e-04 & 1.03 & 2.774e-03 & 1.03
-    \end{tabular}
-  \end{center}
-\end{table}
-
-
-\begin{table}[h!]
-  \begin{center}
-    \caption{Density Error Norms BDF1}
+    \caption{Density Error $L^2(\Omega)$ BDF1}
     \begin{tabular}{c|c|l|c|l|c}
       dt & numTS  & $\displaystyle\max_{k} \left\|\rho^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\left\|\left(\rho_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate\\
       \hline
@@ -697,10 +710,40 @@ with $\int_{\Omega}\phi_h^{k+1}d\x = 0$.  Notice that we have incorporated the n
   \end{center}
 \end{table}
 
+\begin{table}[h!]
+  \begin{center}
+    \caption{Velocity Error $L^2(\Omega)^d$ BDF1}
+    \begin{tabular}{c|c|l|c|l|c}
+      dt & numTS &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{L^2}$ &  Rate  & $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate \\
+      \hline
+      0.1     & 00050 & 9.122e-03 &   -  & 1.390e-02 &   - \\
+      0.05    & 00100 & 3.844e-03 & 1.25 & 5.974e-03 & 1.22\\
+      0.025   & 00200 & 1.719e-03 & 1.16 & 2.695e-03 & 1.15\\
+      0.0125  & 00400 & 8.156e-04 & 1.08 & 1.283e-03 & 1.07\\
+      0.00625 & 00800 & 4.002e-04 & 1.03 & 6.305e-04 & 1.03
+    \end{tabular}
+  \end{center}
+\end{table}
+
 
 \begin{table}[h!]
   \begin{center}
-    \caption{Pressure Error Norms BDF1}
+    \caption{Velocity Error $H^1(\Omega)^d$ BDF1}
+    \begin{tabular}{c|c|l|c|l|c}
+      dt & numTS &  $\displaystyle\max_{k} \left\|\ub^{k}_{h}\right\|_{H^1}$ &  Rate   &  $\left\|\left(\ub_h\right)_{\tau}\right\|_{\ell^2(H^1)}$  &  Rate\\
+      \hline
+      0.1     & 00050 & 3.885e-02 &  -   & 6.001e-02 &  -  \\
+      0.05    & 00100 & 1.646e-02 & 1.24 & 2.608e-02 & 1.20\\
+      0.025   & 00200 & 7.370e-03 & 1.16 & 1.184e-02 & 1.14\\
+      0.0125  & 00400 & 3.495e-03 & 1.08 & 5.645e-03 & 1.07\\
+      0.00625 & 00800 & 1.713e-03 & 1.03 & 2.774e-03 & 1.03
+    \end{tabular}
+  \end{center}
+\end{table}
+
+\begin{table}[h!]
+  \begin{center}
+    \caption{Pressure Error $L^2(\Omega)$ BDF1}
     \begin{tabular}{c|c|l|c|l|c}
       dt & numTS &  $\displaystyle\max_{k} \left\|p^{k}_{h}\right\|_{L^2}$ &  Rate  &  $\left\|\left(p_h\right)_{\tau}\right\|_{\ell^2(L^2)}$  &  Rate\\
       \hline
