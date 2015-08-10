@@ -123,9 +123,53 @@ where the inflow boundary, $\partial\Omega^{in} = \{ \x\in \partial\Omega \:|\: 
 %
 %
 \subsection{Notation}
-Find the solutions at time $t^{k+1}$
-\begin{equation}(\rho^{k+1}_h, \ub^{k+1}_{h}, p^{k+1}_h) \in W_h\times\X_h\times M_h  \end{equation}
+We discretize and subdivide the smooth spatial domain $\Omega\subset \R^d$ into a regular uniform triangulation $\mathcal{T}_h$ with $h>0$ denoting the mesh size.  We likewise discretize the time domain $[0,T]$ into the sequence $\{ t^0=0, t^1, t^2, \dots, t^N = T\}$  with $\tau^k:= t^k-t^{k-1}$ as the step size.  If we are using a uniform time step, then $\tau^k = \tau^{k-1} = \tau = T/N$, but we leave the option for adaptive time stepping.  We use the standard notation $f^{k} := f(t=t^k,\x)$ to refer to a function or solution $f$ at a specific timestep.  When calculating norms of solutions, we often will want a combination of time and spatial norms,  thus we introduce the notation $\left( f \right)_{\tau}:= \{ f^k \}_{k=0}^{N}$ to refer to the seqence of solutions.  For instance, give a true velocity $\ub$ and a discrete solution $\ub_h$ solved for at the time steps $\{t^0,\dots, t^{N}\}$, we may want to compute the maximum norm in time and the $X$ norm in space, say the $L^2(\Omega)^d$ or $H^1(\Omega)^d$, etc.  We denote this as
+\begin{equation}
+  \left\| \left( \ub - \ub_h \right)_{\tau} \right\|_{\ell^{\infty}(X)} := \max_{1\leq k \leq N} \| \ub(t^{k}) - \ub_h^{k}\|_{X}
+\end{equation}
+or the $\ell^2$ norm in time, denoted
+\begin{equation}
+  \left\| \left( \ub - \ub_h \right)_{\tau} \right\|^2_{\ell^{2}(X)} :=  \sum_{k=1}^{N} \tau^{k}\| \ub(t^{k}) - \ub_h^{k}\|^2_{X}.
+\end{equation}
 
+We denote by $X_h$ the finite element space subordinate to $\mathcal{T}_h$ for the velocity.  $W_h$ will be the space for density and $M_h$ the space for pressure.  Typically we will use the Taylor-Hood space $X_h \times M_h = \left(\mathbb{P}^2\left(\mathcal{T}_h\right)\right)^d\times \mathbb{P}^1\left(\mathcal{T}_h\right)$ which satisfies the inf-sup condition for velocity-pressure coupling, but any set of finite element spaces satisfying the inf-sup condition can be used.  We will also typically choose $W_h = \mathbb{P}^2\left(\mathcal{T}_h\right)$.  We likewise denote the subspace $M_h^0\subset M_h$ to be the set of functions with zero mean, ie $M_h^0 := \{ f_h\in M_h \:|\: \sum_{T\in\mathcal{T}_h}\int_{T}f_h dx = 0\}$.
+
+The algorithms described below will describe methods of finding or updating the solutions at time $t^{k+1}$
+\begin{equation}(\rho^{k+1}_h, \ub^{k+1}_{h}, p^{k+1}_h) \in W_h\times\X_h\times M_h  \end{equation}
+given the solutions at previous time steps.  We will use first (BDF1) and second (BDF2) order approximations of time derivatives using the Backward Difference Formula (BDF) class of approximation and refer to the various algorithms by their time order and other properties of the algorithm.
+
+\subsection{Backward Difference Formulae}
+The BDF class of derivative approximations can be described generally using the following notation: An m-th order (BDF-m) approximation of the first derivative in time  uses a linear combination of the previous m time step solutions. It is convenient to use the operator $D_{\tau,m}$ to represent the BDF-m operation of first derivative in time, mainly
+\begin{equation}
+ \left.\frac{\partial}{\partial t}f(t,\x)\right|_{t=t^{k+1}} =  D_{\tau,m}f^{k+1} + \mathcal{O}\left((\tau^{k+1})^m\right)
+\end{equation}
+and
+\begin{equation}
+  D_{\tau,m}f^{k+1} =  \frac{\beta_0}{\tau^{k+1}}f^{k+1} - \displaystyle\sum_{i=1}^{m} \frac{\beta_{i}}{\tau^{k+1}} f^{k+1-i}.
+\end{equation}
+When it is clear from context which order, $m$, we want to use, we will drop the $m$ from the notation and simply write $D_{\tau}f^{k+1}$ for the BDf time derivative approximation.
+
+
+The first order (BDF1) approximation has $\beta_0 = \beta_1 = 1$ for uniform or adaptive time steps giving
+\begin{equation}
+  D_{\tau,1} f^{k+1} = \frac{f^{k+1} - f^{k}}{\tau^{k+1}}.
+\end{equation}
+The second order (BDF2) approximation with uniform time steps has $\beta_0 = 3/2$, $\beta_1 = 2$ and $\beta_2 = -1/2$, giving
+\begin{equation}  
+  D_{\tau,2} f^{k+1} = \frac{3}{2\tau}f^{k+1} - \frac{2}{\tau}f^{k} + \frac{1}{2\tau}f^{k-1}.
+\end{equation}
+For the second order (BDF2) adaptive time stepping, we define the ratio
+\begin{equation}
+  r:=\tau^{k+1}/\tau^{k}
+\end{equation}
+then let $\beta_0 = \frac{1+2r}{(1+r)}$, $\beta_1 = 1+r$, $\beta_2 = -\frac{r^2}{(1+r)}$ giving
+\begin{equation}  
+  D_{\tau,2} f^{k+1} = \frac{1+2r}{(1+r)\tau^{k+1}}f^{k+1} - \frac{1+r}{\tau^{k+1}}f^{k} + \frac{r^2}{(1+r)\tau^{k+1}}f^{k-1}.
+\end{equation}
+It is a simple calculation to show that this adaptive algorithm reduces to the uniform version above with uniform time steps as $r=1$.  There are higher order BDF formulae, but we will not use them here.
+
+The adaptive BDF1 and BDF2 algorithms have truncation errors $\mathcal{O}\left(\tau^{k+1}\right)$ or $\mathcal{O}\left(\left(\tau^{k}+\tau^{k+1} \right)\tau^{k+1} \right)$ respectively, where as the uniform algorithms are $\mathcal{O}(\tau)$ and $\mathcal{O}(\tau^{2})$ respectively.
+  
 
 %
 %
@@ -244,16 +288,18 @@ We note that Equation~(\ref{eqn:bdf1_momentum_constanttimestep}) can be rewritte
 
 %
 \subsection{Pressure Update}
-Now that we have $\rho_h^{k+1}$ and $\ub_h^{k+1}$, we solve for the pressure increment $\phi_h^{\flat}\in M_h$ which then allows us to solve for the pressure $p_h^{k+1}\in M_h$.  
-Recalling that $\chi \leq \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x)$ (note that we will often choose it to be the minimum), we let $\phi_h^{\flat}\in M_h$ be the weak solution of
+Now that we have $\rho_h^{k+1}$ and $\ub_h^{k+1}$, we solve for the pressure increment $\phi_h^{\flat}\in M_h^0$ which then allows us to solve for the pressure $p_h^{k+1}\in M_h$.  
+Recalling that $\chi \leq \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x)$ (note that we will often choose it to be the minimum), we let $\phi_h^{\flat}\in M^0_h$ be the weak solution of
 \begin{equation}\label{eqn:pressureincrementlaplacian}
   \Delta \phi^{\flat} = \frac{\chi}{\tau}\nabla\cdot \ub^{k+1}, \hspace{1cm} \left.\partial_\n\phi^{\flat}\right|_{\partial\Omega} = 0
 \end{equation}
-mainly it solves
+with $\int_{\Omega} \phi^{\flat} d\x = 0$.  That is, find $\phi_h^{\flat}\in M_h^0$ (functions with mean zero) such that
 \begin{equation}
   \dprod{\nabla\phi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}
 \end{equation}
-for all $r_h \in M_h$.  Then we update the pressure as
+for all $r_h \in M_h$.  If we don't build the mean zero property into the finite element space, then equation~\ref{eqn:pressureincrementlaplacian} is an under determined system.  It is often quite difficult to obtain basis functions with mean zero, so a common approach to solving the system with this setup is to fix the value at one degree of freedom, solve the system, calculate the mean and subtract it off of the solution.  Thereby we move the solution into the zero mean subset $M_h^0\subset M_h$. 
+
+ Once we have the pressure correction term, $\phi^{\flat}_h\in M_h^0$, we update the pressure as
 \begin{equation}\label{eqn:rotationalpressureupdate}
   p^{k+1} = \phi^{\flat} + p^{k} - \mu\nabla\cdot \ub^{k+1},
 \end{equation}
@@ -261,16 +307,15 @@ or in other words, we solve for $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h
 \begin{equation}
   \dprod{p_h^{k+1}}{r_h} = \dprod{\phi_h^{\flat} + p_h^{k}}{r_h} + \mu\dprod{\ub_h^{k+1}}{\nabla r_h}.
 \end{equation}
-The last term involving the divergence of velocity makes this the rotational form and leaving it off is the standard form.  In standard form, it is simple enough to just add $p_h^{k+1}$ and $\phi_h^{\flat}$ to update $p_h^{k+1}$ instead of solving the linear system.
+The last term involving the divergence of velocity makes this the \textbf{rotational form} and leaving it off is the \textbf{standard form}.  In standard form, it is simple enough to just add $p_h^{k+1}$ and $\phi_h^{\flat}$ to update $p_h^{k+1}$ instead of solving the linear system.
 
 
 \subsection{Summary of BDF1 Constant Time Step Incremental Rotational Algorithm}\label{subsec:BDF1constantTimeSummary}
-Given $(\rho^{k}, \ub^{k}, p^{k})\in W_h\times \X_h\times M_h$ where the spaces $\X_h\times M_h$ satisfy the standard LBB inf-sup conditions, for instance a Taylor-Hood spaces $\Proj^2\times\Proj^1$.   First, solve for $\rho^{k+1}\in W_h$ such that
+Given $(\rho^{k}, \ub^{k}, p^{k})\in W_h\times \X_h\times M_h$ where the spaces $\X_h\times M_h$ satisfy the standard LBB inf-sup conditions, we first solve for $\rho^{k+1}\in W_h$ such that
 \begin{equation}
   \frac{\rho^{k+1} - \rho^k}{\tau} + \nabla\cdot\left(\rho_h^{k+1}\ub^{k} \right) - \frac{\rho^{k+1}}{2}\nabla\cdot\ub^{k} = 0.
 \end{equation}
-using a monotone preserving hyperbolic transport method.  Second,
-set 
+using a monotone preserving hyperbolic transport method.  Second, set 
 \begin{equation}
   p^{\sharp} = 2p_h^{k} - p_h^{k-1}
 \end{equation}
@@ -290,28 +335,28 @@ where $\chi \leq \displaystyle\min_{\x\in\overline{\Omega}}\rho_0(\x)$ and updat
   \dprod{p_h^{k+1}}{r_h} = \dprod{\phi_h^{\flat} + p_h^{k}}{r_h} + \dprod{\mu\ub_h^{k+1}}{\nabla r_h}.
 \end{equation}
 
-Thus we have solved for $(\rho^{k+1}, \ub^{k+1}, p^{k+1})$ and can move on to the next time step.
+Thus we have solved for $(\rho_h^{k+1}, \ub_h^{k+1}, p_h^{k+1})$ and can move on to the next time step.
 
 
 \subsection{Error analysis of BDF1 Constant Time Step Incremental Rotational Algorithm}
 The stability of the above algorithm is proved in \cite{guermond2009splitting} and the error analysis was carried out in \cite{guermond2011error}.  We refer the reader to those articles for details and give the main results contained in Theorem 4.2 of \cite{guermond2011error}.
 
-We define the Stokes projection, $\left(\Pi_h\ub(t),\Pi_h p(t)\right) \in \X_h\times M_h$, of the solution $\left(\ub(t),p(t)\right)$ to (\ref{eqn:variabledensityNavierStokes})-(\ref{eqn:variabledensityNavierStokesBCIC}) to be the pair that solves
+We define the \textbf{Stokes projection}, $\left(\wb_h(t),q_h(t)\right) \in \X_h\times M_h$, of the solution $\left(\ub(t),p(t)\right)$ to (\ref{eqn:variabledensityNavierStokes})-(\ref{eqn:variabledensityNavierStokesBCIC}) to be the pair that solves
 \begin{equation}
   \begin{cases}
-    \mu\dprod{\nabla\Pi_h\ub(t)}{\nabla\vb_h} + \dprod{\nabla\Pi_h p(t)}{\vb_h} = \mu\dprod{\nabla \ub(t)}{\nabla\vb_h} - \dprod{p(t)}{\nabla\cdot\vb_h}, & \forall \vb_h \in \X_h\\
-    \dprod{\Pi_h \ub(t)}{\nabla r_h} = 0, & \forall r_h\in M_h
+    \mu\dprod{\nabla\wb_h(t)}{\nabla\vb_h} + \dprod{\nabla q_h(t)}{\vb_h} = \mu\dprod{\nabla \ub(t)}{\nabla\vb_h} - \dprod{p(t)}{\nabla\cdot\vb_h}, & \forall \vb_h \in \X_h\\
+    \dprod{\wb_h(t)}{\nabla r_h} = 0, & \forall r_h\in M_h
   \end{cases}
 \end{equation}
 
 \begin{theorem}
   Assume that the true solution to (\ref{eqn:variabledensityNavierStokes}) and (\ref{eqn:variabledensityNavierStokesBCIC}) satisfies (with $l\geq 1$)
   \begin{equation}
-    \ub\in W^{2,\infty}\left(\mathbf{H}_0^1(\Omega)\cap \mathbf{H}^{l+1}(\Omega)\right), \hspace{1cm} p\in W^{1,\infty}\left(H^{l}(\Omega) \right)
+    \ub\in W^{2,\infty}\left(\mathbf{H}_0^1(\Omega)\cap \mathbf{H}^{\ell+1}(\Omega)\right), \hspace{1cm} p\in W^{1,\infty}\left(H^{\ell}(\Omega) \right)
   \end{equation}
   Let $(\ub_h)_{\tau}$ be the solutions of velocity as described in Subsection~\ref{subsec:BDF1constantTimeSummary}.  Then if one of either
   \begin{equation}
-    \|p_h^0 - \Pi_h p^0 \|_{L^2(\Omega)} \leq c h^{\frac{l+1}{2}}
+    \|p_h^0 - q_h^0 \|_{L^2(\Omega)} \leq c h^{\frac{\ell+1}{2}}
   \end{equation}
   or
   \begin{equation}
@@ -319,16 +364,16 @@ We define the Stokes projection, $\left(\Pi_h\ub(t),\Pi_h p(t)\right) \in \X_h\t
   \end{equation}
   is satisfied, then
   \begin{equation}
-    \|\left(\ub\right)_\tau - \left(\ub_h\right)_{\tau} \|_{\ell^{\infty}(\mathbf{L}^2(\Omega))} \leq c\left( \tau + h^{\min(l+1,m)} \right)
+    \|\left(\ub - \ub_h\right)_{\tau} \|_{\ell^{\infty}(\mathbf{L}^2(\Omega))} \leq c\left( \tau + h^{\min(\ell+1,s)} \right)
   \end{equation}
   and
   \begin{equation}
-    \|\left(\ub\right)_\tau - \left(\ub_h\right)_{\tau} \|_{\ell^{2}(\mathbf{H}^1(\Omega))} \leq c\left( \tau + h^{\min(l,m)} \right)
+    \|\left(\ub - \ub_h\right)_{\tau} \|_{\ell^{2}(\mathbf{H}^1(\Omega))} \leq c\left( \tau + h^{\min(\ell,s)} \right)
   \end{equation}
 \end{theorem}
 
 \begin{remark}
-  Here $m>0$ is a constant that deals with the coupling between velocity and our solution of density transport.  In particular it depends on the method we use to solve the mass conservation.  The details are described in Section 4.2 of \cite{guermond2011error} where they conjecture that one can obtain $m=1$ by approximating the mass conservation with a linear first-order viscosity or first-order level set or phase field approach.  They further conjecture that $m>1$ if one uses a nonlinear stabilization technique like discontinuous Galerkin with limiters or entropy viscosity.  
+  Here $s>0$ is a constant that deals with the coupling between velocity and our solution of density transport.  In particular it depends on the method we use to solve the mass conservation.  The details are described in Section 4.2 of \cite{guermond2011error} (using the symbol $m$ instead of $s$) where they conjecture that one can obtain $s=1$ by approximating the mass conservation with a linear first-order viscosity or first-order level set or phase field approach.  They further conjecture that $s>1$ if one uses a nonlinear stabilization technique like discontinuous Galerkin with limiters or entropy viscosity.  
 \end{remark}
 
 
@@ -473,38 +518,7 @@ so that
 %
 \section{General BDF1 and BDF2 Algorithm with Possible Variable Time Step}\label{sec:GeneralAlgorithm}
 
-\subsection{Time discretizations}
-Let $D_{\tau} \left(g^{k+1}\right) = \beta_0g^{k+1} - \displaystyle\sum_{i=1}^{m} \beta_i g^{k+1-i} \approx \frac{\partial g}{\partial t}(t^{k+1})$ be the m-th order discretization of the first derivative operator.  For example, with uniform time steps we have
-\begin{equation}
- D_{\tau}\left( g^{k+1}\right) = \begin{cases}
- \frac{1}{\tau}g^{k+1} - \frac{1}{\tau} g^{k},  & \mbox{for BDF1}\\
-  \frac{3}{2\tau}g^{k+1} - \frac{2}{\tau} g^{k} + \frac{1}{2\tau}g^{k-1}, &\mbox{for BDF2}
-  \end{cases}
-\end{equation}
 
-The coefficients for uniform time steps with $m=1$ are
-\begin{equation}
- \beta_0 = \frac{1}{\tau},\: \beta_1 = \frac{1}{\tau}
-\end{equation}
-and for adaptive time steps
-\begin{equation}
- \beta_0 = \frac{1}{\tau^{k+1}},\: \beta_1 = \frac{1}{\tau^{k+1}}.
-\end{equation}
-The coefficients for uniform time steps with $m=2$ are
-\begin{equation}
-   \beta_0 = \frac{3}{2\tau}, \: \beta_1 = \frac{2}{\tau}, \: \beta_2 = -\frac{1}{2\tau} 
-\end{equation}
-and for adaptive time steps
-\begin{equation}
-   \beta_0 = \frac{2\tau^{k+1}+\tau^{k}}{\tau^{k+1}\left(\tau^{k} + \tau^{k+1}\right)}, \: \beta_1 = \frac{\tau^{k} + \tau^{k+1}}{\tau^{k}\tau^{k+1}}, \: \beta_2 = -\frac{\tau^{k+1}}{\tau^{k}\left(\tau^{k}+\tau^{k+1}\right)}.
-\end{equation}
-or if $r=\tau^{k+1}/\tau^{k}$ then
-\begin{equation}
-   \beta_0 = \frac{1+2r}{(1+r)\tau^{k+1}}, \hspace{1cm} \beta_1 = \frac{1+r}{\tau^{k+1}}, \hspace{1cm} \beta_2 = -\frac{r^2}{(1+r)\tau^{k+1}}.
-\end{equation}
-
-The adaptive BDF1 and BDF2 algorithms have truncation errors $\mathcal{O}\left(\tau^{k+1}\right)$ or $\mathcal{O}\left(\left(\tau^{k}+\tau^{k+1} \right)\tau^{k+1} \right)$ respectively, where as the uniform algorithms are $\mathcal{O}(\tau)$ and $\mathcal{O}(\tau^{2})$ respectively.
-  
 
 
 \subsection{Updated CFL Condition for General Algorithm}
@@ -710,21 +724,21 @@ The numerical solution $(\ub^k, \ut^k,p^k)$ of the constant density incompressib
 \begin{theorem}\label{thm:guermondthm3.1}
 If $\ub(t,x)\in W^{1,\infty}\left(0,T;\; H_0^1(\Omega)^d \cap H^{\ell+1}(\Omega)^d  \right) \cap H^2\left(0,T;\; H^1(\Omega)^d\right)$ and $p\in W^{1,\infty}\left(0,T;\; H^{\ell}(\Omega) \right)\cap H^2\left(0,T;\; L^2(\Omega)\right)$, then
   \begin{equation}
-    \left\| \left(\ub(t) - \ub^k \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} + \left\| \left(\ub(t) - \ut^k \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} \lesssim \tau + h^{\ell+1}
+    \left\| \left(\ub - \ub_h \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} + \left\| \left(\ub - \ut_h \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} \lesssim \tau + h^{\ell+1}
   \end{equation}
 \end{theorem}
 
 \begin{theorem}\label{thm:guermondthm3.2}
 If $\ub(t,x)\in W^{2,\infty}\left(0,T;\; H_0^1(\Omega)^d \cap H^{\ell+1}(\Omega)^d  \right) \cap H^3\left(0,T;\; H^1(\Omega)^d\right)$ and $p\in W^{2,\infty}\left(0,T;\; H^{\ell}(\Omega) \right)\cap H^3\left(0,T;\; L^2(\Omega)\right)$, then there exist $c_s>0$ and $h_s>0$ such that for $h\in (0,h_s]$ and $\tau \leq c_s /\left(1+|\log(h^{-1})| \right)^{1/2}$ in 2 dimensions or $\tau \leq c_s h^{1/2}$ in 3 dimensions we have
   \begin{equation}
-    \left\| \left(\ub(t) - \ut^k \right)_{\tau} \right\|_{\ell^{\infty}\left(H^1(\Omega)^d\right)} + \left\| \left(p(t) - p^k \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)\right)} \lesssim \tau + h^{\ell}
+    \left\| \left(\ub - \ut_h \right)_{\tau} \right\|_{\ell^{\infty}\left(H^1(\Omega)^d\right)} + \left\| \left(p - p_h \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)\right)} \lesssim \tau + h^{\ell}
   \end{equation}
 \end{theorem}
 
 \begin{theorem}\label{thm:guermondthm3.3}
 Under the regularity hypothesis of Theorem~\ref{thm:guermondthm3.1} and its restrictions on $\tau$ and $h$, the error bounds also hold
     \begin{equation}
-      \left\| \left(\ub(t) - \ub^k \right)_{\tau} \right\|_{\ell^{2}\left(L^2(\Omega)^d\right)} + \left\| \left(\ub(t) - \ut^k \right)_{\tau} \right\|_{\ell^{2}\left(L^2(\Omega)^d\right)} \lesssim \tau^2 + h^{\ell+1}
+      \left\| \left(\ub - \ub_h \right)_{\tau} \right\|_{\ell^{2}\left(L^2(\Omega)^d\right)} + \left\| \left(\ub - \ut_h \right)_{\tau} \right\|_{\ell^{2}\left(L^2(\Omega)^d\right)} \lesssim \tau^2 + h^{\ell+1}
     \end{equation}
 \end{theorem}
 
@@ -732,7 +746,7 @@ If we want improved error bounds for $\ell^{\infty}\left( L^2(\Omega)^d \right)$
 \begin{theorem}\label{thm:guermondthm3.4}
 If $\ub(t,x)\in W^{3,\infty}\left(0,T;\; H_0^1(\Omega)^d \cap H^{\ell+1}(\Omega)^d  \right) \cap H^4\left(0,T;\; H^1(\Omega)^d\right)$ and $p\in W^{2,\infty}\left(0,T;\; H^{\ell}(\Omega) \right)\cap H^4\left(0,T;\; L^2(\Omega)\right)$, with the restrictions on $\tau$ and $h$ of Theorem~\ref{thm:guermondthm3.1}, then
   \begin{equation}
-    \left\| \left(\ub(t) - \ub^k \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} + \left\| \left(\ub(t) - \ut^k \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} \lesssim \tau^{7/4} + \tau^{3/4}h^{\ell} + h^{\ell+1}
+    \left\| \left(\ub - \ub_h \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} + \left\| \left(\ub - \ut_h \right)_{\tau} \right\|_{\ell^{\infty}\left(L^2(\Omega)^d\right)} \lesssim \tau^{7/4} + \tau^{3/4}h^{\ell} + h^{\ell+1}
   \end{equation}
 \end{theorem}
 
@@ -741,7 +755,7 @@ The estimates on the pressure norm of Theorem~\ref{thm:guermondthm3.2} can be im
 \begin{theorem}\label{thm:guermondthm3.5}
 Under the regularity hypothesis of Theorem~\ref{thm:guermondthm3.4} and its restrictions on $\tau$ and $h$, the error bounds also hold
     \begin{equation}
-      \left\| \left(p(t) - p^k \right)_{\tau} \right\|_{\ell^{2}\left(\|\cdot\|_{B_h, \mathcal{A}_h}\right)} \lesssim \tau^{3/2} + h^{\ell}
+      \left\| \left(p - p_h \right)_{\tau} \right\|_{\ell^{2}\left(\|\cdot\|_{B_h, \mathcal{A}_h}\right)} \lesssim \tau^{3/2} + h^{\ell}
     \end{equation}
 \end{theorem}
 
@@ -752,8 +766,9 @@ Under the regularity hypothesis of Theorem~\ref{thm:guermondthm3.4} and its rest
 \begin{theorem}
 Given that the true solution is smooth enough, the numerical solution, $(\ub^k, \ut^k, p^k)$, of the constant density incompressible Navier-Stokes algorithm using the second order approximation in time, pressure correction scheme in rotational form gives the following convergence estimates:
 \begin{align*}
-\left\| \left(\ub(t) - \ub^k\right)_{\tau} \right\|_{\ell^2\left([L^2(\Omega)]^d \right)} + \left\| \left(\ub(t) - \ut^k\right)_{\tau} \right\|_{\ell^2\left([L^2(\Omega)]^d \right)} &\lesssim \tau^2\\
-\left\| \left(\ub(t) - \ub^k\right)_{\tau} \right\|_{\ell^2\left([H^1(\Omega)]^d \right)} + \left\| \left(\ub(t) - \ut^k\right)_{\tau} \right\|_{\ell^2\left([H^1(\Omega)]^d \right)} + \left\| \left(p(t) - p^k\right)_{\tau} \right\|_{\ell^2\left([L^2(\Omega)]^d \right)} &\lesssim \tau^{3/2}
+\left\| \left(\ub - \ub_h\right)_{\tau} \right\|_{\ell^2\left([L^2(\Omega)]^d \right)} + \left\| \left(\ub - \ut_h\right)_{\tau} \right\|_{\ell^2\left([L^2(\Omega)]^d \right)} &\lesssim \tau^2\\
+\left\| \left(\ub - \ub_h\right)_{\tau} \right\|_{\ell^2\left([H^1(\Omega)]^d \right)} + \left\| \left(\ub - \ut_h\right)_{\tau} \right\|_{\ell^2\left([H^1(\Omega)]^d \right)}  &\lesssim \tau^{3/2}\\
+ \left\| \left(p - p_h\right)_{\tau} \right\|_{\ell^2\left([L^2(\Omega)]^d \right)} &\lesssim \tau^{3/2}
 \end{align*}
 
 \end{theorem}
@@ -764,7 +779,7 @@ See Theorem 4.1 of \cite{guermond2004error} for details
 
 \section{Variable Density Incompressible Navier Stokes in Standard Form Convergence Theorems}
 
-\begin{theorem}
+\begin{theorem}\label{thm:vardensityStandardFormBDF1}
 If $\rho \in W^{1,\infty}\left(0,T; \; W^{1,\infty}(\Omega) \right)$, $\ub \in W^{1,\infty}\left(0,T;\; H^1_0(\Omega)^d\cap H^{\ell+1}(\Omega^d) \right)$ and $p\in W^{1,\infty}\left( H^{\ell}(\Omega)\right)$ and there exist $\chi, \eta >0 $ such that for all $k$, $\chi \leq \min_{\x} \rho^k(\x)$ and $\sup_{\x} \rho^k(\x) \leq \eta$. Assume (to decouple the density from velocity) that we can construct a sequence $(\rho^k)_k$ from a sequence $(\ub^k)_k$ of velocities in such a way that
 \begin{align}
   \|(\rho - &\rho^k)_{\tau}\|^2_{\ell^{\infty}(H^1)} + \left\| \left( \rho_t - \frac{\rho^k - \rho^{k-1}}{\tau} \right)_{\tau} \right\|^2_{\ell^{\infty}(L^2)}\\
@@ -776,15 +791,35 @@ If $\rho \in W^{1,\infty}\left(0,T; \; W^{1,\infty}(\Omega) \right)$, $\ub \in W
   \end{equation}
   holds.  Then the incremental BDF1 variable density algorithm has the following error estimates
   \begin{align}
-    \|(\ub - \ub^k)_{\tau}\|_{\ell^{\infty}(L^2(\Omega)^d)} &\lesssim \tau + h^{\ell+1}\\
-    \|(\ub - \ub^k)_{\tau}\|_{\ell^{2}(H^1(\Omega)^d)} &\lesssim \tau + h^{\ell}\\
-    \|(p - p^k)_{\tau}\|_{\ell^{2}(L^2(\Omega))} & \lesssim \tau + h^{\ell}  \mbox{  (not stated or proven but should be true)}
+    \left\|\left(\ub - \ub_h\right)_{\tau}\right\|_{\ell^{\infty}(L^2(\Omega)^d)} &\lesssim \tau + h^{\ell+1}\\
+    \left\|\left(\ub - \ub_h\right)_{\tau}\right\|_{\ell^{2}(H^1(\Omega)^d)} &\lesssim \tau + h^{\ell}\\
+    \left\|\left(p - p_h\right)_{\tau}\right\|_{\ell^{2}(L^2(\Omega))} & \lesssim \tau + h^{\ell}  \mbox{  (not stated or proven but should be true)}
   \end{align}
 \end{theorem}
 \begin{proof}
   See proof of Theorem 4.2 of \cite{guermond2011error}.
 \end{proof}
 
+\begin{conjecture}
+  Under the assumptions of Theorem~\ref{thm:vardensityStandardFormBDF1}, the BDF2 standard form algorithm has the following error estimates:
+  \begin{align}
+    \left\| \left(\sqrt{\rho} \ub - \sqrt{\rho_h} \ub_h \right)_{\tau} \right\|_{\ell^{\infty}(L^2(\Omega)^d)} &\lesssim \tau^2 + h^{\ell+1}\\
+    \left\| \left(\ub - \ub_h \right)_{\tau} \right\|_{\ell^2(H^1(\Omega)^d)} &\lesssim \tau + h^{\ell}\\
+    \left\|\left(p - p_h\right)_{\tau} \right\|_{\ell^{2}(L^2(\Omega))} &\lesssim \tau + h^{\ell}  \mbox{  (not stated or proven but should be true)}
+  \end{align}
+\end{conjecture}
+
+
+\section{Variable Density Incompressible Navier Stokes in Rotational Form Convergence Theorems}
+
+\begin{conjecture}
+  Under the assumptions of Theorem~\ref{thm:vardensityStandardFormBDF1}, the BDF2 rotational form algorithm has the following error estimates:
+  \begin{align}
+    \left\| \left(\sqrt{\rho} \ub - \sqrt{\rho_h} \ub_h \right)_{\tau} \right\|_{\ell^{\infty}(L^2(\Omega)^d)} &\lesssim \tau^2 + h^{\ell+1}\\
+    \left\| \left( \ub - \ub_h \right)_{\tau} \right\|_{\ell^2(H^1(\Omega)^d)} &\lesssim \tau^{3/2} + h^{\ell}\\
+    \left\|\left(p - p_h\right)_{\tau} \right\|_{\ell^{2}(L^2(\Omega))} &\lesssim \tau^{3/2} + h^{\ell}  \mbox{  (not stated or proven but should be true)}
+  \end{align}
+\end{conjecture}
 
 \appendix
 %
