@@ -138,7 +138,7 @@ or the $\ell^2$ norm in time, denoted
   \left\| \left( \ub - \ub_h \right)_{\tau} \right\|^2_{\ell^{2}(X)} :=  \sum_{k=1}^{N} \tau^{k}\| \ub(t^{k}) - \ub_h^{k}\|^2_{X}.
 \end{equation}
 
-We denote by $X_h$ the finite element space subordinate to $\mathcal{T}_h$ for the velocity vector field.  $W_h$ will be the space for density and $M_h$ the space for pressure.  Typically we will use the Taylor-Hood space $X_h \times M_h = \left(\mathbb{P}^2\left(\mathcal{T}_h\right)\right)^d\times \mathbb{P}^1\left(\mathcal{T}_h\right)$ which satisfies the LBB inf-sup condition for velocity-pressure coupling, but any set of finite element spaces satisfying the inf-sup condition can be used.  We will also typically choose $W_h = \mathbb{P}^2\left(\mathcal{T}_h\right)$.  We likewise denote the subspace $M_h^0\subset M_h$ to be the set of functions in $M_h$ with zero mean, ie $M_h^0 := \{ f_h\in M_h \:|\: \sum_{T\in\mathcal{T}_h}\int_{T}f_h dx = 0\}$.
+We do not distinguish notation between norms of scalar functions and of vector functions.  We denote by $X_h$ the finite element space subordinate to $\mathcal{T}_h$ for the velocity vector field.  $W_h$ will be the space for density and $M_h$ the space for pressure.  Typically we will use the Taylor-Hood space $X_h \times M_h = \left(\mathbb{P}^2\left(\mathcal{T}_h\right)\right)^d\times \mathbb{P}^1\left(\mathcal{T}_h\right)$ which satisfies the LBB inf-sup condition for velocity-pressure coupling, but any set of finite element spaces satisfying the inf-sup condition can be used.  We will also typically choose $W_h = \mathbb{P}^2\left(\mathcal{T}_h\right)$.  We likewise denote the subspace $M_h^0\subset M_h$ to be the set of functions in $M_h$ with zero mean, ie $M_h^0 := \{ f_h\in M_h \:|\: \sum_{T\in\mathcal{T}_h}\int_{T}f_h dx = 0\}$.
 
 The algorithms described below will describe methods of finding or updating the solutions at time $t^{k+1}$
 \begin{equation}(\rho^{k+1}_h, \ub^{k+1}_{h}, p^{k+1}_h) \in W_h\times\X_h\times M_h  \end{equation}
@@ -236,7 +236,7 @@ The standard approach to creating splittings has been to think about the splitti
 \begin{equation}\label{eqn:helmholtzdecompositionprojection}
   \ut^{k} = \ub^{k} + \frac{\tau}{\rho}\nabla \phi^{k}.
 \end{equation}
- However, the method of solving this system is to apply the divergence operator to both sides and use the fact that $\nabla\cdot \ub^k = 0$ to algebraically eliminate $\ub^k$ from the system.  However when we applied the divergence operator to equation~\ref{eqn:helmholtzdecompositionprojection}, we pulled the density through the divergence operator.   When density is variable, this is no longer possible.  The literature is full of methods to try to solve the resulting non-constantcoefficient problem that results from implementing this projection scheme with variable density,
+ However, the method of solving this system is to apply the divergence operator to both sides and use the fact that $\nabla\cdot \ub^k = 0$ to algebraically eliminate $\ub^k$ from the system.  However when we applied the divergence operator to equation~(\ref{eqn:helmholtzdecompositionprojection}), we pulled the density through the divergence operator.   When density is variable, this is no longer possible.  The literature is full of methods to try to solve the resulting non-constantcoefficient problem that results from implementing this projection scheme with variable density,
 \begin{equation}
   -\nabla\cdot\left(\frac{1}{\rho^{k+1}} \nabla\phi \right) = -\tau\nabla\cdot \ub^{k+1},  \hspace{1cm} \left.\partial_n \phi\right|_{\partial\Omega} = 0.
 \end{equation}  
@@ -349,7 +349,7 @@ with $\int_{\Omega} \phi^{\flat} d\x = 0$.  That is, find $\phi_h^{\flat}\in M_h
 \begin{equation}
   \dprod{\nabla\phi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}
 \end{equation}
-for all $r_h \in M_h$.  If we don't build the mean zero property into the finite element space, then equation~\ref{eqn:pressureincrementlaplacian} is an under determined system.  It is often quite difficult to obtain basis functions with mean zero, so a common approach to solving the system with this setup is to fix the value at one degree of freedom, solve the system, calculate the mean and subtract it off of the solution.  Thereby we move the solution into the zero mean subset $M_h^0\subset M_h$. 
+for all $r_h \in M_h$.  If we don't build the mean zero property into the finite element space, then equation~(\ref{eqn:pressureincrementlaplacian}) is an under determined system.  It is often quite difficult to obtain basis functions with mean zero, so a common approach to solving the system with this setup is to fix the value at one degree of freedom, solve the system, calculate the mean and subtract it off of the solution.  Thereby we move the solution into the zero mean subset $M_h^0\subset M_h$. 
 
  Once we have the pressure correction term, $\phi^{\flat}_h\in M_h^0$, we update the pressure as
 \begin{equation}\label{eqn:rotationalpressureupdate}
@@ -482,7 +482,7 @@ for the semi-implicit convection term, $\ub_h^{*}\cdot\nabla\ub_h^{n+1}$, again 
 
 
 \subsection{Density Update}
-Again, the approach to solving this hyperbolic equation is not specified here but is discussed in section~\ref{sec:ConservationOfMassNumericalApproach}.  We will choose a second order hyperbolic scheme that preserves the following stability properties.  First, that there are constants $\chi, c > 0$ such that 
+Again, the approach to solving this hyperbolic equation is not specified here but is discussed in Section~\ref{sec:ConservationOfMassNumericalApproach}.  We will choose a second order hyperbolic scheme that preserves the following stability properties.  First, that there are constants $\chi, c > 0$ such that 
 \begin{equation}
   \chi \leq \displaystyle\min_{\x\in\overline{\Omega}} \rho_h^{k+1}(\x),  \hspace{1.5cm} \displaystyle\sup_{\x\in\overline{\Omega}}\rho_h^{k+1}(\x) \leq c \hspace{1cm} \forall k\geq 1
 \end{equation}
@@ -581,7 +581,7 @@ so that
   \begin{align}
     p^{\sharp}_h &= \frac{7}{3}p_h^{k} - \frac{5}{3}p_h^{k-1}+ \frac{1}{3}p_h^{k-2} \\
     &= 2p_h^k - p_h^{k-1} + \frac{\tau^2}{3}\left(\frac{p_h^{k} - 2p^{k-1}_h + p_h^{k-2}}{\tau^2}  \right)\\
-    &= p_h^{k+1} + \mathcal{O}(\tau^{2}) + \frac{\tau^2}{3}\left( p_{tt}^{k-1} + \mathcal{O}(\tau^{2}\right)\\
+    &= p_h^{k+1} + \mathcal{O}(\tau^{2}) + \frac{\tau^2}{3}\left( p_{tt}^{k-1} + \mathcal{O}(\tau^{2}) \right)\\
     &= p_h^{k+1} + \mathcal{O}(\tau^2)
   \end{align}
   Whatever the approach, it gives us a higher order approximation to the pressure $p_h^{k+1}$ which is consistent with the original equations.
@@ -786,10 +786,11 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \begin{tabular}{c|l|c|l|c}
       $\tau$  & $\ell^{\infty}\left(L^2(\Omega)\right)$ &  Rate  &  $\ell^2\left(L^2(\Omega)\right)$  &  Rate\\
       \hline
-      5.000e-02 & 4.940e-03 &  -   & 1.090e-02 &  -  \\
-      2.500e-02 & 1.389e-03 & 1.83 & 3.112e-03 & 1.81\\
-      1.250e-02 & 3.933e-04 & 1.82 & 8.899e-04 & 1.81\\
-      6.250e-03 & 1.147e-04 & 1.78 & 2.613e-04 & 1.77
+      1.000e-01 & 2.198e-02 &  -   & 5.908e-02 &  -  \\
+      5.000e-02 & 5.776e-03 & 1.93 & 1.544e-02 & 1.94\\
+      2.500e-02 & 1.561e-03 & 1.89 & 4.117e-03 & 1.91\\
+      1.250e-02 & 4.295e-04 & 1.86 & 1.113e-03 & 1.89\\
+      6.250e-03 & 1.224e-04 & 1.81 & 3.100e-04 & 1.84
     \end{tabular}
     }
     \hfill
@@ -800,10 +801,11 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
       \begin{tabular}{c|l|c|l|c}
         $\tau$  & $\ell^{\infty}\left(L^2(\Omega)\right)$ &  Rate  &  $\ell^2\left(L^2(\Omega)\right)$  &  Rate\\
         \hline
-        5.000e-02 & 2.769e-02 &  -   & 5.512e-02 &  -  \\
-        2.500e-02 & 8.435e-03 & 1.71 & 1.710e-02 & 1.69\\
-        1.250e-02 & 2.581e-03 & 1.71 & 5.361e-03 & 1.67\\
-        6.250e-03 & 6.056e-04 & 2.09 & 1.295e-03 & 2.05
+        1.000e-01 & 9.491e-02 &  -   & 1.899e-01 &  -  \\
+        5.000e-02 & 2.796e-02 & 1.76 & 5.641e-02 & 1.75\\
+        2.500e-02 & 8.504e-03 & 1.72 & 1.739e-02 & 1.70\\
+        1.250e-02 & 2.599e-03 & 1.71 & 5.426e-03 & 1.68\\
+        6.250e-03 & 6.097e-04 & 2.09 & 1.312e-03 & 2.05
       \end{tabular}
     }
 \end{table}
@@ -816,10 +818,11 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \begin{tabular}{c|l|c|l|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Omega)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Omega)^d\right)$  &  Rate\\
       \hline
-      5.000e-02 & 1.959e-03 &  -   & 1.607e-02 &  -  \\
-      2.500e-02 & 5.978e-04 & 1.71 & 4.842e-03 & 1.73\\
-      1.250e-02 & 1.668e-04 & 1.84 & 1.387e-03 & 1.80\\
-      6.250e-03 & 4.430e-05 & 1.91 & 3.934e-04 & 1.82
+      1.000e-01 & 7.077e-03 &  -   & 5.065e-02 &  -  \\
+      5.000e-02 & 2.576e-03 & 1.46 & 1.650e-02 & 1.62\\
+      2.500e-02 & 8.254e-04 & 1.64 & 4.955e-03 & 1.74\\
+      1.250e-02 & 2.497e-04 & 1.72 & 1.416e-03 & 1.81\\
+      6.250e-03 & 7.068e-05 & 1.82 & 4.009e-04 & 1.82
     \end{tabular}
     }
     \hfill
@@ -830,10 +833,11 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
       \begin{tabular}{c|l|c|l|c}
         $\tau$ &  $\ell^{\infty}\left(L^2(\Omega)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Omega)^d\right)$  &  Rate\\
         \hline
-        5.000e-02 & 2.547e-03 &  -   & 3.041e-02 &  -  \\
-        2.500e-02 & 6.968e-04 & 1.87 & 9.607e-03 & 1.66\\
-        1.250e-02 & 1.819e-04 & 1.94 & 3.221e-03 & 1.58\\
-        6.250e-03 & 4.681e-05 & 1.96 & 1.067e-03 & 1.59
+        1.000e-01 & 9.188e-03 &  -   & 9.958e-02 &  -  \\
+        5.000e-02 & 2.850e-03 & 1.69 & 3.069e-02 & 1.70\\
+        2.500e-02 & 8.905e-04 & 1.68 & 9.673e-03 & 1.67\\
+        1.250e-02 & 2.599e-04 & 1.78 & 3.235e-03 & 1.58\\
+        6.250e-03 & 7.224e-05 & 1.85 & 1.070e-03 & 1.60
       \end{tabular}
     }
 \end{table}
@@ -847,10 +851,11 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \begin{tabular}{c|l|c|l|c}
       $\tau$ &  $\ell^{\infty}\left(H^1(\Omega)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Omega)^d\right)$  &  Rate\\
       \hline
-      5.000e-02 & 3.682e-03 &  -   & 8.568e-03 &  -  \\
-      2.500e-02 & 1.082e-03 & 1.77 & 2.729e-03 & 1.65\\
-      1.250e-02 & 2.985e-04 & 1.86 & 8.164e-04 & 1.74\\
-      6.250e-03 & 7.926e-05 & 1.91 & 2.381e-04 & 1.78
+      1.000e-01 & 1.177e-02 &  -   & 3.058e-02 &  -  \\
+      5.000e-02 & 3.780e-03 & 1.64 & 1.143e-02 & 1.42\\
+      2.500e-02 & 1.108e-03 & 1.77 & 3.852e-03 & 1.57\\
+      1.250e-02 & 3.053e-04 & 1.86 & 1.223e-03 & 1.65\\
+      6.250e-03 & 8.098e-05 & 1.91 & 3.768e-04 & 1.70
     \end{tabular}
     }
     \hfill
@@ -861,10 +866,11 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
       \begin{tabular}{c|l|c|l|c}
         $\tau$ &  $\ell^{\infty}\left(H^1(\Omega)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Omega)^d\right)$  &  Rate\\
         \hline
-        5.000e-02 & 5.437e-03 &  -   & 1.307e-02 &  -  \\
-        2.500e-02 & 1.389e-03 & 1.97 & 4.076e-03 & 1.68\\
-        1.250e-02 & 3.508e-04 & 1.99 & 1.373e-03 & 1.57\\
-        6.250e-03 & 8.828e-05 & 1.99 & 4.666e-04 & 1.56
+        1.000e-01 & 2.072e-02 &  -   & 4.363e-02 &  -  \\
+        5.000e-02 & 5.513e-03 & 1.91 & 1.307e-02 & 1.74\\
+        2.500e-02 & 1.410e-03 & 1.97 & 4.165e-03 & 1.65\\
+        1.250e-02 & 3.567e-04 & 1.98 & 1.373e-03 & 1.60\\
+        6.250e-03 & 8.984e-05 & 1.99 & 4.666e-04 & 1.56
       \end{tabular}\tiny
     }
 \end{table}
@@ -877,10 +883,11 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \begin{tabular}{c|l|c|l|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Omega)\right)$ &  Rate  &  $\ell^2\left(L^2(\Omega)\right)$  &  Rate\\
       \hline
-      5.000e-02 & 1.256e-02 &  -   & 1.180e-02 &  -  \\
-      2.500e-02 & 7.181e-03 & 0.81 & 3.656e-03 & 1.69\\
-      1.250e-02 & 4.219e-03 & 0.77 & 1.109e-03 & 1.72\\
-      6.250e-03 & 2.292e-03 & 0.88 & 3.603e-04 & 1.62
+      1.000e-01 & 2.080e-02 &  -   & 3.624e-02 &  -  \\
+      5.000e-02 & 9.859e-03 & 1.08 & 1.163e-02 & 1.64\\
+      2.500e-02 & 4.885e-03 & 1.01 & 3.491e-03 & 1.74\\
+      1.250e-02 & 2.449e-03 & 1.00 & 1.012e-03 & 1.79\\
+      6.250e-03 & 1.219e-03 & 1.01 & 3.160e-04 & 1.68
     \end{tabular}
     }
     \hfill
@@ -891,10 +898,11 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
       \begin{tabular}{c|l|c|l|c}\label{table:lastconvergenceresult}
         $\tau$ &  $\ell^{\infty}\left(L^2(\Omega)\right)$ &  Rate  &  $\ell^2\left(L^2(\Omega)\right)$  &  Rate\\
         \hline
-        5.000e-02 & 1.904e-02 &  -   & 3.781e-02 &  -  \\
-        2.500e-02 & 7.863e-03 & 1.28 & 1.132e-02 & 1.74\\
-        1.250e-02 & 4.303e-03 & 0.87 & 3.598e-03 & 1.65\\
-        6.250e-03 & 2.324e-03 & 0.89 & 1.162e-03 & 1.63
+        1.000e-01 & 5.642e-02 &  -   & 1.289e-01 &  -  \\
+        5.000e-02 & 1.761e-02 & 1.68 & 3.793e-02 & 1.76\\
+        2.500e-02 & 6.451e-03 & 1.45 & 1.129e-02 & 1.75\\
+        1.250e-02 & 2.660e-03 & 1.28 & 3.572e-03 & 1.66\\
+        6.250e-03 & 1.276e-03 & 1.06 & 1.150e-03 & 1.64
       \end{tabular}
     }
 \end{table}
