@@ -1092,6 +1092,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         self.firstStep = True # manipulated in preStep()
         self.zeroMean = zeroMean
         self.setFirstTimeStepValues=setFirstTimeStepValues
+        self.calculateMeshVolume = True # manipulated in postStep()
 
     def attachModels(self,modelList):
         """
@@ -1215,17 +1216,33 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         from math import fabs
         import proteus.Norms as Norms
+        from flcbdfWrappers import globalSum,globalMax
+
+
+        # Do adjustment to get zero value for mean of pressure increment
         if self.zeroMean:
+            # It appears that the mesh.volume term is not being correctly
+            # computed in parallel so I implemented this work around for now.
+            if self.calculateMeshVolume:
+                onesVector = np.ones(self.model.q['u',0].shape)
+                self.meshVolume = Norms.scalarDomainIntegral(self.model.q['dV'],
+                                                       onesVector,
+                                                       self.model.mesh.nElements_owned)
+                self.calculateMeshVolume = False
+
+
             meanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
                                                    self.model.q[('u',0)],
-                                                   self.model.mesh.nElements_owned)/self.model.mesh.volume
+                                                   self.model.mesh.nElements_owned)/self.meshVolume
             self.model.q[('u',0)][:] = self.model.q[('u',0)] - meanvalue
             self.model.ebqe[('u',0)] -= meanvalue
             self.model.u[0].dof -= meanvalue
 
+            # test to see if we are in fact zero mean.  This can be removed in
+            # an optimized code.
             newmeanvalue = Norms.scalarDomainIntegral(self.model.q['dV'],
                                                       self.model.q[('u',0)],
-                                                      self.model.mesh.nElements_owned)
+                                                      self.model.mesh.nElements_owned)/self.meshVolume
             assert fabs(newmeanvalue) < 1.0e-8, "new mean should be zero but is "+`newmeanvalue`
 
         # add post processing adjustments here if possible.  They have already be solved for by this point.
