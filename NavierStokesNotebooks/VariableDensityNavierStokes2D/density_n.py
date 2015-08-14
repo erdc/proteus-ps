@@ -46,7 +46,7 @@ if False: #not ctx.useStabilityTerms:
 
 #matrix type
 #numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
-numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_IIPG_exterior #weak boundary conditions (upwind)
+numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_SIPG_exterior #weak boundary conditions (upwind)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
