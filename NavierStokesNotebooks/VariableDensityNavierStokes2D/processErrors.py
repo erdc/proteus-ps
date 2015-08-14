@@ -44,21 +44,6 @@ if short_type == 'den':
 
 
 
-if args.usePlots:
-    import matplotlib
-    matplotlib.use('AGG')   # generate png output by default
-
-    import matplotlib.pyplot as plt
-    from matplotlib import rc
-    rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-    ## for Palatino and other serif fonts use:
-    #rc('font',**{'family':'serif','serif':['Palatino']})
-    rc('text', usetex=True)
-
-    # create plots for time series of errors
-    fig_L2, ax_L2 = plt.subplots(nrows=1, ncols=1)
-    if args.useH1Norm:
-        fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
 
 
 # read in file names and test if they can be found.  if so
@@ -80,11 +65,12 @@ if args.short_names is not None:
             for p in range(0,args.num_proc):
                 test_filename = args.short_names[i] + "_%d.db" %p
                 if os.path.exists(test_filename):
-                    print "File %s found!" %test_filename
+                    print "** File %s found!" %test_filename
                 else:
-                    print "File %s not found!"%test_filename
+                    print "** File %s not found!"%test_filename
                     addName = False
             if addName:
+                print "%d: All *_p.db files found for %s and will be processed!" %(counter, args.short_names[i])
                 filenames[counter] = args.short_names[i]
                 counter+=1
 else:
@@ -95,14 +81,34 @@ else:
         for i in range(0,len(args.file_names)):
             test_filename = args.file_names[i]
             if os.path.exists(test_filename):
-                print "File %s found and will be processed!" %test_filename
+                print "%d: File %s found and will be processed!" %(counter, test_filename)
                 filenames[counter] = test_filename
                 counter+=1
             else:
-                print "File %s not found!"%test_filename
-
+                print "** File %s not found!"%test_filename
 
 num_filenames = len(filenames)
+
+if num_filenames is int(0):
+    sys.exit("Error: No files to process!")
+
+
+if args.usePlots:
+    import matplotlib
+    matplotlib.use('AGG')   # generate png output by default
+
+    import matplotlib.pyplot as plt
+    from matplotlib import rc
+    rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+    ## for Palatino and other serif fonts use:
+    #rc('font',**{'family':'serif','serif':['Palatino']})
+    rc('text', usetex=True)
+
+    # create plots for time series of errors
+    fig_L2, ax_L2 = plt.subplots(nrows=1, ncols=1)
+    if args.useH1Norm:
+        fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
+
 
 # preallocate space for the results
 numTimeSteps = [0.0]*num_filenames
