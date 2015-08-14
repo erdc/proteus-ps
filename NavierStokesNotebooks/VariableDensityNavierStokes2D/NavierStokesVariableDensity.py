@@ -624,8 +624,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         self.densityModelIndex = densityModelIndex
         self.densityFunction = densityFunction
         self.densityGradFunction = densityGradFunction
-        self.uFunction = uFunction
-        self.vFunction = vFunction
         self.pressureModelIndex = pressureModelIndex
         self.pressureGradFunction = pressureGradFunction
         self.pressureIncrementModelIndex = pressureIncrementModelIndex
@@ -633,15 +631,16 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         self.useStabilityTerms = useStabilityTerms
         self.c_rho = {} # density
         self.c_rho_last = {} # density of cached values
-        if self.bdf is int(2):
-            self.c_rho_lastlast = {}
         self.c_p_last = {}  # pressure
         self.c_phi_last = {} # pressure increment phi
         if self.bdf is int(2):
+            self.c_rho_lastlast = {}
             self.c_p_lastlast = {}
             self.c_phi_lastlast = {}
         self.firstStep = True # manipulated in preStep()
         self.setFirstTimeStepValues=setFirstTimeStepValues
+        self.uFunction = uFunction # for initialization on firstStep if switched on
+        self.vFunction = vFunction # for initialization on firstStep if switched on
         self.useNonlinearAdvection=useNonlinearAdvection
         self.usePressureExtrapolations=usePressureExtrapolations
 
@@ -673,45 +672,45 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 self.c_rho[rho.shape] = rho
                 rho_last = self.densityModel.q[('u_last',0)]
                 self.c_rho_last[rho_last.shape] = rho_last
-                if self.useStabilityTerms:
-                    grad_rho = self.densityModel.q[('grad(u)',0)]
-                    self.c_rho[grad_rho.shape] = grad_rho
                 if self.bdf is int(2):
                     rho_lastlast = self.densityModel.q[('u_lastlast',0)]
                     self.c_rho_lastlast[rho_lastlast.shape] = rho_lastlast
+                if self.useStabilityTerms:
+                    grad_rho = self.densityModel.q[('grad(u)',0)]
+                    self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebq:
                 rho = self.densityModel.ebq[('u',0)]
                 self.c_rho[rho.shape] = rho
                 rho_last = self.densityModel.ebq[('u_last',0)]
                 self.c_rho_last[rho_last.shape] = rho_last
-                if self.useStabilityTerms:
-                    grad_rho = self.densityModel.ebq[('grad(u)',0)]
-                    self.c_rho[grad_rho.shape] = grad_rho
                 if self.bdf is int(2):
                     rho_lastlast = self.densityModel.ebq[('u_lastlast',0)]
                     self.c_rho_lastlast[rho_lastlast.shape] = rho_lastlast
+                if self.useStabilityTerms:
+                    grad_rho = self.densityModel.ebq[('grad(u)',0)]
+                    self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebqe:
                 rho = self.densityModel.ebqe[('u',0)]
                 self.c_rho[rho.shape] = rho
                 rho_last = self.densityModel.ebqe[('u_last',0)]
                 self.c_rho_last[rho_last.shape] = rho_last
-                if self.useStabilityTerms:
-                    grad_rho = self.densityModel.ebqe[('grad(u)',0)]
-                    self.c_rho[grad_rho.shape] = grad_rho
                 if self.bdf is int(2):
                     rho_lastlast = self.densityModel.ebqe[('u_lastlast',0)]
                     self.c_rho_lastlast[rho_lastlast.shape] = rho_lastlast
+                if self.useStabilityTerms:
+                    grad_rho = self.densityModel.ebqe[('grad(u)',0)]
+                    self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebq_global:
                 rho = self.densityModel.ebq_global[('u',0)]
                 self.c_rho[rho.shape] = rho
                 rho_last = self.densityModel.ebq_global[('u_last',0)]
                 self.c_rho_last[rho_last.shape] = rho_last
-                if self.useStabilityTerms:
-                    grad_rho = self.densityModel.ebq_global[('grad(u)',0)]
-                    self.c_rho[grad_rho.shape] = grad_rho
                 if self.bdf is int(2):
                     rho_lastlast = self.densityModel.ebq_global[('u_lastlast',0)]
                     self.c_rho_lastlast[rho_lastlast.shape] = rho_lastlast
+                if self.useStabilityTerms:
+                    grad_rho = self.densityModel.ebq_global[('grad(u)',0)]
+                    self.c_rho[grad_rho.shape] = grad_rho
         if (self.pressureIncrementModelIndex >= 0 and self.pressureIncrementGradFunction is None):
             assert self.pressureIncrementModelIndex < len(modelList), \
                 "pressure increment model index out of range 0," + repr(len(modelList))
@@ -793,6 +792,11 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         #     cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
         #     cebq_global[('u_last',ci)] = deepcopy(cebq_global[('u',ci)])
         #     cebq_global[('grad(u)_last',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
+        #     if self.bdf is int(2):
+        #         cebq[('u_lastlast',ci)] = deepcopy(cebq[('u',ci)])
+        #         cebq[('grad(u)_lastlast',ci)] = deepcopy(cebq[('grad(u)',ci)])
+        #         cebq_global[('u_lastlast',ci)] = deepcopy(cebq_global[('u',ci)])
+        #         cebq_global[('grad(u)_lastlast',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
         pass
     def initializeGlobalExteriorElementBoundaryQuadrature(self,t,cebqe):
         """
@@ -1178,12 +1182,16 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         Give the TC object access to the element boundary quadrature storage
         """
-        # if self.bdf is int(2):
-        #     for ci in range(self.nc):
-        #         cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
-        #         cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
-        #         cebq_global[('u_last',ci)] = deepcopy(cebq_global[('u',ci)])
-        #         cebq_global[('grad(u)_last',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
+        # for ci in range(self.nc):
+        #     cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
+        #     cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
+        #     cebq_global[('u_last',ci)] = deepcopy(cebq_global[('u',ci)])
+        #     cebq_global[('grad(u)_last',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
+        #     if self.bdf is int(2):
+        #         cebq[('u_lastlast',ci)] = deepcopy(cebq[('u',ci)])
+        #         cebq[('grad(u)_lastlast',ci)] = deepcopy(cebq[('grad(u)',ci)])
+        #         cebq_global[('u_lastlast',ci)] = deepcopy(cebq_global[('u',ci)])
+        #         cebq_global[('grad(u)_lastlast',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
         pass
     def initializeGlobalExteriorElementBoundaryQuadrature(self,t,cebqe):
         """
