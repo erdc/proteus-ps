@@ -40,6 +40,12 @@ def getDBC_rho(x,flag):
 def getNone(x,flag):
     return None
 
+def getAFlux(x,flag):
+    if flag == 0: # artificial interior boundary for parallel
+        return lambda x,t: 0.0
+    else:
+        return None
+
 class getIBC_rho:
     def __init__(self):
         self.rhotrue=ctx.rhotrue
@@ -51,6 +57,6 @@ initialConditions = {0:getIBC_rho()}
 
 dirichletConditions = {0:getDBC_rho}
 
-advectiveFluxBoundaryConditions = {0:getNone}
+advectiveFluxBoundaryConditions = {0:getAFlux}
 
 fluxBoundaryConditions = {0:'outFlow'} #this only has an effect when numericalFlux is not used
