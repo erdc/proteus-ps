@@ -282,13 +282,15 @@ if args.usePlots:
     ax_L2.set_xlabel('Time')
     ax_L2.set_ylabel(r'$e_h(t)$')
     ax_L2.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    fig_L2.savefig('%sTimeSeriesErrorL2.png' %args.type, bbox_inches='tight')
+    output_name = '%sErrorL2.png' %args.type
+    fig_L2.savefig(output_name, bbox_inches='tight')
     plt.close(fig_L2)
     if args.useH1Norm:
         ax_H1.set_xlabel('Time')
         ax_H1.set_ylabel(r'$e_h(t)$')
         ax_H1.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        fig_H1.savefig('%sTimeSeriesErrorH1.png', bbox_inches='tight')
+        output_name = '%sErrorH1.png' %args.type
+        fig_H1.savefig(output_name, bbox_inches='tight')
         plt.close(fig_H1)
 
 
