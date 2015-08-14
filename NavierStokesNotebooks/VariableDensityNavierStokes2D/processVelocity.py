@@ -153,12 +153,12 @@ if num_filenames > 1:
     for i in range(num_filenames):
         print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
                                                     vel_maxL2Norm[i],rate_vel_maxL2Norm[i],\
-                                                    vel_ell2H1Norm[i],rate_vel_ell2H1Norm[i])
+                                                    vel_ell2L2Norm[i],rate_vel_ell2L2Norm[i])
     print "\nnumTS   vel_maxH1   rate    vel_l2H1    rate"
     for i in range(num_filenames):
         print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
-                vel_ell2L2Norm[i],rate_vel_ell2L2Norm[i],\
-                vel_maxH1Norm[i],rate_vel_maxH1Norm[i])
+                vel_max2H1Norm[i],rate_vel_maxH1Norm[i],\
+                vel_ell2H1Norm[i],rate_vel_ell2H1Norm[i])
 
 
 
@@ -182,9 +182,9 @@ if num_filenames > 1:
     for i in range(num_filenames):
         print "%1.3e   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
                                                     vel_maxL2Norm[i],rate_vel_maxL2Norm[i],\
-                                                    vel_ell2H1Norm[i],rate_vel_ell2H1Norm[i])
+                                                    vel_ell2L2Norm[i],rate_vel_ell2L2Norm[i])
     print "\nmax dt      vel_maxH1   rate    vel_l2H1    rate"
     for i in range(num_filenames):
         print "%1.3e   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
-                vel_ell2L2Norm[i],rate_vel_ell2L2Norm[i],\
-                vel_maxH1Norm[i],rate_vel_maxH1Norm[i])
+                vel_maxL2Norm[i],rate_vel_maxL2Norm[i],\
+                vel_ell2H1Norm[i],rate_vel_ell2H1Norm[i])
