@@ -13,23 +13,36 @@ parser.add_argument('-np','--num_proc', dest='num_proc',
                     action='store',  default=1,
                     type=int, choices=range(1, 17),
                     required=False, metavar='NUM_PROC',
-                    help="""specify the number of processors which saved the data in results/*_p.db format and need to be analyzed. (default: 1)"""  )
+                    help="""specify the number of processors which saved the """
+                    """data in results/*_p.db format and need to be analyzed. """
+                    """If np>1 then use the -s option to input filenames"""  )
 
 parser.add_argument('-s','--short_name_string', dest='short_names', default=None, # type = string is default
                     action='append', required=False, metavar='SHORT_NAMES',
-                    help="""Give the shortened names for multiple processor files, mainly the base name ex results/velocity_BDF2_dt_0_100000  which is short for in the first processor, results/velocity_BDF2_dt_0_100000_0.db.  Then use -np option to tell it how many to expect of that form""")
+                    help="""Give the shortened names for multiple processor """
+                    """files, mainly the base name ex: results/velocity_BDF2_dt_0_100000 """
+                    """ which is short for results/velocity_BDF2_dt_0_100000_p.db"""
+                    """ for the pth processor file.  Use the -np option to tell """
+                    """it how many files (num processors) to expect of that form""")
 
 parser.add_argument('-p','--plot', dest='usePlots',
                     action='store_true', default=False,
-                    help='turn on plotting of error time series')
+                    help='Turn on plotting of error time series')
 
-parser.add_argument('-H1','--useH1Norm', dest='useH1Norm',
+parser.add_argument('-H1','--H1Norm', dest='useH1Norm',
                     action='store_true', default=False,
                     help='Include calculations using H1 norms if available')
 
+parser.add_argument('-a','--adaptiveTimeStep', dest='useAdaptiveTimeStepCalculation',
+                    action='store_true', default=False,
+                    help="""Calculate results using num time steps instead of dt."""
+                    """This is for error analysis with adaptive time stepping."""
+                    """It is consistent with the uniform time stepping calculation"""
+                    """ and so can be used in any case.""")
+
 parser.add_argument('-t','--type', dest='type', default='variable',
                     choices=['velocity','pressure','density','variable'],
-                    required=False, help="""Give variable indicator name for string outputting.""")
+                    required=False, help="""Give variable name for output labels.""")
 
 parser.add_argument('file_names', nargs=argparse.REMAINDER,
                     help="""If output is from a single processor, you can still list the files in order at the end without flags and it will pick them up and analyze them""")
@@ -296,57 +309,63 @@ if args.usePlots:
 
 # calculate rates of convergence and make a table
 if num_filenames > 1:
-
-    rate_maxL2Norm = [0]*num_filenames
-    rate_ell2L2Norm = [0]*num_filenames
-    if args.useH1Norm:
-        rate_maxH1Norm = [0]*num_filenames
-        rate_ell2H1Norm = [0]*num_filenames
-
-    for i in range(1,num_filenames):
-        rate_maxL2Norm[i] = -np.log(maxL2Norm[i]/maxL2Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
-        rate_ell2L2Norm[i] = -np.log(ell2L2Norm[i]/ell2L2Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
+    if args.useAdaptiveTimeStepCalculation:
+        # In the case of adaptive time steps, we cannot use a single dt, so we use the
+        # relationship in uniform time step case (dt ~ T/N)  where N is the number
+        # of time steps and T is a constant final time.  So the two calculations
+        #  rate = log(e_n/e_{n-1})/log(dt_n/dt_{n-1})
+        #       = -log(e_n/e_{n-1})/log(N_n/N_{n-1})
+        # are consistent in uniform case and the second generalizes to adaptive
+        # time steps.
+        rate_maxL2Norm = [0]*num_filenames
+        rate_ell2L2Norm = [0]*num_filenames
         if args.useH1Norm:
-            rate_maxH1Norm[i] = -np.log(maxH1Norm[i]/maxH1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
-            rate_ell2H1Norm[i] = -np.log(ell2H1Norm[i]/ell2H1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
+            rate_maxH1Norm = [0]*num_filenames
+            rate_ell2H1Norm = [0]*num_filenames
 
-    print "\nnumTS   %s_maxL2   rate    %s_l2L2    rate" %(short_type, short_type)
-    for i in range(num_filenames):
-        print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
-                                                    maxL2Norm[i],rate_maxL2Norm[i],\
-                                                    ell2L2Norm[i],rate_ell2L2Norm[i])
+        for i in range(1,num_filenames):
+            rate_maxL2Norm[i] = -np.log(maxL2Norm[i]/maxL2Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
+            rate_ell2L2Norm[i] = -np.log(ell2L2Norm[i]/ell2L2Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
+            if args.useH1Norm:
+                rate_maxH1Norm[i] = -np.log(maxH1Norm[i]/maxH1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
+                rate_ell2H1Norm[i] = -np.log(ell2H1Norm[i]/ell2H1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
 
-    if args.useH1Norm:
-        print "\nnumTS   %s_maxH1   rate    %s_l2H1    rate" %(short_type, short_type)
+        print "\nnumTS   %s_maxL2   rate    %s_l2L2    rate" %(short_type, short_type)
         for i in range(num_filenames):
             print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
-                                                        maxH1Norm[i],rate_maxH1Norm[i],\
-                                                        ell2H1Norm[i],rate_ell2H1Norm[i])
+                                                        maxL2Norm[i],rate_maxL2Norm[i],\
+                                                        ell2L2Norm[i],rate_ell2L2Norm[i])
 
-# calculate rates of convergence and make a table
-if num_filenames > 1:
-    rate_maxL2Norm = [0]*num_filenames
-    rate_ell2L2Norm = [0]*num_filenames
-    if args.useH1Norm:
-        rate_maxH1Norm = [0]*num_filenames
-        rate_ell2H1Norm = [0]*num_filenames
-
-    for i in range(1,num_filenames):
-        rate_maxL2Norm[i] = np.log(maxL2Norm[i]/maxL2Norm[i-1])/np.log(float(dt[i])/dt[i-1])
-        rate_ell2L2Norm[i] = np.log(ell2L2Norm[i]/ell2L2Norm[i-1])/np.log(float(dt[i])/dt[i-1])
         if args.useH1Norm:
-            rate_maxH1Norm[i] = -np.log(maxH1Norm[i]/maxH1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
-            rate_ell2H1Norm[i] = -np.log(ell2H1Norm[i]/ell2H1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
+            print "\nnumTS   %s_maxH1   rate    %s_l2H1    rate" %(short_type, short_type)
+            for i in range(num_filenames):
+                print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
+                                                            maxH1Norm[i],rate_maxH1Norm[i],\
+                                                            ell2H1Norm[i],rate_ell2H1Norm[i])
+    else:
+        # use standard error analysis calculation with dt = max time step
+        rate_maxL2Norm = [0]*num_filenames
+        rate_ell2L2Norm = [0]*num_filenames
+        if args.useH1Norm:
+            rate_maxH1Norm = [0]*num_filenames
+            rate_ell2H1Norm = [0]*num_filenames
 
-    print "\nmax dt      %s_maxL2   rate    %s_l2L2    rate" %(short_type, short_type)
-    for i in range(num_filenames):
-        print "%1.3e   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
-                                                    maxL2Norm[i],rate_maxL2Norm[i],\
-                                                    ell2L2Norm[i],rate_ell2L2Norm[i])
+        for i in range(1,num_filenames):
+            rate_maxL2Norm[i] = np.log(maxL2Norm[i]/maxL2Norm[i-1])/np.log(float(dt[i])/dt[i-1])
+            rate_ell2L2Norm[i] = np.log(ell2L2Norm[i]/ell2L2Norm[i-1])/np.log(float(dt[i])/dt[i-1])
+            if args.useH1Norm:
+                rate_maxH1Norm[i] = -np.log(maxH1Norm[i]/maxH1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
+                rate_ell2H1Norm[i] = -np.log(ell2H1Norm[i]/ell2H1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
 
-    if args.useH1Norm:
-        print "\nmax dt      %s_maxH1   rate    %s_l2H1    rate" %(short_type, short_type)
+        print "\nmax dt      %s_maxL2   rate    %s_l2L2    rate" %(short_type, short_type)
         for i in range(num_filenames):
             print "%1.3e   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
-                                                        maxH1Norm[i],rate_maxH1Norm[i],\
-                                                        ell2H1Norm[i],rate_ell2H1Norm[i])
+                                                        maxL2Norm[i],rate_maxL2Norm[i],\
+                                                        ell2L2Norm[i],rate_ell2L2Norm[i])
+
+        if args.useH1Norm:
+            print "\nmax dt      %s_maxH1   rate    %s_l2H1    rate" %(short_type, short_type)
+            for i in range(num_filenames):
+                print "%1.3e   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
+                                                            maxH1Norm[i],rate_maxH1Norm[i],\
+                                                            ell2H1Norm[i],rate_ell2H1Norm[i])
