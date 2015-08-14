@@ -11,19 +11,19 @@ parser = argparse.ArgumentParser(description='Process some error database files.
 
 parser.add_argument('-np','--num_proc', dest='num_proc',
                     action='store',  default=1,
-                    type=int, choices=range(1, 17),
-                    required=False, metavar='NUM_PROC',
-                    help="""specify the number of processors which saved the """
+                    type=int, required=False,
+                    help="""Specify the number of processors which saved the """
                     """data in results/*_p.db format and need to be analyzed. """
                     """If np>1 then use the -s option to input filenames"""  )
 
-parser.add_argument('-s','--short_name_string', dest='short_names', default=None, # type = string is default
-                    action='append', required=False, metavar='SHORT_NAMES',
+parser.add_argument('-s','--short_name_string', dest='short_names', default=None,
+                    action='append', required=False,
                     help="""Give the shortened names for multiple processor """
                     """files, mainly the base name ex: results/velocity_BDF2_dt_0_100000 """
                     """ which is short for results/velocity_BDF2_dt_0_100000_p.db"""
                     """ for the pth processor file.  Use the -np option to tell """
-                    """it how many files (num processors) to expect of that form""")
+                    """it how many files (num processors) to expect of that form.  """
+                    """Place a -s in front of each basefile name provided.""")
 
 parser.add_argument('-p','--plot', dest='usePlots',
                     action='store_true', default=False,
@@ -42,10 +42,15 @@ parser.add_argument('-a','--adaptiveTimeStep', dest='useAdaptiveTimeStepCalculat
 
 parser.add_argument('-t','--type', dest='type', default='variable',
                     choices=['velocity','pressure','density','variable'],
-                    required=False, help="""Give variable name for output labels.""")
+                    required=False, help="""Provide variable name for output labels."""
+                    """  Thus if '-t pressure' is given, then the program knows """
+                    """that it is calculating things for pressure and will label"""
+                    """ accordingly.""")
 
 parser.add_argument('file_names', nargs=argparse.REMAINDER,
-                    help="""If output is from a single processor, you can still list the files in order at the end without flags and it will pick them up and analyze them""")
+                    help="""If output is from a single processor, you can still"""
+                    """ list the files in order at the end without flags and it """
+                    """will pick them up and analyze them.""")
 
 args = parser.parse_args()
 
