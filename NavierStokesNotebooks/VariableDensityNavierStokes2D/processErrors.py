@@ -12,9 +12,9 @@ parser = argparse.ArgumentParser(description='Process some error database files.
 parser.add_argument('-np','--num_proc', dest='num_proc',
                     action='store',  default=1,
                     type=int, required=False,
-                    help="""Specify the number of processors which saved the """
+                    help="""Specify the number of processors which produced the """
                     """data in results/*_p.db format and need to be analyzed. """
-                    """If np>1 then use the -s option to input filenames"""  )
+                    """If np>1 then use the -s option to input filenames."""  )
 
 parser.add_argument('-s','--short_name_string', dest='short_names', default=None,
                     action='append', required=False,
