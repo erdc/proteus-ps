@@ -175,7 +175,7 @@ For the second order (BDF2) adaptive time stepping, we define the ratio
   r:=\tau^{k+1}/\tau^{k}
 \end{equation}
 then let $\beta_0 = \frac{1+2r}{(1+r)}$, $\beta_1 = 1+r$, $\beta_2 = -\frac{r^2}{(1+r)}$ giving
-\begin{equation}  
+\begin{equation} \label{eq:bdf2withvariabletimestep} 
   D_{\tau,2} f^{k+1} = \frac{1+2r}{(1+r)\tau^{k+1}}f^{k+1} - \frac{1+r}{\tau^{k+1}}f^{k} + \frac{r^2}{(1+r)\tau^{k+1}}f^{k-1}.
 \end{equation}
 It is a simple calculation to show that this adaptive algorithm reduces to the uniform version above with uniform time steps, ie $r=1$.  There are higher order BDF formulae, but we will not use them here.
@@ -211,60 +211,60 @@ in the following manner:
     \frac{\rho}{\tau}\left(\ut^{k+1} - \ub^{k} \right) - \mu \Delta \ut^{k+1} = \rho\fb^{k+1},  \hspace{2mm} \left.\ut^{k+1}\right|_{\partial\Lambda} = 0.
   \end{equation}
   
-  \item[Step 2] Projection:  Find $\ub^{k+1}, \phi^{k+1}$ that satisfy
+  \item[Step 2] Projection:  Find $\ub^{k+1}, \psi^{k+1}$ that satisfy
   \begin{equation}
     \begin{cases}
-    \frac{\rho}{\tau}\left(\ub^{k+1} - \ut^{k+1} \right) + \nabla \phi^{k+1} = 0 \\
+    \frac{\rho}{\tau}\left(\ub^{k+1} - \ut^{k+1} \right) + \nabla \psi^{k+1} = 0 \\
     \nabla\cdot \ub^{k+1} = 0, \hspace{2mm} \left.\ub^{k+1}\cdot\n \right|_{\partial\Lambda} = 0
     \end{cases}
   \end{equation}
   
   \item[Step 3] Pressure Correction: Find $p^{k+1}$ that satisfies
   \begin{equation}
-    p^{k+1} = \phi^{k+1}
+    p^{k+1} = \psi^{k+1}
   \end{equation} 
 \end{description}
 
-Notice that the second step is precisely the Helmholtz decomposition of $\ut^{k+1} = \ub^{k+1} + \nabla(\frac{\tau}{\rho} \phi^{k+1})$ with $\ub^{k+1}\in H$ and $\frac{\tau}{\rho}\phi^{k+1}\in H^1(\Lambda)$.  Thus $\ub^{k+1} = P_{H}\ut^{k+1}$ is the projection of our velocity $\ut^{k+1}$ onto the divergence free subspace $H$.
+Notice that the second step is precisely the Helmholtz decomposition of $\ut^{k+1} = \ub^{k+1} + \nabla(\frac{\tau}{\rho} \psi^{k+1})$ with $\ub^{k+1}\in H$ and $\frac{\tau}{\rho}\psi^{k+1}\in H^1(\Lambda)$.  Thus $\ub^{k+1} = P_{H}\ut^{k+1}$ is the projection of our velocity $\ut^{k+1}$ onto the divergence free subspace $H$.
 
-In practice, the method of solving this system is to algebraically eliminate the divergence free velocity $\ub^{k+1}$ and then solve the system for $(\ut^{k+1},\phi^{k+1}, p^{k+1})$.  The second step becomes find $\phi^{k+1}$ such that
+In practice, the method of solving this system is to algebraically eliminate the divergence free velocity $\ub^{k+1}$ and then solve the system for $(\ut^{k+1},\psi^{k+1}, p^{k+1})$.  The second step becomes find $\psi^{k+1}$ such that
 \begin{equation}
-  -\Delta\phi^{k+1} = -\frac{\tau}{\rho} \nabla\cdot \ut^{k+1}, \hspace{2mm} \left.\frac{\partial \phi^{k+1}}{\partial\n}\right|_{\partial\Lambda} = 0
+  -\Delta\psi^{k+1} = -\frac{\tau}{\rho} \nabla\cdot \ut^{k+1}, \hspace{2mm} \left.\frac{\partial \psi^{k+1}}{\partial\n}\right|_{\partial\Lambda} = 0
 \end{equation}
-for which there are many fast Poisson solvers available. If desired, the divergence free velocity can then be backed out $\ub^{k+1} = \ut^{k+1} -\frac{\tau}{\rho} \nabla\phi^{k+1}$.
+for which there are many fast Poisson solvers available. If desired, the divergence free velocity can then be backed out $\ub^{k+1} = \ut^{k+1} -\frac{\tau}{\rho} \nabla\psi^{k+1}$.
 
 
 %
 %
 %
 \section{Penalty-like Perturbation of Continuous Equations}
-The standard approach to creating splittings has been to think about the splitting operator as a projection scheme where we have the two sequences of velocities $\{\ub^{k}\}$ and $\{\ut^{k}\}$ and the pressure increment $\{\phi^{k}\}$ that represent the Helmholtz decomposition of $L^{2}$ velocity fields into divergence free and curl free components
+The standard approach to creating splittings has been to think about the splitting operator as a projection scheme where we have the two sequences of velocities $\{\ub^{k}\}$ and $\{\ut^{k}\}$ and the pressure increment $\{\psi^{k}\}$ that represent the Helmholtz decomposition of $L^{2}$ velocity fields into divergence free and curl free components
 \begin{equation}\label{eqn:helmholtzdecompositionprojection}
-  \ut^{k} = \ub^{k} + \frac{\tau}{\rho}\nabla \phi^{k}.
+  \ut^{k} = \ub^{k} + \frac{\tau}{\rho}\nabla \psi^{k}.
 \end{equation}
  However, the method of solving this system is to apply the divergence operator to both sides and use the fact that $\nabla\cdot \ub^k = 0$ to algebraically eliminate $\ub^k$ from the system.  However when we applied the divergence operator to equation~(\ref{eqn:helmholtzdecompositionprojection}), we pulled the density through the divergence operator.   When density is variable, this is no longer possible.  The literature is full of methods to try to solve the resulting non-constantcoefficient problem that results from implementing this projection scheme with variable density,
 \begin{equation}
-  -\nabla\cdot\left(\frac{1}{\rho^{k+1}} \nabla\phi \right) = -\tau\nabla\cdot \ub^{k+1},  \hspace{1cm} \left.\partial_n \phi\right|_{\partial\Lambda} = 0.
+  -\nabla\cdot\left(\frac{1}{\rho^{k+1}} \nabla\psi \right) = -\tau\nabla\cdot \ub^{k+1},  \hspace{1cm} \left.\partial_n \psi\right|_{\partial\Lambda} = 0.
 \end{equation}  
 This can be badly conditioned and rather more difficult to assemble and solve than the constant coefficient version.  In this form, it is also clear to see why later on we will require uniform lower bounds on our approximation of the density $\rho^{k+1}$.
 
 An alternative approach is to look at the constant density projection scheme in terms of an $\epsilon$ perturbation of the original system. Thus the formerly stated projection part becomes a penalty-like adjustment that is easily generalized to the variable density framework.  The incremental pressure correction algorithm, an improvement on the original Chorin/Temam algorithm for constant density, can be expressed solely in terms of the non divergence free velocity $\ut^{k}$ and pressure $p^{k}$ in the form
 \begin{equation}
   \begin{cases}
-    \rho\left(\frac{\ut^{k+1} - \ut^{k}}{\tau} + \ut^{k}\cdot\nabla\ut^{k+1} \right) - \mu\Delta\ut^{k+1} + \nabla\left(p^{k} + \phi^{k}  \right) = \fb^{k+1}, & \left.\ut^{k}\right|_{\partial\Lambda} = 0\\
-    \nabla\cdot\ut^{k+1} - \frac{\tau}{\rho}\Delta\phi^{n+1}=0, &\left.\partial_\n \phi\right|_{\partial\Lambda} = 0\\
-    p^{k+1} = p^{k} + \phi^{k+1}
+    \rho\left(\frac{\ut^{k+1} - \ut^{k}}{\tau} + \ut^{k}\cdot\nabla\ut^{k+1} \right) - \mu\Delta\ut^{k+1} + \nabla\left(p^{k} + \psi^{k}  \right) = \fb^{k+1}, & \left.\ut^{k}\right|_{\partial\Lambda} = 0\\
+    \nabla\cdot\ut^{k+1} - \frac{\tau}{\rho}\Delta\psi^{n+1}=0, &\left.\partial_\n \psi\right|_{\partial\Lambda} = 0\\
+    p^{k+1} = p^{k} + \psi^{k+1}
   \end{cases}
 \end{equation}
 This can be seen as a discrete version of the following system   
 \begin{equation}\label{eqn:discreteperturbation}
   \begin{cases}
     \rho\left(\ub_t + \ub\cdot\nabla\ub  \right) + \nabla p -\mu\Delta\ub = \fb, & \left.\ub\right|_{\partial\Lambda} = 0\\
-    \nabla\cdot\ub - \frac{\veps}{\rho}\Delta \phi = 0,& \left.\partial_\n \phi\right|_{\partial\Lambda} = 0\\
-    \veps p_t = \phi
+    \nabla\cdot\ub - \frac{\veps}{\rho}\Delta \psi = 0,& \left.\partial_\n \psi\right|_{\partial\Lambda} = 0\\
+    \veps p_t = \psi
   \end{cases}
 \end{equation}
-where we have replaced difference quotients with time derivatives and substituted $\veps = \tau$ for the remaining $\tau$'s and recognized $p^{k} + \phi^{k} = p^{k} + \left( p^{k} - p^{k-1} \right) = 2p^{k} - p^{k-1} \approx p^{k+1}$ as a second order extrapolation of pressure to time $t^{k+1}$.
+where we have replaced difference quotients with time derivatives and substituted $\veps = \tau$ for the remaining $\tau$'s and recognized $p^{k} + \psi^{k} = p^{k} + \left( p^{k} - p^{k-1} \right) = 2p^{k} - p^{k-1} \approx p^{k+1}$ as a second order extrapolation of pressure to time $t^{k+1}$.
 
 This is a second order $\mathcal{O}(\veps^2)$ perturbation of the constant density incompressible Navier-Stokes equations.  Simpler versions of this discrete system were observed by Rannacher in \cite{rannacher1992chorin} to be nothing more than penalties on the divergence of velocity in the momentum equation in a norm resembling the $H^{-1}$ norm.  Hence the term penalty-like algorithms.  As described in \cite{guermond2009splitting}, the system~$\left(\ref{eqn:discreteperturbation}\right)$ is the starting point for the algorithms described below.
 
@@ -277,7 +277,7 @@ This is a second order $\mathcal{O}(\veps^2)$ perturbation of the constant densi
 %
 %
 \section{Penalty-Like Time-Splitting Algorithms for Variable Density}\label{sec:variabledensityAlgorithm}
-\textbf{(Note rewrite this first paragraph to be more clear.)} The key to making the jump from the constant density schemes to the below defined variable density schemes is to think of the system of equations~$\left(\ref{eqn:discreteperturbation}\right)$ not as a projection scheme but as a penalty scheme with the penalty being applied on the divergence of velocity.  Then the pressure increment equation (the second one) can be easily modified to accommodate the variable density since instead of using the varying density in the second equation, we replace it with the constant $\veps = \chi \leq \min_{\x\in\overline{\Lambda}}\rho_0(\x)$ as in equation~$\left(\ref{eqn:pressureincrementlaplacian}\right)$.  This prevents us from having to solve a variable coefficient laplacian equation at each time step and instead we can solve a constant coefficient laplacian equation for the pressure increment $\phi$.  Once we have taken care of that equation, we proceed with all the standard approaches to discretizing the other momentum equations.  In particular, we will use a semi-implicit convection term $\ub^{k}\cdot\nabla\ub^{k+1}$ to remove the nonlinearity.  The rotational part of the scheme will modify the update of pressure with an extra term consisting of a penalty for divergence of velocity as seen in equation~$\left(\ref{eqn:rotationalpressureupdate}\right)$.  
+\textbf{(Note rewrite this first paragraph to be more clear.)} The key to making the jump from the constant density schemes to the below defined variable density schemes is to think of the system of equations~$\left(\ref{eqn:discreteperturbation}\right)$ not as a projection scheme but as a penalty scheme with the penalty being applied on the divergence of velocity.  Then the pressure increment equation (the second one) can be easily modified to accommodate the variable density since instead of using the varying density in the second equation, we replace it with the constant $\veps = \chi \leq \min_{\x\in\overline{\Lambda}}\rho_0(\x)$ as in equation~$\left(\ref{eqn:pressureincrementlaplacian}\right)$.  This prevents us from having to solve a variable coefficient laplacian equation at each time step and instead we can solve a constant coefficient laplacian equation for the pressure increment $\psi$.  Once we have taken care of that equation, we proceed with all the standard approaches to discretizing the other momentum equations.  In particular, we will use a semi-implicit convection term $\ub^{k}\cdot\nabla\ub^{k+1}$ to remove the nonlinearity.  The rotational part of the scheme will modify the update of pressure with an extra term consisting of a penalty for divergence of velocity as seen in equation~$\left(\ref{eqn:rotationalpressureupdate}\right)$.  
 
 The velocity described below is not explicitly enforced to be divergence free.  The penalty terms will push it in the right direction but we cannot guarantee that it will even be numerically divergence free, meaning that 
 \begin{equation}
@@ -349,31 +349,31 @@ We note that Equation~(\ref{eqn:bdf1_momentum_constanttimestep}) can be rewritte
 For the second order algorithm, there are two options for pressure update, the so called \textbf{standard form} and the \textbf{rotational form} which differ only in an additional term being added to the pressure update.  For the first order algorithm, we could likewise implement a rotational form but it does not improve our convergence rates so here we will only give the standard algorithm.  The second order description in Section~\ref{sec:bdf2pressureupdate} will go into more details on these two approaches.
 \end{remark}
 
-Now that we have $\rho_h^{k+1}$ and $\ub_h^{k+1}$, we solve for the pressure increment $\phi_h^{\flat}\in M_h^0$ which then allows us to solve for the pressure $p_h^{k+1}\in M_h$.  
-Recalling that $\chi \leq \displaystyle\min_{\x\in\overline{\Lambda}} \rho_h^{k+1}(\x)$ (note that we will often choose it to be the minimum), we let $\phi_h^{\flat}\in M^0_h$ be the weak solution of
+Now that we have $\rho_h^{k+1}$ and $\ub_h^{k+1}$, we solve for the pressure increment $\psi_h^{\flat}\in M_h^0$ which then allows us to solve for the pressure $p_h^{k+1}\in M_h$.  
+Recalling that $\chi \leq \displaystyle\min_{\x\in\overline{\Lambda}} \rho_h^{k+1}(\x)$ (note that we will often choose it to be the minimum), we let $\psi_h^{\flat}\in M^0_h$ be the weak solution of
 \begin{equation}\label{eqn:pressureincrementlaplacian}
-  \Delta \phi^{\flat} = \frac{\chi}{\tau}\nabla\cdot \ub^{k+1}, \hspace{1cm} \left.\partial_\n\phi^{\flat}\right|_{\partial\Lambda} = 0
+  \Delta \psi^{\flat} = \frac{\chi}{\tau}\nabla\cdot \ub^{k+1}, \hspace{1cm} \left.\partial_\n\psi^{\flat}\right|_{\partial\Lambda} = 0
 \end{equation}
-with $\int_{\Lambda} \phi^{\flat} d\x = 0$.  That is, find $\phi_h^{\flat}\in M_h^0$ (functions with mean zero) such that
+with $\int_{\Lambda} \psi^{\flat} d\x = 0$.  That is, find $\psi_h^{\flat}\in M_h^0$ (functions with mean zero) such that
 \begin{equation}
-  \dprod{\nabla\phi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}
+  \dprod{\nabla\psi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}
 \end{equation}
 for all $r_h \in M_h$.  If we don't build the mean zero property into the finite element space, then equation~(\ref{eqn:pressureincrementlaplacian}) is an under determined system.  It is often quite difficult to obtain basis functions with mean zero, so a common approach to solving the system with this setup is to fix the value at one degree of freedom, solve the system, calculate the mean and subtract it off of the solution.  Thereby we move the solution into the zero mean subset $M_h^0\subset M_h$. 
 
- Once we have the pressure correction term, $\phi^{\flat}_h\in M_h^0$, we update the pressure as
+ Once we have the pressure correction term, $\psi^{\flat}_h\in M_h^0$, we update the pressure as
 \begin{equation}\label{eqn:rotationalpressureupdate}
-  p^{k+1} = \phi^{\flat} + p^{k}
+  p^{k+1} = \psi^{\flat} + p^{k}
 \end{equation}
 which can be done by simple addition instead of solving the projection scheme 
 \begin{equation}
-  \dprod{p_h^{k+1}}{r_h} = \dprod{\phi_h^{\flat} + p_h^{k}}{r_h}.
+  \dprod{p_h^{k+1}}{r_h} = \dprod{\psi_h^{\flat} + p_h^{k}}{r_h}.
 \end{equation}
 
 % or in other words, we solve for $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h$
 % \begin{equation}
-%   \dprod{p_h^{k+1}}{r_h} = \dprod{\phi_h^{\flat} + p_h^{k}}{r_h} + \mu\dprod{\ub_h^{k+1}}{\nabla r_h}.
+%   \dprod{p_h^{k+1}}{r_h} = \dprod{\psi_h^{\flat} + p_h^{k}}{r_h} + \mu\dprod{\ub_h^{k+1}}{\nabla r_h}.
 % \end{equation}
-% The last term involving the divergence of velocity makes this the \textbf{rotational form} and leaving it off is the \textbf{standard form}.  In standard form, it is simple enough to just add $p_h^{k+1}$ and $\phi_h^{\flat}$ to update $p_h^{k+1}$ instead of solving the linear system.
+% The last term involving the divergence of velocity makes this the \textbf{rotational form} and leaving it off is the \textbf{standard form}.  In standard form, it is simple enough to just add $p_h^{k+1}$ and $\psi_h^{\flat}$ to update $p_h^{k+1}$ instead of solving the linear system.
 %
 
 %
@@ -388,7 +388,7 @@ Given $(\rho^{k}, \ub^{k}, p^{k})\in W_h\times \X_h\times M_h$ where the spaces 
 using a monotone preserving hyperbolic transport method.  
 
 \item[Step 2] Viscous Prediction: Set 
-\begin{equation}
+\begin{equation}\label{eq:pressureextrapolation_uniformtimestep}
   p^{\sharp} = 2p_h^{k} - p_h^{k-1}
 \end{equation}
 and find $\ub^{k+1}_h\in\X_h$ such that for all $\vb_h\in\X_h$,
@@ -399,82 +399,60 @@ and find $\ub^{k+1}_h\in\X_h$ such that for all $\vb_h\in\X_h$,
 \end{split}
 \end{equation}
 
-\item[Step 3] Projection: Find $\phi_h^{\flat}\in M^0_h$ such that for all $r_h\in M_h$,
+\item[Step 3] Projection: Find $\psi_h^{\flat}\in M^0_h$ such that for all $r_h\in M_h$,
 \begin{equation}
-  \dprod{\nabla\phi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}
+  \dprod{\nabla\psi_h^{\flat}}{\nabla r_h} = \frac{\chi}{\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}
 \end{equation}
 where $\chi \leq \displaystyle\min_{\x\in\overline{\Lambda}}\rho_0(\x)$ 
 
 \item[Step 4] Pressure Correction: Update the pressure $p_h^{k+1}\in M_h$, 
 \begin{equation}
-p^{k+1}_h = p^{k}_h + \phi^{\flat}_h.
+p^{k+1}_h = p^{k}_h + \psi^{\flat}_h.
 \end{equation}
 \end{description}
 Thus we have solved for $(\rho_h^{k+1}, \ub_h^{k+1}, p_h^{k+1})$ and can move on to the next time step.
 
+%
+% %
+% %
+% \subsection{Error analysis of BDF1 Constant Time Step Incremental Algorithm}
+% The stability of the above algorithm is proved in \cite{guermond2009splitting} and the error analysis was carried out in \cite{guermond2011error}.  We refer the reader to those articles for details and give the main results contained in Theorem 4.2 of \cite{guermond2011error}.
+%
+% We define the \textbf{Stokes projection}, $\left(\wb_h(t),q_h(t)\right) \in \X_h\times M_h$, of the solution $\left(\ub(t),p(t)\right)$ to (\ref{eqn:variabledensityNavierStokes})-(\ref{eqn:variabledensityNavierStokesBCIC}) to be the pair that solves
+% \begin{equation}
+%   \begin{cases}
+%     \mu\dprod{\nabla\wb_h(t)}{\nabla\vb_h} + \dprod{\nabla q_h(t)}{\vb_h} = \mu\dprod{\nabla \ub(t)}{\nabla\vb_h} - \dprod{p(t)}{\nabla\cdot\vb_h}, & \forall \vb_h \in \X_h\\
+%     \dprod{\wb_h(t)}{\nabla r_h} = 0, & \forall r_h\in M_h
+%   \end{cases}
+% \end{equation}
+%
+% \begin{theorem}
+%   Assume that the true solution to (\ref{eqn:variabledensityNavierStokes}) and (\ref{eqn:variabledensityNavierStokesBCIC}) satisfies (with $l\geq 1$)
+%   \begin{equation}
+%     \ub\in W^{2,\infty}\left(\mathbf{H}_0^1(\Lambda)\cap \mathbf{H}^{\ell+1}(\Lambda)\right), \hspace{1cm} p\in W^{1,\infty}\left(H^{\ell}(\Lambda) \right)
+%   \end{equation}
+%   Let $(\ub_h)_{\tau}$ be the solutions of velocity as described in Subsection~\ref{subsec:BDF1constantTimeSummary}.  Then if one of either
+%   \begin{equation}
+%     \|p_h^0 - q_h^0 \|_{L^2(\Lambda)} \leq c h^{\frac{\ell+1}{2}}
+%   \end{equation}
+%   or
+%   \begin{equation}
+%     \|p_h^0\|_{H^1(\Lambda)} \leq c \hspace{0.5cm} \mbox{and} \hspace{0.5cm} \dprod{\ub_h^0}{\nabla r_h} = 0 \hspace{0.25cm} \forall r_h\in M_h
+%   \end{equation}
+%   is satisfied, then
+%   \begin{equation}
+%     \|\left(\ub - \ub_h\right)_{\tau} \|_{\ell^{\infty}(\mathbf{L}^2(\Lambda))} \leq c\left( \tau + h^{\min(\ell+1,s)} \right)
+%   \end{equation}
+%   and
+%   \begin{equation}
+%     \|\left(\ub - \ub_h\right)_{\tau} \|_{\ell^{2}(\mathbf{H}^1(\Lambda))} \leq c\left( \tau + h^{\min(\ell,s)} \right)
+%   \end{equation}
+% \end{theorem}
+%
+% \begin{remark}
+%   Here $s>0$ is a constant that deals with the coupling between velocity and our solution of density transport.  In particular it depends on the method we use to solve the mass conservation.  The details are described in Section 4.2 of \cite{guermond2011error} (using the symbol $m$ instead of $s$) where they conjecture that one can obtain $s=1$ by approximating the mass conservation with a linear first-order viscosity or first-order level set or phase field approach.  They further conjecture that $s>1$ if one uses a nonlinear stabilization technique like discontinuous Galerkin with limiters or entropy viscosity.
+% \end{remark}
 
-%
-%
-\subsection{Error analysis of BDF1 Constant Time Step Incremental Algorithm}
-The stability of the above algorithm is proved in \cite{guermond2009splitting} and the error analysis was carried out in \cite{guermond2011error}.  We refer the reader to those articles for details and give the main results contained in Theorem 4.2 of \cite{guermond2011error}.
-
-We define the \textbf{Stokes projection}, $\left(\wb_h(t),q_h(t)\right) \in \X_h\times M_h$, of the solution $\left(\ub(t),p(t)\right)$ to (\ref{eqn:variabledensityNavierStokes})-(\ref{eqn:variabledensityNavierStokesBCIC}) to be the pair that solves
-\begin{equation}
-  \begin{cases}
-    \mu\dprod{\nabla\wb_h(t)}{\nabla\vb_h} + \dprod{\nabla q_h(t)}{\vb_h} = \mu\dprod{\nabla \ub(t)}{\nabla\vb_h} - \dprod{p(t)}{\nabla\cdot\vb_h}, & \forall \vb_h \in \X_h\\
-    \dprod{\wb_h(t)}{\nabla r_h} = 0, & \forall r_h\in M_h
-  \end{cases}
-\end{equation}
-
-\begin{theorem}
-  Assume that the true solution to (\ref{eqn:variabledensityNavierStokes}) and (\ref{eqn:variabledensityNavierStokesBCIC}) satisfies (with $l\geq 1$)
-  \begin{equation}
-    \ub\in W^{2,\infty}\left(\mathbf{H}_0^1(\Lambda)\cap \mathbf{H}^{\ell+1}(\Lambda)\right), \hspace{1cm} p\in W^{1,\infty}\left(H^{\ell}(\Lambda) \right)
-  \end{equation}
-  Let $(\ub_h)_{\tau}$ be the solutions of velocity as described in Subsection~\ref{subsec:BDF1constantTimeSummary}.  Then if one of either
-  \begin{equation}
-    \|p_h^0 - q_h^0 \|_{L^2(\Lambda)} \leq c h^{\frac{\ell+1}{2}}
-  \end{equation}
-  or
-  \begin{equation}
-    \|p_h^0\|_{H^1(\Lambda)} \leq c \hspace{0.5cm} \mbox{and} \hspace{0.5cm} \dprod{\ub_h^0}{\nabla r_h} = 0 \hspace{0.25cm} \forall r_h\in M_h
-  \end{equation}
-  is satisfied, then
-  \begin{equation}
-    \|\left(\ub - \ub_h\right)_{\tau} \|_{\ell^{\infty}(\mathbf{L}^2(\Lambda))} \leq c\left( \tau + h^{\min(\ell+1,s)} \right)
-  \end{equation}
-  and
-  \begin{equation}
-    \|\left(\ub - \ub_h\right)_{\tau} \|_{\ell^{2}(\mathbf{H}^1(\Lambda))} \leq c\left( \tau + h^{\min(\ell,s)} \right)
-  \end{equation}
-\end{theorem}
-
-\begin{remark}
-  Here $s>0$ is a constant that deals with the coupling between velocity and our solution of density transport.  In particular it depends on the method we use to solve the mass conservation.  The details are described in Section 4.2 of \cite{guermond2011error} (using the symbol $m$ instead of $s$) where they conjecture that one can obtain $s=1$ by approximating the mass conservation with a linear first-order viscosity or first-order level set or phase field approach.  They further conjecture that $s>1$ if one uses a nonlinear stabilization technique like discontinuous Galerkin with limiters or entropy viscosity.  
-\end{remark}
-
-%
-%
-%
-\section{BDF1 Variable Time Stepping Algorithm}\label{sec:BDF1VariableTimeSteppingAlgorithm}
-In the case of variable time step  $\tau^{k} := t^{k}-t^{k-1}$, there are two changes for BDF1.  The choice of pressure for the momentum equations is augmented to reflect the second order extrapolation in variable time steps:
-\begin{equation}
-  p^{\sharp}_h := p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\delta p_h^{k} = p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^{k} - p_h^{k-1} \right).
-\end{equation}
-Notice that this reduces to the above case when $\tau^{k+1}=\tau^{k} = \tau$.  We also substitute the variable time step
-\begin{equation}
-  \tau =\tau^{k+1}.
-\end{equation}
-Everything else in the algorithm is kept the same as above.
-
-%
-%
-\subsection{CFL Condition For Variable Step BDF1 Algorithm}\label{sec:CFLBDF1}
-The convergence results have not been proved for the case of variable time stepping but it seems reasonable to expect them to still hold under a standard Courant-Friedrich-Levy (CFL) conditions augmented with a maximally allowed time step, ie
-\begin{equation}
-  \tau^{k+1} \leq \min \left\{c \frac{\min_{T\in\mathcal{T}_h}\left(h_{T}/p_T\right)}{\|\ub^{k}\|_{L^{\infty}(\Lambda)}}, \tau^{max}\right\}, \hspace{1cm} c<1, \hspace{0.5cm}\tau^{\max} \mbox{ small enough}.
-\end{equation}
-Here we have used $p_T$ to mean the maximal polynomial degree used on the cell $T$ (typically we will have velocity and density use the same degree of polynomial and pressure with one degree less, so that setting it to velocity degree is sufficient) so that we are consistent with $h$ and $p$ refinement.  This time stepping scheme controls both the conservation of mass equation, since the physical velocity being used is $\ub^{k}$, and the conservation of momentum equations, since we are using the semi-implicit convection term $\ub^{k}\cdot\nabla\ub^{k+1}$ so again the physical velocity is $\ub^{k}$.  It is common in practice to choose the values $c=0.33$ or $c=0.5$.
 
 
 %
@@ -493,11 +471,11 @@ Here we have used $p_T$ to mean the maximal polynomial degree used on the cell $
 
 The above BDF1 schemes are proved in \cite{guermond2011error} to be first order accurate in time for the $\mathbf{L}^2(\Lambda)$ and $\mathbf{H}^1(\Lambda)$ norms of velocity.  However, because we have used a second order extrapolation of pressure
 \begin{equation}
-  p^{\sharp}_h = p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^{k} - p_h^{k-1} \right) \approx p_h^{k+1} + \mathcal{O}\left(\left(\tau^{k+1}\right)^2 \right)
+  p^{\sharp}_h = p_h^{k} + \delta p_h^{k} = 2p^{k}_h-p^{k-1}_h \approx p_h^{k+1} + \mathcal{O}\left(\tau^2 \right)
 \end{equation}
-to split the system of equations, they point out that the splitting error of the algorithm is expected to be second order.  Thus it seems logical to introduce a second order approximation to the time derivative for the velocity equations.  Likewise it might be advantageous to use an second order extrapolation of velocity 
+to split the system of equations, the splitting error of the algorithm is expected to be second order.  Thus it seems logical to introduce a second order approximation to the time derivative for the velocity equations.  Likewise it might be advantageous to use a second order extrapolation of velocity 
 \begin{equation}
-  \ub^{*}_h = \ub_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( \ub_h^{k} - \ub_h^{k-1} \right)
+  \ub^{*}_h = 2\ub_h^{k}  - \ub_h^{k-1}
 \end{equation}
 for the semi-implicit convection term, $\ub_h^{*}\cdot\nabla\ub_h^{n+1}$, again eliminating the nonlinearity and preserving the second order in time approximation.
 
@@ -522,10 +500,10 @@ We define
   \rho_h^{*} := \frac{3}{2}\rho_h^{k+1} - \frac{2}{3}\rho_h^{k} + \frac{1}{6}\rho_h^{k-1} = \rho_h^{k+1} + \frac{1}{6}\left(3\rho_h^{k+1} -4\rho_h^{k} + \rho_h^{k-1} \right)
 \end{equation}
 \begin{equation}
-  p_h^{\sharp} := p_h^{k} + \frac{4}{3}\phi_h^{k} - \frac{1}{3}\phi_h^{k-1}.
+  p_h^{\sharp} := p_h^{k} + \frac{4}{3}\psi_h^{k} - \frac{1}{3}\psi_h^{k-1}.
 \end{equation}
 and the second order extrapolation of velocity
-\begin{equation}
+\begin{equation}\label{eq:velocityextrapolation_uniformtimestep}
   \ub^{*}_h = 2\ub_h^{k}  - \ub_h^{k-1}.
 \end{equation}
 Now compute $\ub_h^{k+1}\in\X_h$ so that for all $\vb_h\in\X_h$,
@@ -538,7 +516,7 @@ Now compute $\ub_h^{k+1}\in\X_h$ so that for all $\vb_h\in\X_h$,
 Notice that we only use $\rho_h^{k+1}$ or $\rho_h^{*}$ in the above equation.
 
 \begin{remark}
-Again, as in the BDF1 case (equation~(\ref{eqn:bdf1morerecognizableform})), we can rearrange terms so that equation~(\ref{eqn:bdf2lessrecognizableform}) is a little more recognizable.  This is done in the general description in Section~\ref{sec:generalalgorithmdescription}.
+Again, as in the BDF1 case (equation~(\ref{eqn:bdf1morerecognizableform})), we can rearrange terms so that equation~(\ref{eqn:bdf2lessrecognizableform}) is a little more recognizable.  This is done in the general description in Section~\ref{sec:generalalgorithm}.
 \end{remark}
 
 \begin{remark}
@@ -558,39 +536,39 @@ where we have used (a) the fact that $\ub_h^{*}$ is a second order in time appro
 %
 %
 \subsection{Penalty Term Update}
-We compute the pressure correction $\phi_h^{k+1}\in M^0_h$ so that for all $r_h\in M_h$,
+We compute the pressure correction $\psi_h^{k+1}\in M^0_h$ so that for all $r_h\in M_h$,
 \begin{equation}
-  \dprod{\nabla\phi_h^{k+1}}{\nabla r_h} = \frac{3\chi}{2\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}.
+  \dprod{\nabla\psi_h^{k+1}}{\nabla r_h} = \frac{3\chi}{2\tau}\dprod{\ub_h^{k+1}}{\nabla r_h}.
 \end{equation}
 
 \begin{remark}
-  A numerical technique for the above system for $\phi_h^{k+1}\in M_h^0$ with zero mean is described in Section~\ref{sec:bdf1pressureupdate}.
+  A numerical technique for the above system for $\psi_h^{k+1}\in M_h^0$ with zero mean is described in Section~\ref{sec:bdf1pressureupdate}.
 \end{remark}
 
 %
 %
 \subsection{Pressure Update}\label{sec:bdf2pressureupdate}
 \begin{remark}
-  There are two options for how to correct the pressure.  The \textbf{standard form} which is simply the update $\p_h^{k+1} = p_h^{k} + \phi_h^{k+1}$, and the \textbf{rotational form} which adds an additional term $\nabla\cdot\left(\mu\ub^{k+1}_h\right)$ to the update.  Using the rotational form increases the accuracy of pressure and the $H^1$ norm of velocity by $\tau^{1/2}$ and so is the prefered method.  It is analyzed in \cite{guermond2004error} for constant density and viscosity.
+  There are two options for how to correct the pressure.  The \textbf{standard form} which is simply the update $p_h^{k+1} = p_h^{k} + \psi_h^{k+1}$, and the \textbf{rotational form} which adds an additional term $\nabla\cdot\left(\mu\ub^{k+1}_h\right)$ to the update.  Using the rotational form increases the accuracy of pressure and the $H^1$ norm of velocity by $\tau^{1/2}$ and so is the prefered method.  It is analyzed in \cite{guermond2004error} for constant density and viscosity.
 \end{remark}
 Finally, we update the pressure with the pressure correction and the rotational term $\nabla\cdot\left(\mu\ub^{k+1}_h\right)$
 \begin{equation}
-  p_h^{k+1} = p_h^{k} + \phi_h^{k+1} - \nabla\cdot\left(\mu\ub^{k+1}_h\right)
+  p_h^{k+1} = p_h^{k} + \psi_h^{k+1} - \nabla\cdot\left(\mu\ub^{k+1}_h\right)
 \end{equation}
 meaning we seek $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h$
 \begin{equation}
-  \dprod{p_h^{k+1}}{r_h} = \dprod{p_h^{k} + \phi_h^{k+1}}{r_h} + \dprod{\mu\ub_h^{k+1}}{\nabla r_h}.
+  \dprod{p_h^{k+1}}{r_h} = \dprod{p_h^{k} + \psi_h^{k+1}}{r_h} + \dprod{\mu\ub_h^{k+1}}{\nabla r_h}.
 \end{equation}
 
 
 \begin{remark}
-Now that we have defined $\phi_h^{k}$, we can show what $p_h^{\sharp}$ represents.  In the non-rotational scheme, we have
+Now that we have defined $\psi_h^{k}$, we can show what $p_h^{\sharp}$ represents.  In the non-rotational scheme, we have
 \begin{equation}
-  \phi_h^{k+1} = p_h^{k+1} - p_h^{k}
+  \psi_h^{k+1} = p_h^{k+1} - p_h^{k}
 \end{equation}
 so that
   \begin{align}
-    p_h^{\sharp} &= p_h^{k} + \frac{4}{3}\phi_h^{k} - \frac{1}{3}\phi_h^{k-1}\\
+    p_h^{\sharp} &= p_h^{k} + \frac{4}{3}\psi_h^{k} - \frac{1}{3}\psi_h^{k-1}\\
     &= p_h^{k} + \frac{4}{3}\left(p_h^{k} - p_h^{k-1}\right) - \frac{1}{3}\left(p_h^{k-1} - p_h^{k-2}\right)\\
     &= \frac{7}{3}p_h^{k} - \frac{5}{3}p_h^{k-1}+ \frac{1}{3}p_h^{k-2} \\
     &= \frac{1}{3}\left( 3p_h^{k} - 3p_h^{k-1} + p_h^{k-2} \right) + \frac{2}{3}\left(2p_h^{k} - p_h^{k-1}  \right)\\
@@ -619,16 +597,53 @@ so that
     &= -\nabla\cdot\left[\mu\ub^{k+1}\right] + \frac{2}{3}\tau\nabla\cdot\left[\mu\ub_t^{k}\right] + \mathcal{O}(\tau^{2})
   \end{align}
   which can be seen as a penalty term on the divergence of velocity at time $t^{k+1}$.  The first term combines with the diffusion term to fix part of the artificial boundary conditions that are imposed by this splitting and the rest is absorbed as a penalty.  More details can be found in \cite{guermond2004error} and in the appendix below.
+\end{remark}
+
+\begin{remark}
+It turns out we can do a similar trick with the general coefficients $\beta_0$, $\beta_1$ and $\beta_2$ if we rewrite them using the ratio $r = \tau^{k+1}/\tau^{k}$, however we must use the proper scaling for variable time stepping
+\begin{equation}
+  p^{\sharp}_h = p_h^{k} + r\left(\frac{\beta_1}{\beta_0}\psi^{k} + \frac{\beta_1}{\beta_0}\psi^{k-1}  \right).
+\end{equation}
+Notice the extra factor $r$ in there similar to the extension of $2p_h^{k}-p_h^{k-1}$ to $p_h^{k} + r(p_h^k - p_h^{k-1})$.  Recalling the definitions implicit in equation~(\ref{eq:bdf2withvariabletimestep}) for the BDF2 coefficients and of the pressure increment, $\psi^{k}_h = p^{k}_h - p^{k-1}_h$, we have
+\begin{align*}
+  p_h^{\sharp} &= \left(1+r\frac{\beta_1}{\beta_0}  \right)p^{k}_h + r\frac{\beta_2-\beta_1}{\beta_0}p^{k-1}_h - r\frac{\beta_2}{\beta_0}p_h^{k-2}\\
+  &= p_h^{k} + r(p_h^{k}-p_h^{k-1}) + \frac{r^3}{1+2r}\left(p_h^{k} - 2p_h^{k-1} + p_h^{k-2} \right)
+\end{align*}
 
 \end{remark}
 
 
-%
-%
-%
-\section{General BDF1 and BDF2 Algorithm with Variable Time Steps}\label{sec:generalalgorithm}
 
 
+%
+%
+%
+\section{Variable Time Stepping and the CFL Condition}
+
+%
+%
+%
+\subsection{Changes for First and Second Order Algorithm with Variable Time Steps}\label{sec:BDF1VariableTimeSteppingAlgorithm}
+In the case of variable time step  $\tau^{k} := t^{k}-t^{k-1}$, there are two types of changes to be made.  First, the second order extrapolation terms must be updated to reflect variable time stepping:
+\begin{equation}
+  p^{\sharp}_h := p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\delta p_h^{k} = p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^{k} - p_h^{k-1} \right).
+\end{equation}
+and 
+\begin{equation}
+  \ub_h^{*} = \ub_h^{k} + \frac{\tau^{k+1}}{\tau^k}\left( \ub_h^{k} - \ub_h^{k-1}\right).
+\end{equation}
+Notice that these reduce to equations~(\ref{eq:pressureextrapolation_uniformtimestep}) and (\ref{eq:velocityextrapolation_uniformtimestep}) when $\tau^{k+1} = \tau^{k} = \tau$.  Secondly, in the remainder of the first order algorithm instead of $\tau$, we use the current time step $\tau^{k+1}$.
+
+
+
+%
+%
+\subsection{CFL Condition For Variable Step BDF1 Algorithm}\label{sec:CFLBDF1}
+The convergence results have not been proved for the case of variable time stepping but it seems reasonable to expect them to still hold under a standard Courant-Friedrich-Levy (CFL) conditions augmented with a maximally allowed time step, ie
+\begin{equation}
+  \tau^{k+1} \leq \min \left\{c \frac{\min_{T\in\mathcal{T}_h}\left(h_{T}/p_T\right)}{\|\ub^{k}\|_{L^{\infty}(\Lambda)}}, \tau^{max}\right\}, \hspace{1cm} c<1, \hspace{0.5cm}\tau^{\max} \mbox{ small enough}.
+\end{equation}
+Here we have used $p_T$ to mean the maximal polynomial degree used on the cell $T$ (typically we will have velocity and density use the same degree of polynomial and pressure with one degree less, so that setting it to velocity degree is sufficient) so that we are consistent with $h$ and $p$ refinement.  This time stepping scheme controls both the conservation of mass equation, since the physical velocity being used is $\ub^{k}$, and the conservation of momentum equations, since we are using the semi-implicit convection term $\ub^{k}\cdot\nabla\ub^{k+1}$ so again the physical velocity is $\ub^{k}$.  It is common in practice to choose the values $c=0.33$ or $c=0.5$.
 
 %
 %
@@ -640,9 +655,12 @@ We modify the CFL condition as described in Section~\ref{sec:CFLBDF1} to use the
 since that is the velocity that we transport with in the density and velocity updates Equations~(\ref{eqn:generaldensity}) and (\ref{eqn:generalvelocity}).
 
 
+
 %
-%  
-\subsection{General Variable Time Step BDF1-BDF2 algorithm}\label{sec:generalalgorithmdescription}
+%
+%
+\section{General First and Second Order Algorithm with Variable Time Steps}\label{sec:generalalgorithm}
+
 
 \begin{description}
 \item[Step 1] Density Update: Define
@@ -665,8 +683,8 @@ using any monotone hyperbolic scheme of appropriate order.
                        \rho_h^{k+1}, & \mbox{BDF2} 
                       \end{cases}\\
   p_h^{\sharp} &= \begin{cases}
-                  p_h^{k} + \phi^{k}, & \mbox{BDF1}\\ 
-                  p_h^{k} + \frac{\beta_1}{\beta_0}\phi^{k} + \frac{\beta_2}{\beta_0}\phi_h^{k-1}, & \mbox{BDF2} 
+                  p_h^{k} + \psi^{k}, & \mbox{BDF1}\\ 
+                  p_h^{k} + \frac{\beta_1}{\beta_0}\psi^{k} + \frac{\beta_2}{\beta_0}\psi_h^{k-1}, & \mbox{BDF2} 
                  \end{cases}
 \end{align}
 and solve for $\ub_h^{k+1}\in\X_h$ that satisfies for all $\vb_h\in\X_h$
@@ -678,15 +696,15 @@ and solve for $\ub_h^{k+1}\in\X_h$ that satisfies for all $\vb_h\in\X_h$
 \end{equation}
 where the last term on the left hand side is a stability term.  
 
-\item[Step 3] Projection: Set $\chi = \min \rho_h^{k+1}$ and solve for $\phi_h^{k+1}\in M_h$ such that for all $r_h\in M_h$,
+\item[Step 3] Projection: Set $\chi = \min \rho_h^{k+1}$ and solve for $\psi_h^{k+1}\in M_h$ such that for all $r_h\in M_h$,
 \begin{equation}
- \dprod{\nabla \phi_h^{k+1}}{\nabla r_h} = \beta_0 \chi \dprod{\ub_h^{k+1}}{\nabla r_h}
+ \dprod{\nabla \psi_h^{k+1}}{\nabla r_h} = \beta_0 \chi \dprod{\ub_h^{k+1}}{\nabla r_h}
 \end{equation}
-with $\int_{\Lambda}\phi_h^{k+1}d\x = 0$.  Notice that we have incorporated the natural boundary condition $\left.\nabla\phi_h^{k+1}\cdot\n\right|_{\partial\Lambda} = 0 $ already in this formulation.  
+with $\int_{\Lambda}\psi_h^{k+1}d\x = 0$.  Notice that we have incorporated the natural boundary condition $\left.\nabla\psi_h^{k+1}\cdot\n\right|_{\partial\Lambda} = 0 $ already in this formulation.  
 
 \item[Step 4] Pressure Correction: Solve for $p_h^{k+1}\in M_h$ such that for all $r_h\in M_h$
 \begin{equation}
-  \dprod{p_h^{k+1}}{r_h} = \dprod{p_h^{k} + \phi_h^{k+1}}{r_h} + \dprod{\mu \ub_h^{k+1}}{\nabla r_h}.
+  \dprod{p_h^{k+1}}{r_h} = \dprod{p_h^{k} + \psi_h^{k+1}}{r_h} + \dprod{\mu \ub_h^{k+1}}{\nabla r_h}.
 \end{equation}
 \end{description}
 
@@ -707,6 +725,10 @@ At this stage, we note a practical consideration, mainly how to start the second
 \end{remark}
 
 
+%
+%
+%
+\section{Strong vs Weak Boundary Conditions}
 
 
 
@@ -746,7 +768,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
   \tiny
   \centering
     \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF1 Standard Model, $T=10$}
-    \begin{tabular}{c|l|c|l|c}\label{table:firstconvergenceresult}
+    \begin{tabular}{c|c|c|c|c}\label{table:firstconvergenceresult}
       $\tau$  & $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
       \hline
       1.000e-01 & 2.290e-01 &  -   & 4.456e-01 &  -  \\
@@ -761,7 +783,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
       \tiny
       \centering
         \caption{Pressure Error $(p - p_h)_{\tau}$ BDF1 Standard Model, $T=10$}
-        \begin{tabular}{c|l|c|l|c}
+        \begin{tabular}{c|c|c|c|c}
           $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
           \hline
           1.000e-01 & 9.100e-02 &  -   & 2.082e-01 &  -  \\
@@ -778,7 +800,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
   \tiny
   \centering
     \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF1 Standard Model, $T=10$}
-    \begin{tabular}{c|l|c|l|c}
+    \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)^d\right)$  &  Rate\\
       \hline
       1.000e-01 & 1.522e-02 &  -   & 1.563e-01 &  -  \\
@@ -793,7 +815,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \tiny
     \centering
       \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF1 Standard Model, $T=10$}
-      \begin{tabular}{c|l|c|l|c}
+      \begin{tabular}{c|c|c|c|c}
         $\tau$ &  $\ell^{\infty}\left(H^1(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Lambda)^d\right)$  &  Rate\\
         \hline
         1.000e-01 & 3.399e-02 &  -   & 6.923e-02 &  -  \\
@@ -806,25 +828,25 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
 \end{table}
 
 
- \newpage
+ % \newpage
 
 %
 %
 \subsection{BDF2 Algorithm Results}
-
+On the left is the rotational models,  on the right are the standard models.  Because it is a smooth circular domain with smooth exact solutions, we see the rates for pressure and the $H^1(\Lambda)$ norm of velocity behaving better than is predicted in both the rotational and standard forms.  The additional $\mathcal{O}(\tau^{1/2})$ jump that is predicted when using the rotational model is no longer visible because it has obtained that rate already.  The biggest difference is the value of the errors them selves.  The rotational model has smaller error norms accross the board.
 \begin{table}[h!]
   \parbox{.45\linewidth}{
   \tiny
   \centering
     \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF2 Rotational Model, $T=10$}
-    \begin{tabular}{c|l|c|l|c}
+    \begin{tabular}{c|c|c|c|c}
       $\tau$  & $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
       \hline
-      1.000e-01 & 2.198e-02 &  -   & 5.908e-02 &  -  \\
-      5.000e-02 & 5.776e-03 & 1.93 & 1.544e-02 & 1.94\\
-      2.500e-02 & 1.561e-03 & 1.89 & 4.117e-03 & 1.91\\
-      1.250e-02 & 4.295e-04 & 1.86 & 1.113e-03 & 1.89\\
-      6.250e-03 & 1.224e-04 & 1.81 & 3.100e-04 & 1.84
+      1.000e-01 & 2.022e-02 &  -   & 5.583e-02 &  -  \\
+      5.000e-02 & 5.169e-03 & 1.97 & 1.438e-02 & 1.96\\
+      2.500e-02 & 1.374e-03 & 1.91 & 3.772e-03 & 1.93\\
+      1.250e-02 & 3.739e-04 & 1.88 & 1.005e-03 & 1.91\\
+      6.250e-03 & 1.066e-04 & 1.81 & 2.780e-04 & 1.85
     \end{tabular}
     }
     \hfill
@@ -832,14 +854,14 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \tiny
     \centering
       \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF2 Standard Model, $T=10$}
-      \begin{tabular}{c|l|c|l|c}
+      \begin{tabular}{c|c|c|c|c}
         $\tau$  & $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
         \hline
-        1.000e-01 & 9.491e-02 &  -   & 1.899e-01 &  -  \\
-        5.000e-02 & 2.796e-02 & 1.76 & 5.641e-02 & 1.75\\
-        2.500e-02 & 8.504e-03 & 1.72 & 1.739e-02 & 1.70\\
-        1.250e-02 & 2.599e-03 & 1.71 & 5.426e-03 & 1.68\\
-        6.250e-03 & 6.097e-04 & 2.09 & 1.312e-03 & 2.05
+        1.000e-01 & 7.784e-02 &  -   & 1.576e-01 &  -  \\
+        5.000e-02 & 2.321e-02 & 1.75 & 4.717e-02 & 1.74\\
+        2.500e-02 & 7.046e-03 & 1.72 & 1.451e-02 & 1.70\\
+        1.250e-02 & 2.131e-03 & 1.73 & 4.480e-03 & 1.70\\
+        6.250e-03 & 4.642e-04 & 2.20 & 1.010e-03 & 2.15
       \end{tabular}
     }
 \end{table}
@@ -849,14 +871,14 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
   \tiny
   \centering
     \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $T=10$}
-    \begin{tabular}{c|l|c|l|c}
+    \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)^d\right)$  &  Rate\\
       \hline
-      1.000e-01 & 7.077e-03 &  -   & 5.065e-02 &  -  \\
-      5.000e-02 & 2.576e-03 & 1.46 & 1.650e-02 & 1.62\\
-      2.500e-02 & 8.254e-04 & 1.64 & 4.955e-03 & 1.74\\
-      1.250e-02 & 2.497e-04 & 1.72 & 1.416e-03 & 1.81\\
-      6.250e-03 & 7.068e-05 & 1.82 & 4.009e-04 & 1.82
+      1.000e-01 & 6.610e-03 &  -   & 1.042e-02 &  -  \\
+      5.000e-02 & 2.396e-03 & 1.46 & 3.242e-03 & 1.68\\
+      2.500e-02 & 7.684e-04 & 1.64 & 9.293e-04 & 1.80\\
+      1.250e-02 & 2.310e-04 & 1.73 & 2.525e-04 & 1.88\\
+      6.250e-03 & 6.596e-05 & 1.81 & 6.643e-05 & 1.93
     \end{tabular}
     }
     \hfill
@@ -864,14 +886,14 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \tiny
     \centering
       \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Standard Model, $T=10$}
-      \begin{tabular}{c|l|c|l|c}
+      \begin{tabular}{c|c|c|c|c}
         $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)^d\right)$  &  Rate\\
         \hline
-        1.000e-01 & 9.188e-03 &  -   & 9.958e-02 &  -  \\
-        5.000e-02 & 2.850e-03 & 1.69 & 3.069e-02 & 1.70\\
-        2.500e-02 & 8.905e-04 & 1.68 & 9.673e-03 & 1.67\\
-        1.250e-02 & 2.599e-04 & 1.78 & 3.235e-03 & 1.58\\
-        6.250e-03 & 7.224e-05 & 1.85 & 1.070e-03 & 1.60
+        1.000e-01 & 7.575e-03 &  -   & 1.688e-02 &  -  \\
+        5.000e-02 & 2.574e-03 & 1.56 & 4.457e-03 & 1.92\\
+        2.500e-02 & 7.988e-04 & 1.69 & 1.139e-03 & 1.97\\
+        1.250e-02 & 2.375e-04 & 1.75 & 2.883e-04 & 1.98\\
+        6.250e-03 & 6.692e-05 & 1.83 & 7.264e-05 & 1.99
       \end{tabular}
     }
 \end{table}
@@ -882,14 +904,14 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
   \tiny
   \centering
     \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $T=10$}
-    \begin{tabular}{c|l|c|l|c}
+    \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(H^1(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Lambda)^d\right)$  &  Rate\\
       \hline
-      1.000e-01 & 1.177e-02 &  -   & 3.058e-02 &  -  \\
-      5.000e-02 & 3.780e-03 & 1.64 & 1.143e-02 & 1.42\\
-      2.500e-02 & 1.108e-03 & 1.77 & 3.852e-03 & 1.57\\
-      1.250e-02 & 3.053e-04 & 1.86 & 1.223e-03 & 1.65\\
-      6.250e-03 & 8.098e-05 & 1.91 & 3.768e-04 & 1.70
+      1.000e-01 & 3.916e-02 &  -   & 4.707e-02 &  -  \\
+      5.000e-02 & 1.441e-02 & 1.44 & 1.478e-02 & 1.67\\
+      2.500e-02 & 4.790e-03 & 1.59 & 4.329e-03 & 1.77\\
+      1.250e-02 & 1.503e-03 & 1.67 & 1.220e-03 & 1.83\\
+      6.250e-03 & 4.585e-04 & 1.71 & 3.443e-04 & 1.82
     \end{tabular}
     }
     \hfill
@@ -897,14 +919,14 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \tiny
     \centering
       \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Standard Model, $T=10$}
-      \begin{tabular}{c|l|c|l|c}
+      \begin{tabular}{c|c|c|c|c}
         $\tau$ &  $\ell^{\infty}\left(H^1(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Lambda)^d\right)$  &  Rate\\
         \hline
-        1.000e-01 & 2.072e-02 &  -   & 4.363e-02 &  -  \\
-        5.000e-02 & 5.513e-03 & 1.91 & 1.307e-02 & 1.74\\
-        2.500e-02 & 1.410e-03 & 1.97 & 4.165e-03 & 1.65\\
-        1.250e-02 & 3.567e-04 & 1.98 & 1.373e-03 & 1.60\\
-        6.250e-03 & 8.984e-05 & 1.99 & 4.666e-04 & 1.56
+        1.000e-01 & 4.559e-02 &  -   & 8.301e-02 &  -  \\
+        5.000e-02 & 1.599e-02 & 1.51 & 2.569e-02 & 1.69\\
+        2.500e-02 & 5.169e-03 & 1.63 & 8.154e-03 & 1.66\\
+        1.250e-02 & 1.598e-03 & 1.69 & 2.740e-03 & 1.57\\
+        6.250e-03 & 4.845e-04 & 1.72 & 8.870e-04 & 1.63
       \end{tabular}\tiny
     }
 \end{table}
@@ -914,14 +936,14 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
   \tiny
   \centering
     \caption{Pressure Error $(p - p_h)_{\tau}$ BDF2 Rotational Model, $T=10$}
-    \begin{tabular}{c|l|c|l|c}
+    \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
       \hline
-      1.000e-01 & 2.080e-02 &  -   & 3.624e-02 &  -  \\
-      5.000e-02 & 9.859e-03 & 1.08 & 1.163e-02 & 1.64\\
-      2.500e-02 & 4.885e-03 & 1.01 & 3.491e-03 & 1.74\\
-      1.250e-02 & 2.449e-03 & 1.00 & 1.012e-03 & 1.79\\
-      6.250e-03 & 1.219e-03 & 1.01 & 3.160e-04 & 1.68
+      1.000e-01 & 1.744e-02 &  -   & 3.221e-02 &  -  \\
+      5.000e-02 & 8.717e-03 & 1.00 & 9.988e-03 & 1.69\\
+      2.500e-02 & 4.336e-03 & 1.01 & 2.920e-03 & 1.77\\
+      1.250e-02 & 2.141e-03 & 1.02 & 8.336e-04 & 1.81\\
+      6.250e-03 & 1.054e-03 & 1.02 & 2.678e-04 & 1.64
     \end{tabular}
     }
     \hfill
@@ -929,14 +951,14 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \tiny
     \centering
       \caption{Pressure Error $(p - p_h)_{\tau}$ BDF2 Standard Model, $T=10$}
-      \begin{tabular}{c|l|c|l|c}\label{table:lastconvergenceresult}
+      \begin{tabular}{c|c|c|c|c}\label{table:lastconvergenceresult}
         $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
         \hline
-        1.000e-01 & 5.642e-02 &  -   & 1.289e-01 &  -  \\
-        5.000e-02 & 1.761e-02 & 1.68 & 3.793e-02 & 1.76\\
-        2.500e-02 & 6.451e-03 & 1.45 & 1.129e-02 & 1.75\\
-        1.250e-02 & 2.660e-03 & 1.28 & 3.572e-03 & 1.66\\
-        6.250e-03 & 1.276e-03 & 1.06 & 1.150e-03 & 1.64
+        1.000e-01 & 4.644e-02 &  -   & 1.061e-01 &  -  \\
+        5.000e-02 & 1.433e-02 & 1.70 & 3.113e-02 & 1.77\\
+        2.500e-02 & 5.048e-03 & 1.50 & 9.331e-03 & 1.74\\
+        1.250e-02 & 2.343e-03 & 1.11 & 2.983e-03 & 1.65\\
+        6.250e-03 & 1.108e-03 & 1.08 & 9.490e-04 & 1.65
       \end{tabular}
     }
 \end{table}
@@ -991,8 +1013,8 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
 %
 %
 %
-\chapter{Literature Review of Convergence Results for Pressure Correction Incompressible Navier-Stokes Solvers}\label{ch:LiteratureReview}
-We give a review of the main general theorems in the literature on expected convergence rates for the various forms of the projection schemes before stating the expected convergence results for the above algorithm.  While it has not been fully proved, it appears to behave qualitatively like the algorithms for which the results have been proven and the conjectures at the end summarize what we expect.
+\chapter{Convergence Results for Pressure-Correction Incompressible Navier-Stokes Algorithms}\label{ch:LiteratureReview}
+We give a review of the main general theorems in the literature on expected convergence rates for the various forms of the projection schemes before stating the expected convergence results for the above algorithm.  While it has not been fully proved, it appears to behave qualitatively like the algorithms for which the results have been proven and the conjectures at the end summarize what we expect.  The proofs are stated without proof although reference is given to where they come from which often includes the proof or sketches of proof.
 
 %
 %
@@ -1001,7 +1023,7 @@ We give a review of the main general theorems in the literature on expected conv
 
 %
 %
-\subsection{Standard Form}
+\subsection{Algorithm in Standard Form}
 The numerical solution $(\ub^k, \ut^k,p^k)$ of the constant density incompressible Navier-Stokes algorithm in standard form using BDF2 time derivative has the following error estimates hold, Theorems (3.1)-(3.5) of \cite{guermond1997resultat}.
 
 \begin{theorem}\label{thm:guermondthm3.1}
@@ -1045,7 +1067,7 @@ Under the regularity hypothesis of Theorem~\ref{thm:guermondthm3.4} and its rest
 
 %
 %
-\subsection{Rotational Form}
+\subsection{Algorithm in Rotational Form}
 
 \begin{theorem}
 Given that the true solution is smooth enough, the numerical solution, $(\ub^k, \ut^k, p^k)$, of the constant density incompressible Navier-Stokes algorithm using the second order approximation in time, pressure correction scheme in rotational form gives the following convergence estimates:
@@ -1068,7 +1090,7 @@ See Theorem 4.1 of \cite{guermond2004error} for details
 
 %
 %
-\subsection{Standard Form}
+\subsection{Algorithm in Standard Form}
 
 \begin{theorem}\label{thm:vardensityStandardFormBDF1}
 If $\rho \in W^{1,\infty}\left(0,T; \; W^{1,\infty}(\Lambda) \right)$, $\ub \in W^{1,\infty}\left(0,T;\; H^1_0(\Lambda)^d\cap H^{\ell+1}(\Lambda^d) \right)$ and $p\in W^{1,\infty}\left( H^{\ell}(\Lambda)\right)$ and there exist $\chi, \eta >0 $ such that for all $k$, $\chi \leq \min_{\x} \rho^k(\x)$ and $\sup_{\x} \rho^k(\x) \leq \eta$. Assume (to decouple the density from velocity) that we can construct a sequence $(\rho^k)_k$ from a sequence $(\ub^k)_k$ of velocities in such a way that
@@ -1080,7 +1102,7 @@ If $\rho \in W^{1,\infty}\left(0,T; \; W^{1,\infty}(\Lambda) \right)$, $\ub \in 
   \begin{equation}
     \|\rho(t^0) - \rho^0\|_{L^{\infty}} + \|\ub(t^0)-\ub^{0}\|_{L^2} + h\|\ub(t^0) - \ub^0\| + h\|p(t^0) - p^0\| \lesssim h^{\ell+1}
   \end{equation}
-  holds.  Then the incremental BDF1 variable density algorithm has the following error estimates
+  holds.  Then the incremental BDF1 variable density algorithm in standard form has the following error estimates
   \begin{align}
     \left\|\left(\ub - \ub_h\right)_{\tau}\right\|_{\ell^{\infty}(L^2(\Lambda)^d)} &\lesssim \tau + h^{\ell+1}\\
     \left\|\left(\ub - \ub_h\right)_{\tau}\right\|_{\ell^{2}(H^1(\Lambda)^d)} &\lesssim \tau + h^{\ell}\\
@@ -1092,7 +1114,7 @@ If $\rho \in W^{1,\infty}\left(0,T; \; W^{1,\infty}(\Lambda) \right)$, $\ub \in 
 \end{proof}
 
 \begin{conjecture}
-  Under the assumptions of Theorem~\ref{thm:vardensityStandardFormBDF1}, the BDF2 standard form algorithm has the following error estimates:
+  Under the assumptions of Theorem~\ref{thm:vardensityStandardFormBDF1}, the BDF2 standard form algorithm with variable density has the following error estimates:
   \begin{align}
     \left\| \left(\sqrt{\rho} \ub - \sqrt{\rho_h} \ub_h \right)_{\tau} \right\|_{\ell^{\infty}(L^2(\Lambda)^d)} &\lesssim \tau^2 + h^{\ell+1}\\
     \left\| \left(\ub - \ub_h \right)_{\tau} \right\|_{\ell^2(H^1(\Lambda)^d)} &\lesssim \tau + h^{\ell}\\
@@ -1102,10 +1124,10 @@ If $\rho \in W^{1,\infty}\left(0,T; \; W^{1,\infty}(\Lambda) \right)$, $\ub \in 
 
 %
 %
-\subsection{Rotational Form}
+\subsection{Algorithm in Rotational Form}
 
 \begin{conjecture}
-  Under the assumptions of Theorem~\ref{thm:vardensityStandardFormBDF1}, the BDF2 rotational form algorithm has the following error estimates:
+  Under the assumptions of Theorem~\ref{thm:vardensityStandardFormBDF1}, the BDF2 rotational form algorithm with variable density has the following error estimates:
   \begin{align}
     \left\| \left(\sqrt{\rho} \ub - \sqrt{\rho_h} \ub_h \right)_{\tau} \right\|_{\ell^{\infty}(L^2(\Lambda)^d)} &\lesssim \tau^2 + h^{\ell+1}\\
     \left\| \left( \ub - \ub_h \right)_{\tau} \right\|_{\ell^2(H^1(\Lambda)^d)} &\lesssim \tau^{3/2} + h^{\ell}\\
@@ -1113,7 +1135,10 @@ If $\rho \in W^{1,\infty}\left(0,T; \; W^{1,\infty}(\Lambda) \right)$, $\ub \in 
   \end{align}
 \end{conjecture}
 
-
+This last conjecture is more of an observation of what we expect we should observe under smooth conditions.  
+\begin{conjecture}
+  If $\Lambda$ is smooth, for instance a circular domain, and the exact solution is smooth, then we should see the $\ell^{\infty}(E)$ norms behaving as well as the $\ell^{2}(E)$ norms in every instance.  In many cases, we cannot give a good result for the $\ell^{\infty}$ in time norms because the theory is tricky or unclear, but we should see observe them to be as good as the $\ell^2$ in time norms.  Additionally, the general theory says that $L^{2}(\Lambda)$ norm of pressure and the $H^1(\Lambda)$ norm of velocity should have $\tau^{1/2}$ power worse rates than the $L^2(\Lambda)$ norm of velocity but in smooth domains, they are often observed to all have the higher rates.  It is only when corners appear in the domain or the exact solution has less regularity that the loss appears.  
+\end{conjecture}
 
 
 %
@@ -1164,10 +1189,10 @@ with constant density and variable viscosity.  To proceed with the proof, we sta
 \begin{numcases}{}
   \frac{\rho}{\tau}\left( \ut^{k+1} - \ub^{k}\right) + \rho \ut^{k}\cdot\nabla\ut^{k+1} - \nabla\cdot\left(\mu\nabla\ut^{k+1}\right) + \nabla p^{k} = \fb^{k+1},\label{eqn:initialmomentum}\\ 
   \left.\ut^{k+1}\right|_{\partial\Lambda} = 0,\\
-  \frac{\rho}{\tau}\left(\ub^{k+1} - \ut^{k+1}  \right) + \nabla \phi^{k+1} = 0,\label{eqn:initialprojection} \\
+  \frac{\rho}{\tau}\left(\ub^{k+1} - \ut^{k+1}  \right) + \nabla \psi^{k+1} = 0,\label{eqn:initialprojection} \\
   \left.\ub^{k+1}\cdot\n\right|_{\partial\Lambda} = 0,\\
   \nabla\cdot \ub^{k+1} = 0,\\
-  p^{k+1} = p^{k} + \phi^{k+1} - \mu\nabla\cdot\ut^{k+1}.\label{eqn:initialpressureupdate}
+  p^{k+1} = p^{k} + \psi^{k+1} - \mu\nabla\cdot\ut^{k+1}.\label{eqn:initialpressureupdate}
 \end{numcases}
 By applying $\nabla\times\left(\mu\nabla\times \ \cdot\  \right)$ to both sides of (\ref{eqn:initialprojection}) we observe that
 \begin{equation}\label{eqn:curlcurluequalscurlcurlutilde}
