@@ -43,19 +43,22 @@ parun navierstokes_vardensity_so.py -l5 -v -b L2_batch.py -C "parallel=False ana
 #  running the processing from VariableDensityNavierStokes2D/  folder when results
 # are stored in results/  folder.  This will produce the error reports and tables.
 
-python processVelocity.py results/velocity_BDF1_dt_0_100000_0.db \
-                          results/velocity_BDF1_dt_0_050000_0.db \
-                          results/velocity_BDF1_dt_0_025000_0.db \
-                          results/velocity_BDF1_dt_0_012500_0.db \
-                          results/velocity_BDF1_dt_0_006250_0.db
+python processErrors.py -t velocity -H1 -p \
+                        results/velocity_BDF1_dt_0_100000_0.db \
+                        results/velocity_BDF1_dt_0_050000_0.db \
+                        results/velocity_BDF1_dt_0_025000_0.db \
+                        results/velocity_BDF1_dt_0_012500_0.db \
+                        results/velocity_BDF1_dt_0_006250_0.db
 
-python processPressure.py results/pressure_BDF1_dt_0_100000_0.db \
-                          results/pressure_BDF1_dt_0_050000_0.db \
-                          results/pressure_BDF1_dt_0_025000_0.db \
-                          results/pressure_BDF1_dt_0_012500_0.db \
-                          results/pressure_BDF1_dt_0_006250_0.db
+python processErrors.py -t pressure -p \
+                        results/pressure_BDF1_dt_0_100000_0.db \
+                        results/pressure_BDF1_dt_0_050000_0.db \
+                        results/pressure_BDF1_dt_0_025000_0.db \
+                        results/pressure_BDF1_dt_0_012500_0.db \
+                        results/pressure_BDF1_dt_0_006250_0.db
 
-python processDensity.py results/density_BDF1_dt_0_100000_0.db \
+python processErrors.py -t density -p \
+                        results/density_BDF1_dt_0_100000_0.db \
                         results/density_BDF1_dt_0_050000_0.db \
                         results/density_BDF1_dt_0_025000_0.db \
                         results/density_BDF1_dt_0_012500_0.db \
@@ -63,19 +66,22 @@ python processDensity.py results/density_BDF1_dt_0_100000_0.db \
 
 mv -f *.png results/
 
-python processVelocity.py results/velocity_BDF2_dt_0_100000_0.db \
-                          results/velocity_BDF2_dt_0_050000_0.db \
-                          results/velocity_BDF2_dt_0_025000_0.db \
-                          results/velocity_BDF2_dt_0_012500_0.db \
-                          results/velocity_BDF2_dt_0_006250_0.db
+python processErrors.py -t velocity -H1 -p \
+                        results/velocity_BDF2_dt_0_100000_0.db \
+                        results/velocity_BDF2_dt_0_050000_0.db \
+                        results/velocity_BDF2_dt_0_025000_0.db \
+                        results/velocity_BDF2_dt_0_012500_0.db \
+                        results/velocity_BDF2_dt_0_006250_0.db
 
-python processPressure.py results/pressure_BDF2_dt_0_100000_0.db \
-                          results/pressure_BDF2_dt_0_050000_0.db \
-                          results/pressure_BDF2_dt_0_025000_0.db \
-                          results/pressure_BDF2_dt_0_012500_0.db \
-                          results/pressure_BDF2_dt_0_006250_0.db
+python processErrors.py -t pressure -p \
+                        results/pressure_BDF2_dt_0_100000_0.db \
+                        results/pressure_BDF2_dt_0_050000_0.db \
+                        results/pressure_BDF2_dt_0_025000_0.db \
+                        results/pressure_BDF2_dt_0_012500_0.db \
+                        results/pressure_BDF2_dt_0_006250_0.db
 
-python processDensity.py results/density_BDF2_dt_0_100000_0.db \
+python processErrors.py -t density -p \
+                        results/density_BDF2_dt_0_100000_0.db \
                         results/density_BDF2_dt_0_050000_0.db \
                         results/density_BDF2_dt_0_025000_0.db \
                         results/density_BDF2_dt_0_012500_0.db \
@@ -102,3 +108,52 @@ mpiexec -np 4 parun navierstokes_vardensity_so.py -O petsc.options.superlu_dist 
 #   DT = 0.1
 
 mpiexec -np 4 parun navierstokes_vardensity_so.py -O petsc.options.superlu_dist -l5 -v -b L2_batch.py -C "parallel=True analytical=True" -D navierstokes_bdf2_1_dt_0_100000_results > bdf2_1_dt_0_100000.out
+
+
+
+python processErrors.py -np 2 -t velocity -H1 -p \
+                        -s results/velocity_BDF1_dt_0_100000 \
+                        -s results/velocity_BDF1_dt_0_050000 \
+                        -s results/velocity_BDF1_dt_0_025000 \
+                        -s results/velocity_BDF1_dt_0_012500 \
+                        -s results/velocity_BDF1_dt_0_006250
+
+python processErrors.py -np 2 -t pressure -p \
+                        -s results/pressure_BDF1_dt_0_100000 \
+                        -s results/pressure_BDF1_dt_0_050000 \
+                        -s results/pressure_BDF1_dt_0_025000 \
+                        -s results/pressure_BDF1_dt_0_012500 \
+                        -s results/pressure_BDF1_dt_0_006250
+
+python processErrors.py -np 2 -t density -p \
+                        -s results/density_BDF1_dt_0_100000 \
+                        -s results/density_BDF1_dt_0_050000 \
+                        -s results/density_BDF1_dt_0_025000 \
+                        -s results/density_BDF1_dt_0_012500 \
+                        -s results/density_BDF1_dt_0_006250
+
+mv -f *.png results/
+
+
+python processErrors.py -np 2 -t velocity -H1 -p \
+                        -s results/velocity_BDF2_dt_0_100000 \
+                        -s results/velocity_BDF2_dt_0_050000 \
+                        -s results/velocity_BDF2_dt_0_025000 \
+                        -s results/velocity_BDF2_dt_0_012500 \
+                        -s results/velocity_BDF2_dt_0_006250
+
+python processErrors.py -np 2 -t pressure -p \
+                        -s results/pressure_BDF2_dt_0_100000 \
+                        -s results/pressure_BDF2_dt_0_050000 \
+                        -s results/pressure_BDF2_dt_0_025000 \
+                        -s results/pressure_BDF2_dt_0_012500 \
+                        -s results/pressure_BDF2_dt_0_006250
+
+python processErrors.py -np 2 -t density -p \
+                        -s results/density_BDF2_dt_0_100000 \
+                        -s results/density_BDF2_dt_0_050000 \
+                        -s results/density_BDF2_dt_0_025000 \
+                        -s results/density_BDF2_dt_0_012500 \
+                        -s results/density_BDF2_dt_0_006250
+
+mv -f *.png results/
