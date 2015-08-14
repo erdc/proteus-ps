@@ -57,7 +57,8 @@ if args.usePlots:
 
     # create plots for time series of errors
     fig_L2, ax_L2 = plt.subplots(nrows=1, ncols=1)
-    # fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
+    if args.useH1Norm:
+        fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
 
 
 # read in file names and test if they can be found.  if so
