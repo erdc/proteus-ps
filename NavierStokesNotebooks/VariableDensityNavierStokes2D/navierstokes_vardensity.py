@@ -26,7 +26,7 @@ useNonlinearAdvection = False # switches between extrapolated and fully nonlinea
 useNumericalFluxEbqe = True # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useVelocityComponents = True  # False uses post processed velocity,
-useScaleUpTimeStepsBDF2 = True  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
+useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
 setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
 usePressureExtrapolations = False # use p_star instead of p_last in velocity and pressure model
 
@@ -93,7 +93,7 @@ xs,ys,ts = symbols('x y t')
 
 # viscosity coefficient
 mu = 1.0 # the viscosity coefficient
-chi = 0.8  # 1.0 is the minimal value of rho density.
+chi = 1.0  # 1.0 is the minimal value of rho density.
 
 # Given solution: (Modify here and if needed add more sympy.functions above with
 #                  notation sy_* to distinguish as symbolic functions)

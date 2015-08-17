@@ -62,6 +62,14 @@ def getZeroFlux(x,flag):
                 ctx.boundaryTags['top'],
                 ctx.boundaryTags['fixed']]:
         return lambda x,t: 0.0
+    elif flag == 0:
+       return lambda x,t: 0.0
+    else:
+        return None
+
+def getDFlux(x,flag):
+    if flag == 0: # artificial boundary from parallelization
+       return lambda x,t: 0.0
     else:
         return None
 
@@ -85,5 +93,5 @@ initialConditions = {0:getIBC_u(),
 dirichletConditions = {0:getDBC_u,
                        1:getDBC_v }
 
-diffusiveFluxBoundaryConditions = {0:{0:getNone},
-                                   1:{1:getNone}}
+diffusiveFluxBoundaryConditions = {0:{0:getDFlux},
+                                   1:{1:getDFlux}}
