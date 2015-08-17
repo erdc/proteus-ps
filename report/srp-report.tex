@@ -599,18 +599,17 @@ so that
   which can be seen as a penalty term on the divergence of velocity at time $t^{k+1}$.  The first term combines with the diffusion term to fix part of the artificial boundary conditions that are imposed by this splitting and the rest is absorbed as a penalty.  More details can be found in \cite{guermond2004error} and in the appendix below.
 \end{remark}
 
-\begin{remark}
-It turns out we can do a similar trick with the general coefficients $\beta_0$, $\beta_1$ and $\beta_2$ if we rewrite them using the ratio $r = \tau^{k+1}/\tau^{k}$, however we must use the proper scaling for variable time stepping
-\begin{equation}
-  p^{\sharp}_h = p_h^{k} + r\left(\frac{\beta_1}{\beta_0}\psi^{k} + \frac{\beta_1}{\beta_0}\psi^{k-1}  \right).
-\end{equation}
-Notice the extra factor $r$ in there similar to the extension of $2p_h^{k}-p_h^{k-1}$ to $p_h^{k} + r(p_h^k - p_h^{k-1})$.  Recalling the definitions implicit in equation~(\ref{eq:bdf2withvariabletimestep}) for the BDF2 coefficients and of the pressure increment, $\psi^{k}_h = p^{k}_h - p^{k-1}_h$, we have
-\begin{align*}
-  p_h^{\sharp} &= \left(1+r\frac{\beta_1}{\beta_0}  \right)p^{k}_h + r\frac{\beta_2-\beta_1}{\beta_0}p^{k-1}_h - r\frac{\beta_2}{\beta_0}p_h^{k-2}\\
-  &= p_h^{k} + r(p_h^{k}-p_h^{k-1}) + \frac{r^3}{1+2r}\left(p_h^{k} - 2p_h^{k-1} + p_h^{k-2} \right)
-\end{align*}
-
-\end{remark}
+% \begin{remark}
+% It turns out we can do a similar trick with the general coefficients $\beta_0$, $\beta_1$ and $\beta_2$ if we rewrite them using the ratio $r = \tau^{k+1}/\tau^{k}$, however we must use the proper scaling for variable time stepping
+% \begin{equation}
+%   p^{\sharp}_h = p_h^{k} + r\left(\frac{\beta_1}{\beta_0}\psi^{k} + \frac{\beta_1}{\beta_0}\psi^{k-1}  \right).
+% \end{equation}
+% Notice the extra factor $r$ in there similar to the extension of $2p_h^{k}-p_h^{k-1}$ to $p_h^{k} + r(p_h^k - p_h^{k-1})$.  Recalling the definitions implicit in equation~(\ref{eq:bdf2withvariabletimestep}) for the BDF2 coefficients and of the pressure increment, $\psi^{k}_h = p^{k}_h - p^{k-1}_h$, we have
+% \begin{align*}
+%   p_h^{\sharp} &= \left(1+r\frac{\beta_1}{\beta_0}  \right)p^{k}_h + r\frac{\beta_2-\beta_1}{\beta_0}p^{k-1}_h - r\frac{\beta_2}{\beta_0}p_h^{k-2}\\
+%   &= p_h^{k} + r(p_h^{k}-p_h^{k-1}) + \frac{r^3}{1+2r}\left(p_h^{k} - 2p_h^{k-1} + p_h^{k-2} \right)
+% \end{align*}
+% \end{remark}
 
 
 
@@ -636,23 +635,22 @@ Notice that these reduce to equations~(\ref{eq:pressureextrapolation_uniformtime
 
 
 
-%
-%
-\subsection{CFL Condition For Variable Step BDF1 Algorithm}\label{sec:CFLBDF1}
-The convergence results have not been proved for the case of variable time stepping but it seems reasonable to expect them to still hold under a standard Courant-Friedrich-Levy (CFL) conditions augmented with a maximally allowed time step, ie
-\begin{equation}
-  \tau^{k+1} \leq \min \left\{c \frac{\min_{T\in\mathcal{T}_h}\left(h_{T}/p_T\right)}{\|\ub^{k}\|_{L^{\infty}(\Lambda)}}, \tau^{max}\right\}, \hspace{1cm} c<1, \hspace{0.5cm}\tau^{\max} \mbox{ small enough}.
-\end{equation}
-Here we have used $p_T$ to mean the maximal polynomial degree used on the cell $T$ (typically we will have velocity and density use the same degree of polynomial and pressure with one degree less, so that setting it to velocity degree is sufficient) so that we are consistent with $h$ and $p$ refinement.  This time stepping scheme controls both the conservation of mass equation, since the physical velocity being used is $\ub^{k}$, and the conservation of momentum equations, since we are using the semi-implicit convection term $\ub^{k}\cdot\nabla\ub^{k+1}$ so again the physical velocity is $\ub^{k}$.  It is common in practice to choose the values $c=0.33$ or $c=0.5$.
+
 
 %
 %
-\subsection{Updated CFL Condition for General Algorithm}
-We modify the CFL condition as described in Section~\ref{sec:CFLBDF1} to use the $\ub_h^{*}$ velocity as defined in the general algorithm in Section~\ref{sec:generalalgorithm}:
+\subsection{CFL Condition For General Algorithm}\label{sec:CFLgeneralalgorithm}
+The convergence results have not been proved for the case of variable time stepping but it seems reasonable to expect them to still hold under a standard Courant-Friedrich-Levy (CFL) conditions augmented with a maximally allowed time step, ie
 \begin{equation}
-  \tau^{k+1} \leq \min \left\{c \frac{\min_{T\in\mathcal{T}_h}\left(h_{T}/p_T\right)}{\|\ub_h^{*}\|_{L^{\infty}(\Lambda)}}, \tau^{max}\right\}, \hspace{1cm} c<1, \hspace{0.5cm}\tau^{\max} << 1.
+  \tau^{k+1} \leq \min \left\{c \frac{\min_{T\in\mathcal{T}_h}\left(h_{T}/p_T\right)}{\|\ub_h^{*}\|_{L^{\infty}(\Lambda)}}, \tau^{max}\right\}, \hspace{1cm} c<1, \hspace{0.5cm}\tau^{\max} << 1,
 \end{equation}
-since that is the velocity that we transport with in the density and velocity updates Equations~(\ref{eqn:generaldensity}) and (\ref{eqn:generalvelocity}).
+where 
+\begin{equation}
+  \ub_h^{*} = \begin{cases} \ub_h^{k}, & \mbox{BDF1}\\ \ub_h^{k}+ \frac{\tau^{k+1}}{\tau^{k}}\left(\ub_h^{k} - \ub_h^{k-1}\right),& $\mbox{BDF2}$ \end{cases}
+\end{equation}
+sicnce that is the velocity that we transport with in the density and velocity updates (see Equations~(\ref{eqn:generaldensity}) and (\ref{eqn:generalvelocity})).
+Here we have used $p_T$ to mean the maximal polynomial degree used on the cell $T$ (typically we will have velocity and density use the same degree of polynomial and pressure with one degree less, so that setting it to velocity degree is sufficient) so that we are consistent with $h$ and $p$ refinement.  This time stepping scheme controls both the conservation of mass equation, since the physical velocity being used is $\ub^{k}$, and the conservation of momentum equations, since we are using the semi-implicit convection term $\ub^{k}\cdot\nabla\ub^{k+1}$ so again the physical velocity is $\ub^{k}$.  It is common in practice to choose the values $c=0.33$ or $c=0.5$.
+
 
 
 
@@ -708,17 +706,20 @@ with $\int_{\Lambda}\psi_h^{k+1}d\x = 0$.  Notice that we have incorporated the 
 \end{equation}
 \end{description}
 
-
+%
+%
+\subsection{Comments on General Algorithm}
 \begin{remark}
 There are a some papers that introduce or suggest the following improvement to the above model, mainly to replace the $p^{k}_h$ term (or $\nabla p^{k}_h$) throughout the system with
 \begin{equation}
   p_h^{*,k+1} = \begin{cases}
                 p_h^{k}, & \mbox{BDF1}\\
-                p_h^{k} + \frac{\tau^{k}}{\tau^{k-1}}\left( p_h^k - p_h^{k-1} \right), & \mbox{BDF2}.
+                p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^k - p_h^{k-1} \right), & \mbox{BDF2}.
                 \end{cases}
 \end{equation}
 The BDF2 option is a second order approximation to $p^{k+1}_h$ instead of the first order approximation $p_h^k$.  While this sounds nice in theory, numerically it seems to give an unstable algorithm.  While there are no published findings to this extent, the authors of the papers which have been cited herein give the verbal recommendation that this improvement not be used.  Our own observations and testing show this method to be unstable, as well, when $\tau$ is small relative to the mesh size $h$.
 \end{remark}
+
 
 \begin{remark}
 At this stage, we note a practical consideration, mainly how to start the second order system.  The recommended approach is to interpolate the initial conditions (instead of using a projection) and then proceed forward using the first order model for the first step and the second order model from then on.  The resulting errors will be second order.  There is no need to adjust the time steps to scale up to second order since for a single step of the first order method, the error is already second order.  The first order errors come from aggregating multiple steps and accumulating the previous errors, but since we only take a single step and then use the second order model from then on, we maintain the second order rate throughout.  If the CFL condition with adaptive time stepping is desired, it can be started immediately after the first step.
@@ -833,7 +834,6 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
 %
 %
 \subsection{BDF2 Algorithm Results}
-On the left is the rotational models,  on the right are the standard models.  Because it is a smooth circular domain with smooth exact solutions, we see the rates for pressure and the $H^1(\Lambda)$ norm of velocity behaving better than is predicted in both the rotational and standard forms.  The additional $\mathcal{O}(\tau^{1/2})$ jump that is predicted when using the rotational model is no longer visible because it has obtained that rate already.  The biggest difference is the value of the errors them selves.  The rotational model has smaller error norms accross the board.
 \begin{table}[h!]
   \parbox{.45\linewidth}{
   \tiny
@@ -964,7 +964,7 @@ On the left is the rotational models,  on the right are the standard models.  Be
 \end{table}
 
 
-
+On the left is the rotational models,  on the right are the standard models.  Because it is a smooth circular domain with smooth exact solutions, we see the rates for pressure and the $H^1(\Lambda)$ norm of velocity behaving better than is predicted in both the rotational and standard forms.  The additional $\mathcal{O}(\tau^{1/2})$ jump that is predicted when using the rotational model is no longer visible because it has obtained that rate already.  The biggest difference is the value of the errors them selves.  The rotational model has smaller error norms accross the board.
 
 
 
@@ -976,6 +976,71 @@ On the left is the rotational models,  on the right are the standard models.  Be
 %
 %
 \chapter{Two Phase Flow Incompressible Navier-Stokes Flow}\label{ch:2PFlow}
+
+We define a two phase flow on a Lipshitz domain $\Lambda\subset\mathbb{R}^d$ with boundary $\partial\Lambda = \partial\Lambda_{d}\cap\partial\Lambda_{n}$.  We will refer to one of the phases (in the case of air and water, it will the the water) as the interior region denoted $\Omega$ with smooth boundary $\Gamma = \partial\Omega$ separating the two phases.  The other phase is $\Lambda\backslash\Omega$.  It is not necessary that $\Omega$ be a close domain inside of $\Lambda$ as is depicted in Figure~\ref{fig:DomainAndBoundary}, but it is possible that $\partial\Lambda\cap \partial\Omega \neq \emptyset$.  We must be careful that the imposed boundary conditions are consistent in such cases.
+\begin{figure}[h!]
+  \centering
+    \includegraphics[width=0.65\textwidth]{DomainAndBoundaryForNavierStokes}
+  \caption{Domain and Boundary with outer unit normals}
+  \label{fig:DomainAndBoundary}
+\end{figure}
+
+We wish to find the velocity, $\ub\in C^{1}\left([0,T], \left[H^{2}(\Lambda)\right]^d\right)$ and pressure, $p\in C^{1}\left([0,T],H^{1}(\Lambda)\right)$ which satisfy the incompressible time-dependent Navier-Stokes equation
+\begin{equation}\label{eq:nspde01}
+  \begin{cases}
+		\rho\left(\pf{\ub}{t} + \left(\ub\cdot\nabla\right)\ub  \right) - \nabla\cdot \sigma = \fb & \mbox{in }[0,T]\times\Lambda\\
+		\nabla\cdot \ub = 0 & \mbox{in }[0,T]\times\Lambda\\
+		\left[\sigma \right]\cdot\n = \fb_{\partial\Omega}  & \mbox{on }[0,T]\times\partial\Omega \\
+		\ub = \fb_d  & \x \in\partial\Lambda_{d}\\
+		\sigma\cdot\nu = \fb_{\nu} & \x\in \partial\Lambda_{n}\\
+		\left.\ub\right|_{t=0} = \ub_{0} & \mbox{divergence free initial velocity}\\
+		\left.p\right|_{t=0} = p_0 & \mbox{initial pressure.}
+	\end{cases}
+\end{equation}
+Here $\sigma$, the (symmetric) \textbf{stress tensor}\index{sigma, stress tensor@$\sigma$, stress tensor} is chosen to be
+\begin{equation}
+	 \sigma = \epsilon(\ub) - pI
+\end{equation}
+and the \textbf{strain rate tensor}\index{epsilon, strain rate tensor@$\epsilon(\ub)$, strain rate tensor}, $\epsilon(\ub)$, is defined using the \textbf{symmetric gradient}\index{gradient, symmetric gradient@ $\nabla^{s}$, symmetric gradient}
+\begin{equation}
+	\epsilon(\ub) = 2\mu \nabla^{s} \ub = 2\mu\left(\frac{\nabla\ub + \nabla\ub^{T}}{2}\right).
+\end{equation}
+ Simplifying, we get
+\begin{equation}\label{eq:nspde02}
+  \begin{cases}
+		\rho\left(\pf{\ub}{t} + \left(\ub\cdot\nabla\right)\ub  \right) - 2\nabla\cdot\left(\mu \nabla^{s}\ub \right) + \nabla p = \fb & \mbox{in }[0,T]\times\Lambda\\
+		\nabla\cdot \ub = 0 & \mbox{in }[0,T]\times\Lambda\\
+		\left[ 2\mu\nabla^{s}\ub - p I \right]\cdot\n = \fb_{\partial\Omega}  & \mbox{on }[0,T]\times\partial\Omega \\
+		\ub = \fb_d  & \x \in\partial\Lambda_{d}\\
+		\left(2\mu\nabla^{s}\ub-p I\right)\cdot\nu = \fb_{\nu} & \x\in \partial\Lambda_{n}\\
+		\left.\ub\right|_{t=0} = \ub_{0} & \mbox{divergence free initial velocity} \\
+		\left.p\right|_{t=0} = p_0 & \mbox{initial pressure}
+	\end{cases}
+\end{equation}
+
+\noindent where the \textbf{density}\index{rho, density@$\rho$, density} $\rho = \rho(\x,t)\in C^{1}\left([0,T], H^{1}(\Omega)\right)$ is possibly variable, the \textbf{(dynamic) viscosity}\index{mu, viscosity (dynamic)@$\mu$, viscosity (dynamic)}\ $\mu = \mu(\x,t)\in C\left([0,T], H^{1}(\Omega)\right)$ is also possibly variable, $\n$ is the outward pointing \textbf{unit normal}\index{n, unit normal@$\n$, normal unit vector on $\partial\Omega$} vector on $\partial\Omega$ and $\nu$ is the outward pointing \textbf{unit normal}\index{nu, unit normal@ $\nu$, normal unit vector on $\partial\Lambda$} vector on $\partial\Lambda$.  We leave the forces $\fb_{\partial\Omega}$ applied on the boundary of $\Omega$ in general form, but it could be surface tension
+\begin{equation}
+	 \fb_{\partial\Omega} = \sigma\vec{\kappa} 
+\end{equation}
+ where $\sigma$ is the surface tension coefficient and $\vec{\kappa} = \kappa\n$ is the vector total curvature.
+
+\noindent We use the standard jump notation
+\begin{equation}  
+	\left[ \gb(\x) \right] = \gb(\x^{+}) - \gb(\x^{-})
+\end{equation}
+where $\x^{+}$ is in the direction of the normal $\n$ and $\x^{-}$ is in the opposite direction.
+
+
+\section{Tracking the Boundary, $\Gamma$}\label{sec:TrackingBoundaryGamma}
+As the two phase boundary $\Gamma$ is free to move around the domain, but the physics depend on where it is, we must be able to track $\Gamma$.  To this end, we implement a level set method combined with a volume of fluid solver to track $\Gamma$ and use the volume of fluid calculation to enforce mass conservation of the system.  The level set method is notorious for losing volume or mass, but when combined with a volume of fluid solver and adjusted accordingly as in \cite{kees2011conservative}, we can maintain global mass conservation.  Unfortunately, there is not yet a good method to enforce local mass conservation with the level set method.
+
+\subsection{The Volume of Fluid Method}\label{sec:VoFMEthod}
+
+\subsection{The Level Set Method}\label{sec:LevelSetMethod}
+
+\subsection{The Volume Correction}\label{sec:VolumeCorrection}
+
+
 
 %
 %
