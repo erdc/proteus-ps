@@ -195,8 +195,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         We are implementing the post processing in the pressureIncrement model which is
         essentially the divergence free velocity equation.  The velocity
         is then extracted from the pressureIncrement Model as ('velocity',0).  In order to
-        get a physical velocity, we must then scale it by the constants dt/chi  since the pressure
-        equation is  -div(  grad\phi - chi/dt [u v] ) = 0  so that the flux F has local integrals matching chi/dt [u v]
+        get a physical velocity, we must then scale it by the constants dt/chi*beta_0  since the pressure
+        equation is  -div(  grad\phi - beta_0*chi/dt [u v] ) = 0  so that the flux F has local integrals matching beta_0*chi/dt [u v]
         and hopefully has locally divergence free velocity matching chi/dt [u v].  Thus the scaling by dt/chi
         to get physical velocity.
 
