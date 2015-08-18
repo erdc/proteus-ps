@@ -24,13 +24,16 @@ coefficients=NavierStokes.VelocityTransport2D(bdf=ctx.globalBDFTimeOrder,
                                               uFunction=ctx.utrue,
                                               vFunction=ctx.vtrue,
                                               pressureIncrementModelIndex=2,
+                                              pressureIncrementFunction=None, # set to ctx.pitrue for exact pressure increment
                                               pressureIncrementGradFunction=None, # set to ctx.gradpitrue for exact pressure increment
                                               pressureModelIndex=3,
+                                              pressureFunction=None, # set to ctx.ptrue for exact pressure
                                               pressureGradFunction=None, # set to ctx.gradptrue for exact pressure
                                               useStabilityTerms=ctx.useStabilityTerms,
                                               setFirstTimeStepValues=ctx.setFirstTimeStepValues,
                                               useNonlinearAdvection=ctx.useNonlinearAdvection,
-                                              usePressureExtrapolations=ctx.usePressureExtrapolations)
+                                              usePressureExtrapolations=ctx.usePressureExtrapolations,
+                                              useConservativePressureTerm=ctx.useConservativePressureTerm)
 
 if ctx.opts.analytical:
     analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue,ctx.gradutrue),
