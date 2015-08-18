@@ -22,14 +22,7 @@ class HistoryManipulation:
 
     """
     def __init__(self, modelList=None, bdf=1, useNumericalFluxEbqe=False):
-        self.densityModel = modelList[0]
-        self.density_nc = 1
-        self.velocityModel = modelList[1]
-        self.velocity_nc = 2 # dim
-        self.pressureIncrementModel = modelList[2]
-        self.pressureIncrement_nc = 1
-        self.pressureModel = modelList[3]
-        self.pressure_nc = 1
+        self.modelList = modelList
         self.bdf = bdf
         self.useNumericalFluxEbqe = useNumericalFluxEbqe
 
@@ -41,37 +34,16 @@ class HistoryManipulation:
             u_last = solution at time t^{0}
             u_lastlast = solution at time t^{0}
         """
-        for modelc in [self.densityModel.q, self.densityModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.densityModel.ebqe]:
-            for ci in range(self.density_nc):
-                if self.bdf is int(2):
-                    modelc[('u_lastlast',ci)][:] = modelc[('u',ci)]
-                    modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)',ci)]
-                modelc[('u_last',ci)][:] = modelc[('u',ci)]
-                modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
+        for model in self.modelList:
+            for transfer_from_c, transfer_to_c in zip([model.q, model.numericalFlux.ebqe if self.useNumericalFluxEbqe else model.ebqe],
+                                                      [model.q, model.ebqe]):
+                for ci in range(model.nc):
+                    if self.bdf is int(2):
+                        transfer_to_c[('u_lastlast',ci)][:] = transfer_from_c[('u',ci)]
+                        transfer_to_c[('grad(u)_lastlast',ci)][:] = transfer_from_c[('grad(u)',ci)]
+                    transfer_to_c[('u_last',ci)][:] = transfer_from_c[('u',ci)]
+                    transfer_to_c[('grad(u)_last',ci)][:] = transfer_from_c[('grad(u)',ci)]
 
-        for modelc in [self.velocityModel.q, self.velocityModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.velocityModel.ebqe]:
-            for ci in range(self.velocity_nc):
-                if self.bdf is int(2):
-                    modelc[('u_lastlast',ci)][:] = modelc[('u',ci)]
-                    modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)',ci)]
-                modelc[('u_last',ci)][:] = modelc[('u',ci)]
-                modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
-
-        for modelc in [self.pressureIncrementModel.q, self.pressureIncrementModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.pressureIncrementModel.ebqe]:
-            for ci in range(self.pressureIncrement_nc):
-                if self.bdf is int(2):
-                    modelc[('u_lastlast',ci)][:] = modelc[('u',ci)]
-                    modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)',ci)]
-                modelc[('u_last',ci)][:] = modelc[('u',ci)]
-                modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
-
-        for modelc in [self.pressureModel.q, self.pressureModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.pressureModel.ebqe]:
-            for ci in range(self.pressure_nc):
-                if self.bdf is int(2):
-                    modelc[('u_lastlast',ci)][:] = modelc[('u',ci)]
-                    modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)',ci)]
-                modelc[('u_last',ci)][:] = modelc[('u',ci)]
-                modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
 
     def updateHistory(self):
         """
@@ -82,39 +54,15 @@ class HistoryManipulation:
               u_last = solution at time t^{n-1}
               u_lastlast = solution at time t^{n-2}
         """
-        for modelc in [self.densityModel.q, self.densityModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.densityModel.ebqe]:
-            for ci in range(self.density_nc):
-                if self.bdf is int(2):
-                    modelc[('u_lastlast',ci)][:] = modelc[('u_last',ci)]
-                    modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)_last',ci)]
-                modelc[('u_last',ci)][:] = modelc[('u',ci)]
-                modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
-
-        for modelc in [self.velocityModel.q, self.velocityModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.velocityModel.ebqe]:
-            for ci in range(self.velocity_nc):
-                if self.bdf is int(2):
-                    modelc[('u_lastlast',ci)][:] = modelc[('u_last',ci)]
-                    modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)_last',ci)]
-                modelc[('u_last',ci)][:] = modelc[('u',ci)]
-                modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
-
-        for modelc in [self.pressureIncrementModel.q, self.pressureIncrementModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.pressureIncrementModel.ebqe]:
-            for ci in range(self.pressureIncrement_nc):
-                if self.bdf is int(2):
-                    modelc[('u_lastlast',ci)][:] = modelc[('u_last',ci)]
-                    modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)_last',ci)]
-                modelc[('u_last',ci)][:] = modelc[('u',ci)]
-                modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
-
-        for modelc in [self.pressureModel.q, self.pressureModel.numericalFlux.ebqe if self.useNumericalFluxEbqe else self.pressureModel.ebqe]:
-            for ci in range(self.pressure_nc):
-                if self.bdf is int(2):
-                    modelc[('u_lastlast',ci)][:] = modelc[('u_last',ci)]
-                    modelc[('grad(u)_lastlast',ci)][:] = modelc[('grad(u)_last',ci)]
-                modelc[('u_last',ci)][:] = modelc[('u',ci)]
-                modelc[('grad(u)_last',ci)][:] = modelc[('grad(u)',ci)]
-
-
+        for model in self.modelList:
+            for transfer_from_c, transfer_to_c in zip([model.q, model.numericalFlux.ebqe if self.useNumericalFluxEbqe else model.ebqe],
+                                                      [model.q, model.ebqe]):
+                for ci in range(model.nc):
+                    if self.bdf is int(2):
+                        transfer_to_c[('u_lastlast',ci)][:] = transfer_from_c[('u_last',ci)]
+                        transfer_to_c[('grad(u)_lastlast',ci)][:] = transfer_from_c[('grad(u)_last',ci)]
+                    transfer_to_c[('u_last',ci)][:] = transfer_from_c[('u',ci)]
+                    transfer_to_c[('grad(u)_last',ci)][:] = transfer_from_c[('grad(u)',ci)]
 
 
 class DensityTransport2D(TransportCoefficients.TC_base):
