@@ -169,17 +169,17 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             self.model.points_quadrature.add(('u_last',ci))
             self.model.points_elementBoundaryQuadrature.add(('u_last',ci))
-            self.model.numericalFlux.ebqe[('u_last',ci)]=self.model.ebqe[('u_last',ci)]
+            self.model.numericalFlux.ebqe[('u_last',ci)]=deepcopy(self.model.ebqe[('u_last',ci)])
             self.model.vectors_quadrature.add(('grad(u)_last',ci))
             self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',ci))
-            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=self.model.ebqe[('grad(u)_last',ci)]
+            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=deepcopy(self.model.ebqe[('grad(u)_last',ci)])
             if self.bdf is int(2):
                 self.model.points_quadrature.add(('u_lastlast',ci))
                 self.model.points_elementBoundaryQuadrature.add(('u_lastlast',ci))
-                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=self.model.ebqe[('u_lastlast',ci)]
+                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=deepcopy(self.model.ebqe[('u_lastlast',ci)])
                 self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
                 self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
-                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
+                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=deepcopy(self.model.ebqe[('grad(u)_lastlast',ci)])
 
         if (not self.useVelocityComponents and self.velocityModelIndex >=0
             and self.pressureIncrementModelIndex >= 0 and self.velocityFunction is None):
@@ -600,17 +600,17 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             self.model.points_quadrature.add(('u_last',ci))
             self.model.points_elementBoundaryQuadrature.add(('u_last',ci))
-            self.model.numericalFlux.ebqe[('u_last',ci)]=self.model.ebqe[('u_last',ci)]
+            self.model.numericalFlux.ebqe[('u_last',ci)]=deepcopy(self.model.ebqe[('u_last',ci)])
             self.model.vectors_quadrature.add(('grad(u)_last',ci))
             self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',ci))
-            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=self.model.ebqe[('grad(u)_last',ci)]
+            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=deepcopy(self.model.ebqe[('grad(u)_last',ci)])
             if self.bdf is int(2):
                 self.model.points_quadrature.add(('u_lastlast',ci))
                 self.model.points_elementBoundaryQuadrature.add(('u_lastlast',ci))
-                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=self.model.ebqe[('u_lastlast',ci)]
+                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=deepcopy(self.model.ebqe[('u_lastlast',ci)])
                 self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
                 self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
-                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
+                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=deepcopy(self.model.ebqe[('grad(u)_lastlast',ci)])
         if (self.densityModelIndex >= 0 and self.densityFunction is None):
             assert self.densityModelIndex < len(modelList), \
                 "density model index out of range 0," + repr(len(modelList))
@@ -1058,17 +1058,17 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             self.model.points_quadrature.add(('u_last',ci))
             self.model.points_elementBoundaryQuadrature.add(('u_last',ci))
-            self.model.numericalFlux.ebqe[('u_last',ci)]=self.model.ebqe[('u_last',ci)]
+            self.model.numericalFlux.ebqe[('u_last',ci)]=deepcopy(self.model.ebqe[('u_last',ci)])
             self.model.vectors_quadrature.add(('grad(u)_last',ci))
             self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',ci))
-            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=self.model.ebqe[('grad(u)_last',ci)]
+            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=deepcopy(self.model.ebqe[('grad(u)_last',ci)])
             if self.bdf is int(2):
                 self.model.points_quadrature.add(('u_lastlast',ci))
                 self.model.points_elementBoundaryQuadrature.add(('u_lastlast',ci))
-                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=self.model.ebqe[('u_lastlast',ci)]
+                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=deepcopy(self.model.ebqe[('u_lastlast',ci)])
                 self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
                 self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
-                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
+                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=deepcopy(self.model.ebqe[('grad(u)_lastlast',ci)])
 
         if (self.velocityModelIndex >= 0 and self.velocityFunction is None):
             assert self.velocityModelIndex < len(modelList), \
@@ -1374,17 +1374,17 @@ class Pressure2D(TransportCoefficients.TC_base):
         for ci in range(self.nc):
             self.model.points_quadrature.add(('u_last',ci))
             self.model.points_elementBoundaryQuadrature.add(('u_last',ci))
-            self.model.numericalFlux.ebqe[('u_last',ci)]=self.model.ebqe[('u_last',ci)]
+            self.model.numericalFlux.ebqe[('u_last',ci)]=deepcopy(self.model.ebqe[('u_last',ci)])
             self.model.vectors_quadrature.add(('grad(u)_last',ci))
             self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_last',ci))
-            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=self.model.ebqe[('grad(u)_last',ci)]
+            self.model.numericalFlux.ebqe[('grad(u)_last',ci)]=deepcopy(self.model.ebqe[('grad(u)_last',ci)])
             if self.bdf is int(2):
                 self.model.points_quadrature.add(('u_lastlast',ci))
                 self.model.points_elementBoundaryQuadrature.add(('u_lastlast',ci))
-                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=self.model.ebqe[('u_lastlast',ci)]
+                self.model.numericalFlux.ebqe[('u_lastlast',ci)]=deepcopy(self.model.ebqe[('u_lastlast',ci)])
                 self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
                 self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
-                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=self.model.ebqe[('grad(u)_lastlast',ci)]
+                self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=deepcopy(self.model.ebqe[('grad(u)_lastlast',ci)])
         if (self.usePressureExtrapolations and self.velocityModelIndex >= 0):
             self.velocityModel = modelList[self.velocityModelIndex]
 
