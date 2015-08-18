@@ -13,16 +13,17 @@ parser.add_argument('-np','--num_proc', dest='num_proc',
                     action='store',  default=1,
                     type=int, required=False,
                     help="""Specify the number of processors which produced the """
-                    """data in results/*_p.db format and need to be analyzed. """
-                    """If np>1 then use the -s option to input filenames."""  )
+                    """data in results/[short_names]_p.db format and need to be analyzed.  """
+                    """If np>1, then use the -s option to input filenames."""  )
 
 parser.add_argument('-s','--short_name_string', dest='short_names', default=None,
                     action='append', required=False,
                     help="""Give the shortened names for multiple processor """
-                    """files, mainly the base name ex: results/velocity_BDF2_dt_0_100000 """
-                    """ which is short for results/velocity_BDF2_dt_0_100000_p.db"""
-                    """ for the pth processor file.  Use the -np option to tell """
-                    """it how many files (num processors) to expect of that form.  """
+                    """files, ie the base name before the processor number.  For """
+                    """example: results/velocity_BDF2_dt_0_100000"""
+                    """ is short for the pth processor file results/velocity_BDF2_dt_0_100000_p.db"""
+                    """  Use the -np option to tell it how many files """
+                    """(num processors) to expect of that form.  """
                     """Place a -s in front of each basefile name provided.""")
 
 parser.add_argument('-p','--plot', dest='usePlots',
@@ -37,7 +38,7 @@ parser.add_argument('-a','--adaptiveTimeStep', dest='useAdaptiveTimeStepCalculat
                     action='store_true', default=False,
                     help="""Calculate results using num time steps instead of dt."""
                     """This is for error analysis with adaptive time stepping."""
-                    """It is consistent with the uniform time stepping calculation"""
+                    """  It is consistent with the uniform time stepping calculation"""
                     """ and so can be used in any case.""")
 
 parser.add_argument('-t','--type', dest='type', default='variable',
@@ -49,7 +50,8 @@ parser.add_argument('-t','--type', dest='type', default='variable',
 
 parser.add_argument('file_names', nargs=argparse.REMAINDER,
                     help="""If output is from a single processor, you can still"""
-                    """ list the files in order at the end without flags and it """
+                    """ list the files in order of decreasing timestep size or """
+                    """increasing number of time steps at the end without flags and it """
                     """will pick them up and analyze them.""")
 
 args = parser.parse_args()
