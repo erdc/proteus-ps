@@ -36,10 +36,7 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 #numericalFluxType = MixedDarcy_exterior
 #numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_SIPG_exterior
 #numericalFluxType = NumericalFlux.Advection_Diagonal_average
-if ctx.useConservativePressureTerm:
-    numericalFluxType = NumericalFlux.HamiltonJacobi_Advection_pN_DiagonalLesaintRaviart_Diffusion_SIPG_exterior
-else:
-    numericalFluxType = NumericalFlux.HamiltonJacobi_DiagonalLesaintRaviart_Diffusion_SIPG_exterior
+numericalFluxType = NumericalFlux.HamiltonJacobi_DiagonalLesaintRaviart_Diffusion_SIPG_exterior
 
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
