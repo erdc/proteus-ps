@@ -30,6 +30,7 @@ useVelocityComponents = True  # False uses post processed velocity,
 useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
 setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
 usePressureExtrapolations = False # use p_star instead of p_last in velocity and pressure model
+useConservativePressureTerm = True # use < -pI, grad w>  instead of < grad p, w> in velocity update
 
 # Spatial Discretization  he = he_coeff*2*Pi/150.0
 he_coeff = 0.75 # default to match Guermond paper: 0.75
