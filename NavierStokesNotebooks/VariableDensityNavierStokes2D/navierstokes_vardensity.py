@@ -20,11 +20,12 @@ quad_degree = 5  # exact for polynomials of this degree
 
 # Model Flags
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
-useRotationalModel = True #  Standard vs Rotational models in pressure update
+useRotationalModel = False #  Standard vs Rotational models in pressure update
 useStabilityTerms = True  # stability terms in density and velocity models
 useNonlinearAdvection = False # switches between extrapolated and fully nonlinear advection in velocity model
 useNumericalFluxEbqe = True # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
+useDirichletPressureIncrementBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useVelocityComponents = True  # False uses post processed velocity,
 useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
 setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
@@ -34,9 +35,11 @@ usePressureExtrapolations = False # use p_star instead of p_last in velocity and
 he_coeff = 0.75 # default to match Guermond paper: 0.75
 
 # setup time variables
-T = 1.0
+T = 2.0
 DT = 0.1  # target time step size
-
+#DT *= 0.5
+#DT *= 0.5
+#DT *= 0.5
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
     nFrames = int(T/DT) + 1

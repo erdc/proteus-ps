@@ -15,7 +15,7 @@ name = "pressureincrement"
 # from pnList in *_so.py  0 = density,  1 = (u,v),  2 = (pressureincrement),  3 = (pressure)
 coefficients=NavierStokes.PressureIncrement2D(bdf=ctx.globalBDFTimeOrder,
                                               chiValue=ctx.chi,
-                                              zeroMean=not ctx.useDirichletPressureBC,
+                                              zeroMean=not ctx.useDirichletPressureIncrementBC,
                                               densityModelIndex=0,
                                               velocityModelIndex=1,
                                               velocityFunction=None, # use ctx.velocityFunction for exact velocity
@@ -33,16 +33,13 @@ def getDBC_p(x,flag):
         return lambda x,t: 0.0
 
 def getDBC_fixed(x,flag):
-    if flag in [ctx.boundaryTags['fixed']]:
-        return lambda x,t: 0.0
+    return None
 
 def getNone(x,flag):
     return None
 
 def getDiffusiveFlux(x,flag):
-    return None
-#    if flag not in [ctx.boundaryTags['fixed']]:
-#        return lambda x,t: 0.0
+    return lambda x,t: 0.0
 
 class getIBC_p:
     def __init__(self):
@@ -53,11 +50,14 @@ class getIBC_p:
 
 initialConditions = {0:getIBC_p()}
 
-if ctx.useDirichletPressureBC:
+if ctx.useDirichletPressureIncrementBC:
     dirichletConditions = {0:getDBC_p }
 else:
     dirichletConditions = {0:getDBC_fixed }
 
 advectiveFluxBoundaryConditions = {0:getNone}
 
-diffusiveFluxBoundaryConditions = {0:{0:getDiffusiveFlux}}
+if ctx.useDirichletPressureIncrementBC:
+    diffusiveFluxBoundaryConditions = {0:{0:getNone}}
+else:
+    diffusiveFluxBoundaryConditions = {0:{0:getDiffusiveFlux}}

@@ -1224,7 +1224,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         from math import fabs
         import proteus.Norms as Norms
-        from flcbdfWrappers import globalSum,globalMax
+        from proteus.flcbdfWrappers import globalSum,globalMax
 
 
         # Do adjustment to get zero value for mean of pressure increment
