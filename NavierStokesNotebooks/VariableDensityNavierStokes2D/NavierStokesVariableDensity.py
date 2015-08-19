@@ -1223,8 +1223,8 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
             if ('u',0) in self.velocityModel.ebqe:
-                u = self.velocityModel.ebqe[('u',0)]
-                v = self.velocityModel.ebqe[('u',1)]
+                u = self.velocityModel.numericalFlux.ebqe[('u',0)]
+                v = self.velocityModel.numericalFlux.ebqe[('u',1)]
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
             if ('u',0) in self.velocityModel.ebq_global:
