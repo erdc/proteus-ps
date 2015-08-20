@@ -33,11 +33,11 @@ elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
 elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_degree)
 
 
-if False: #not ctx.useStabilityTerms:
+if True:#not ctx.useStabilityTerms:
+    #the matrix appears to be indefinite without these
     subgridError = SubgridError.Advection_ASGS(coefficients,
                                                ctx.nd,
                                                lag=False)
-
 #numerics.shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(physics.coefficients,
 #                                                                physics.nd,
 #                                                                lag = True,
@@ -46,7 +46,7 @@ if False: #not ctx.useStabilityTerms:
 
 #matrix type
 #numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
-numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_SIPG_exterior #weak boundary conditions (upwind)
+numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_exterior #weak boundary conditions (upwind)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
@@ -71,8 +71,8 @@ levelNonlinearSolver = NonlinearSolvers.Newton
 
 #linear solve rtolerance
 
-linTolFac = 0.001
-l_atol_res = 0.001*ctx.density_atol_res
+linTolFac = 0.0
+l_atol_res = 0.1*ctx.density_atol_res
 tolFac = 0.0
 nl_atol_res = ctx.density_atol_res
 nonlinearSolverConvergenceTest = 'r'

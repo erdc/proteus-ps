@@ -33,12 +33,27 @@ def getDBC_p(x,flag):
         return lambda x,t: 0.0
 
 def getDBC_fixed(x,flag):
-    return None
+    if flag == ctx.boundaryTags['fixed']:
+        return lambda x,t: 0.0
+    else:
+        return None
 
 def getNone(x,flag):
     return None
 
-def getDiffusiveFlux(x,flag):
+def getAdvectiveFlux(x,flag):
+    if flag == 0:
+        return lambda x,t: 0.0
+
+def getDiffusiveFlux_p(x,flag):
+    if flag == 0:
+        return lambda x,t: 0.0
+
+def getDiffusiveFlux_fixed(x,flag):
+    if flag != ctx.boundaryTags['fixed']:
+        return lambda x,t: 0.0
+
+def getDiffusiveFlux_None(x,flag):
     return lambda x,t: 0.0
 
 class getIBC_p:
@@ -52,12 +67,14 @@ initialConditions = {0:getIBC_p()}
 
 if ctx.useDirichletPressureIncrementBC:
     dirichletConditions = {0:getDBC_p }
+    advectiveFluxBoundaryConditions = {0:getAdvectiveFlux}
+    diffusiveFluxBoundaryConditions = {0:{0:getDiffusiveFlux_p}}
 else:
-    dirichletConditions = {0:getDBC_fixed }
-
-advectiveFluxBoundaryConditions = {0:getNone}
-
-if ctx.useDirichletPressureIncrementBC:
-    diffusiveFluxBoundaryConditions = {0:{0:getNone}}
-else:
-    diffusiveFluxBoundaryConditions = {0:{0:getDiffusiveFlux}}
+    if ctx.useNoFluxPressureIncrementBC:
+        dirichletConditions = {0:getNone }
+        advectiveFluxBoundaryConditions = {0:getAdvectiveFlux}
+        diffusiveFluxBoundaryConditions = {0:{0:getDiffusiveFlux_None}}
+    else:
+        dirichletConditions = {0:getDBC_fixed }
+        advectiveFluxBoundaryConditions = {0:getAdvectiveFlux}
+        diffusiveFluxBoundaryConditions = {0:{0:getDiffusiveFlux_fixed}}

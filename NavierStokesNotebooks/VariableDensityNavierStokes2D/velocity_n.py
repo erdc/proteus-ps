@@ -68,8 +68,8 @@ levelNonlinearSolver = NonlinearSolvers.Newton
 # l_atol_res = 1.0e-5
 # nl_atol_res = 1.0e-5
 
-linTolFac = 0.001
-l_atol_res = 0.001*ctx.velocity_atol_res
+linTolFac = 0.0
+l_atol_res = 0.1*ctx.velocity_atol_res
 tolFac = 0.0
 nl_atol_res = ctx.velocity_atol_res
 nonlinearSolverConvergenceTest      = 'r'

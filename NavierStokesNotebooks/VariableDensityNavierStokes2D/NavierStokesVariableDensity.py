@@ -65,6 +65,113 @@ class HistoryManipulation:
                     transfer_to_c[('grad(u)_last',ci)][:] = transfer_from_c[('grad(u)',ci)]
 
 
+class DensityTransport2D_check(TransportCoefficients.TC_base):
+    r"""
+    The coefficients for conservative mass transport
+
+    Conservation of mass is given by
+
+    .. math::
+
+       \frac{\partial\rho}{\partial t}+\nabla\cdot\left(\rho\mathbf{v}\right)-rho/2*\nabla\cdot\mathbf{v}=0
+    """
+    def __init__(self,
+                 bdf=1,
+                 currentModelIndex=0,
+                 densityFunction=None,
+                 velocityModelIndex=-1,
+                 velocityFunction=None,
+                 divVelocityFunction=None,
+                 useVelocityComponents=True,
+                 chiValue=1.0,  # only needed for the scaling adjustment in case of post processed velocity
+                 pressureIncrementModelIndex=-1,
+                 useStabilityTerms=False,
+                 setFirstTimeStepValues=True,
+                 useNumericalFluxEbqe=False):
+        TransportCoefficients.TC_base.__init__(self,
+                                               nc = 1,
+                                               variableNames = ['rho'],
+                                               mass = {0:{0:'nonlinear'}},
+                                               advection = {0:{0:'nonlinear'}},
+                                               reaction = {0:{0:'nonlinear'}} if useStabilityTerms else {} ) # for the stability term
+        self.bdf=int(bdf)
+        self.currentModelIndex = currentModelIndex
+        self.densityFunction = densityFunction
+        self.velocityModelIndex = velocityModelIndex
+        self.velocityFunction = velocityFunction
+        self.divVelocityFunction = divVelocityFunction
+        self.useVelocityComponents = useVelocityComponents
+        self.chiValue = chiValue
+        self.pressureIncrementModelIndex=pressureIncrementModelIndex
+        self.c_u_last = {}
+        self.c_v_last = {}
+        self.c_u_lastlast = {}
+        self.c_v_lastlast = {}
+        self.c_velocity_last = {}
+        self.c_grad_u_last = {}
+        self.c_grad_v_last = {}
+        self.c_grad_u_lastlast = {}
+        self.c_grad_v_lastlast = {}
+        self.useStabilityTerms = useStabilityTerms
+        self.firstStep = True # manipulated in preStep()
+        self.setFirstTimeStepValues = setFirstTimeStepValues
+        self.useNumericalFluxEbqe = useNumericalFluxEbqe
+
+    def attachModels(self,modelList):
+        pass
+    def initializeMesh(self,mesh):
+        """
+        Give the TC object access to the mesh for any mesh-dependent information.
+        """
+        pass
+    def initializeElementQuadrature(self,t,cq):
+        """
+        Give the TC object access to the element quadrature storage
+        """
+        pass
+    def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
+        """
+        Give the TC object access to the element boundary quadrature storage
+        """
+        pass
+    def initializeGlobalExteriorElementBoundaryQuadrature(self,t,cebqe):
+        """
+        Give the TC object access to the exterior element boundary quadrature storage
+        """
+        pass
+    def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
+        """
+        Give the TC object access to the generalized interpolation point storage. These points are used  to project nonlinear potentials (phi).
+        """
+        pass
+    def preStep(self,t,firstStep=False):
+        """
+        Give the TC object an opportunity to modify itself before the time step.
+        """
+        pass
+    def postStep(self,t,firstStep=False):
+        """
+        Give the TC object an opportunity to modify itself before the time step.
+        """
+        pass
+    def evaluate(self,t,c):
+        """
+        Evaluate the coefficients after getting the specified velocity
+        """
+        from math import cos
+        u_star = - c['x'][...,1]*cos(t)
+        v_star =   c['x'][...,0]*cos(t)
+        rho = c[('u',0)]
+        c[('m',0)][:] = rho
+        c[('dm',0,0)][:] = 1.0
+        c[('f',0)][...,0] = rho*u_star
+        c[('f',0)][...,1] = rho*v_star
+        c[('df',0,0)][...,0] = u_star
+        c[('df',0,0)][...,1] = v_star
+        if self.useStabilityTerms:
+            c[('r',0)][:]    = -0.5*rho*div_vel_star
+            c[('dr',0,0)][:] = -0.5*div_vel_star
+
 class DensityTransport2D(TransportCoefficients.TC_base):
     r"""
     The coefficients for conservative mass transport
@@ -110,9 +217,9 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         TransportCoefficients.TC_base.__init__(self,
                                                nc = 1,
                                                variableNames = ['rho'],
-                                               mass = {0:{0:'linear'}},
-                                               advection = {0:{0:'linear'}},
-                                               reaction = {0:{0:'linear'}} if useStabilityTerms else {} ) # for the stability term
+                                               mass = {0:{0:'nonlinear'}},
+                                               advection = {0:{0:'nonlinear'}},
+                                               reaction = {0:{0:'nonlinear'}} if useStabilityTerms else {} ) # for the stability term
         self.bdf=int(bdf)
         self.currentModelIndex = currentModelIndex
         self.densityFunction = densityFunction
@@ -1232,6 +1339,10 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                 v = self.velocityModel.ebq_global[('u',1)]
                 self.c_u[u.shape] = u
                 self.c_v[v.shape] = v
+        elif (self.velocityModelIndex >= 0):
+            assert self.velocityModelIndex < len(modelList), \
+                "velocity model index out of  range 0," + repr(len(modelList))
+            self.velocityModel = modelList[self.velocityModelIndex]
         if self.densityModelIndex >= 0:  # make this model available to test vs chi
             assert self.densityModelIndex < len(modelList), \
                 "density model index out of range 0," + repr(len(modelList))

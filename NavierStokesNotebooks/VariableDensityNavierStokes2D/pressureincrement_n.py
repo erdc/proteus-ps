@@ -23,15 +23,14 @@ matrix = LinearAlgebraTools.SparseMatrix
 #numerics.levelLinearSolver = LinearSolvers.KSP_petsc4py
 #using petsc4py requires weak boundary condition enforcement
 #can also use our internal wrapper for SuperLU
-if ctx.useDirichletPressureIncrementBC:
-    multilevelLinearSolver = LinearSolvers.LU
-    levelLinearSolver = LinearSolvers.LU
-else:
+
+if ctx.useNoFluxPressureIncrementBC:
     linearSmoother    = LinearSolvers.NavierStokesPressureCorrection
     multilevelLinearSolver = LinearSolvers.KSP_petsc4py
     levelLinearSolver = LinearSolvers.KSP_petsc4py
-    parallelPartitioningType = ctx.parallelPartitioningType
-    nLayersOfOverlapForParallel = ctx.nLayersOfOverlapForParallel
+else:
+    multilevelLinearSolver = LinearSolvers.LU
+    levelLinearSolver = LinearSolvers.LU
 
 linear_solver_options_prefix = 'phi_'
 
@@ -47,7 +46,7 @@ levelNonlinearSolver = NonlinearSolvers.Newton
 #linear solve rtolerance
 
 linTolFac = 0.0
-l_atol_res = 0.001*ctx.phi_atol_res
+l_atol_res = 0.1*ctx.phi_atol_res
 tolFac = 0.0
 nl_atol_res = ctx.phi_atol_res
 nonlinearSolverConvergenceTest = 'r'
