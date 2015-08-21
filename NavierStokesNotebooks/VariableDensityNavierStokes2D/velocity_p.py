@@ -57,19 +57,6 @@ def getDBC_v(x,flag):
     else:
         return None
 
-def getNone(x,flag):
-    return None
-
-def getZeroFlux(x,flag):
-    if flag in [ctx.boundaryTags['bottom'],
-                ctx.boundaryTags['top'],
-                ctx.boundaryTags['fixed']]:
-        return lambda x,t: 0.0
-    elif flag == 0:
-       return lambda x,t: 0.0
-    else:
-        return None
-
 def getDFlux(x,flag):
     if flag == 0: # artificial boundary from parallelization
        return lambda x,t: 0.0

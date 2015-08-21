@@ -45,6 +45,13 @@ class HistoryManipulation:
                     transfer_to_c[('grad(u)_last',ci)][:] = transfer_from_c[('grad(u)',ci)]
 
 
+            for transfer_from_c, transfer_to_c in zip([model.q, model.ebqe],
+                                                      [model.q, model.ebqe]):
+                if ('velocity_last',0) in transfer_to_c:
+                    if self.bdf is int(2):
+                        transfer_to_c[('velocity_lastlast',0)][:] = transfer_from_c[('velocity',0)]
+                    transfer_to_c[('velocity_last',0)][:] = transfer_from_c[('velocity',0)]
+
     def updateHistory(self):
         """
             Transfer the solutions backward so that they represent the previous
@@ -64,6 +71,12 @@ class HistoryManipulation:
                     transfer_to_c[('u_last',ci)][:] = transfer_from_c[('u',ci)]
                     transfer_to_c[('grad(u)_last',ci)][:] = transfer_from_c[('grad(u)',ci)]
 
+            for transfer_from_c, transfer_to_c in zip([model.q, model.ebqe],
+                                                      [model.q, model.ebqe]):
+                if ('velocity_last',0) in transfer_to_c:
+                    if self.bdf is int(2):
+                        transfer_to_c[('velocity_lastlast',0)][:] = transfer_from_c[('velocity_last',0)]
+                    transfer_to_c[('velocity_last',0)][:] = transfer_from_c[('velocity',0)]
 
 class DensityTransport2D_check(TransportCoefficients.TC_base):
     r"""
@@ -108,6 +121,7 @@ class DensityTransport2D_check(TransportCoefficients.TC_base):
         self.c_u_lastlast = {}
         self.c_v_lastlast = {}
         self.c_velocity_last = {}
+        self.c_velocity_lastlast = {}
         self.c_grad_u_last = {}
         self.c_grad_v_last = {}
         self.c_grad_u_lastlast = {}
@@ -234,6 +248,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         self.c_u_lastlast = {}
         self.c_v_lastlast = {}
         self.c_velocity_last = {}
+        self.c_velocity_lastlast = {}
         self.c_grad_u_last = {}
         self.c_grad_v_last = {}
         self.c_grad_u_lastlast = {}
@@ -298,32 +313,39 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             self.velocityModel = modelList[self.velocityModelIndex]
             self.pressureIncrementModel = modelList[self.pressureIncrementModelIndex]
             if ('velocity',0) in self.pressureIncrementModel.q:
-                vel_last = self.pressureIncrementModel.q[('velocity',0)]
+                vel_last = self.pressureIncrementModel.q[('velocity_last',0)]
                 self.c_velocity_last[vel_last.shape] = vel_last
+                if self.bdf is int(2):
+                    vel_lastlast = self.pressureIncrementModel.q[('velocity_lastlast',0)]
+                    self.c_velocity_lastlast[vel_last.shape] = vel_last
                 if self.useStabilityTerms:
                     grad_u_last = self.velocityModel.q[('grad(u)',0)]
                     grad_v_last = self.velocityModel.q[('grad(u)',1)]
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
             if ('velocity',0) in self.pressureIncrementModel.ebq:
-                vel_last = self.pressureIncrementModel.ebq[('velocity',0)]
+                vel_last = self.pressureIncrementModel.ebq[('velocity_last',0)]
                 self.c_velocity_last[vel_last.shape] = vel_last
+                if self.bdf is int(2):
+                    vel_lastlast = self.pressureIncrementModel.ebq[('velocity_lastlast',0)]
+                    self.c_velocity_lastlast[vel_last.shape] = vel_last
                 if self.useStabilityTerms:
                     grad_u_last = self.velocityModel.ebq[('grad(u)',0)]
                     grad_v_last = self.velocityModel.ebq[('grad(u)',1)]
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
             if ('velocity',0) in self.pressureIncrementModel.ebqe:
-                vel_last = self.pressureIncrementModel.ebqe[('velocity',0)]
+                vel_last = self.pressureIncrementModel.ebqe[('velocity_last',0)]
                 self.c_velocity_last[vel_last.shape] = vel_last
+                if self.bdf is int(2):
+                    vel_lastlast = self.pressureIncrementModel.ebqe[('velocity_lastlast',0)]
+                    self.c_velocity_lastlast[vel_last.shape] = vel_last
                 if self.useStabilityTerms:
                     grad_u_last = self.velocityModel.ebqe[('grad(u)',0)]
                     grad_v_last = self.velocityModel.ebqe[('grad(u)',1)]
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
             if ('velocity',0) in self.pressureIncrementModel.ebq_global:
-                vel_last = self.pressureIncrementModel.ebq_global[('velocity',0)]
-                self.c_velocity_last[vel_last.shape] = vel_last
                 if self.useStabilityTerms:
                     grad_u_last = self.velocityModel.ebq_global[('grad(u)',0)]
                     grad_v_last = self.velocityModel.ebq_global[('grad(u)',1)]
@@ -433,12 +455,12 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         """
         Give the TC object access to the element boundary quadrature storage
         """
-        # for ci in range(self.nc):
-        #     cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
-        #     cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
-        #     cebq_global[('u_last',ci)] = deepcopy(cebq_global[('u',ci)])
-        #     cebq_global[('grad(u)_last',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
-        pass
+        for ci in range(self.nc):
+            cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
+            cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
+            if self.bdf is int(2):
+                cebq[('u_lastlast',ci)] = deepcopy(cebq[('u',ci)])
+                cebq[('grad(u)_lastlast',ci)] = deepcopy(cebq[('grad(u)_last',ci)])
     def initializeGlobalExteriorElementBoundaryQuadrature(self,t,cebqe):
         """
         Give the TC object access to the exterior element boundary quadrature storage
@@ -548,9 +570,14 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 v_lastlast = self.velocityFunction(c['x'],tLastLast)[...,1]
                 if self.useStabilityTerms:
                     div_vel_lastlast = self.divVelocityFunction(c['x'],tLastLast)
-            else:  # TODO: add if not self.useVelocityComponents condition here
+            elif self.useVelocityComponents:
                 u_lastlast = self.c_u_lastlast[u_shape]
                 v_lastlast = self.c_v_lastlast[u_shape]
+                if self.useStabilityTerms:
+                    div_vel_lastlast = self.c_grad_u_lastlast[grad_shape][...,0] + self.c_grad_v_lastlast[grad_shape][...,1]
+            else:
+                u_lastlast = self.c_velocity_lastlast[grad_shape][...,0]
+                v_lastlast = self.c_velocity_lastlast[grad_shape][...,1]
                 if self.useStabilityTerms:
                     div_vel_lastlast = self.c_grad_u_lastlast[grad_shape][...,0] + self.c_grad_v_lastlast[grad_shape][...,1]
 
@@ -907,22 +934,16 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             if self.bdf is int(2):
                 cq[('u_lastlast',ci)] = deepcopy(cq[('u',ci)])
                 cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)',ci)])
-
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
         """
-        # for ci in range(self.nc):
-        #     cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
-        #     cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
-        #     cebq_global[('u_last',ci)] = deepcopy(cebq_global[('u',ci)])
-        #     cebq_global[('grad(u)_last',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
-        #     if self.bdf is int(2):
-        #         cebq[('u_lastlast',ci)] = deepcopy(cebq[('u',ci)])
-        #         cebq[('grad(u)_lastlast',ci)] = deepcopy(cebq[('grad(u)',ci)])
-        #         cebq_global[('u_lastlast',ci)] = deepcopy(cebq_global[('u',ci)])
-        #         cebq_global[('grad(u)_lastlast',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
-        pass
+        for ci in range(self.nc):
+            cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
+            cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
+            if self.bdf is int(2):
+                cebq[('u_lastlast',ci)] = deepcopy(cebq[('u',ci)])
+                cebq[('grad(u)_lastlast',ci)] = deepcopy(cebq[('grad(u)',ci)])
     def initializeGlobalExteriorElementBoundaryQuadrature(self,t,cebqe):
         """
         Give the TC object access to the exterior element boundary quadrature storage
@@ -1134,7 +1155,10 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         # choose the density to use on the mass term,  bdf1 is rho_last,  bdf2 is current rho
         # as well as the other various element (not velocity) that differ between bdf1 and bdf2
         if self.bdf is int(1) or self.firstStep:
-            rho_sharp = rho_last
+            if self.useStabilityTerms:
+                rho_sharp = rho_last
+            else:
+                rho_sharp = rho
             rho_t = (rho - rho_last)/dt # bdf1 time derivative
         elif self.bdf is int(2):
             rho_sharp = rho
@@ -1374,22 +1398,23 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             if self.bdf is int(2):
                 cq[('u_lastlast',ci)] = deepcopy(cq[('u',ci)])
                 cq[('grad(u)_lastlast',ci)] = deepcopy(cq[('grad(u)',ci)])
+        cq[('velocity_last',0)] = deepcopy(cq[('velocity',0)])
+        if self.bdf is int(2):
+            cq[('velocity_lastlast',0)] = deepcopy(cq[('velocity',0)])
 
     def initializeElementBoundaryQuadrature(self,t,cebq,cebq_global):
         """
         Give the TC object access to the element boundary quadrature storage
         """
-        # for ci in range(self.nc):
-        #     cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
-        #     cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
-        #     cebq_global[('u_last',ci)] = deepcopy(cebq_global[('u',ci)])
-        #     cebq_global[('grad(u)_last',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
-        #     if self.bdf is int(2):
-        #         cebq[('u_lastlast',ci)] = deepcopy(cebq[('u',ci)])
-        #         cebq[('grad(u)_lastlast',ci)] = deepcopy(cebq[('grad(u)',ci)])
-        #         cebq_global[('u_lastlast',ci)] = deepcopy(cebq_global[('u',ci)])
-        #         cebq_global[('grad(u)_lastlast',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
-        pass
+        for ci in range(self.nc):
+            cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
+            cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
+            if self.bdf is int(2):
+                cebq[('u_lastlast',ci)] = deepcopy(cebq[('u',ci)])
+                cebq[('grad(u)_lastlast',ci)] = deepcopy(cebq[('grad(u)',ci)])
+        cebq[('velocity_last',0)] = deepcopy(cebq[('velocity',0)])
+        if self.bdf is int(2):
+            cebq[('velocity_lastlast',0)] = deepcopy(cebq[('velocity',0)])
     def initializeGlobalExteriorElementBoundaryQuadrature(self,t,cebqe):
         """
         Give the TC object access to the exterior element boundary quadrature storage
@@ -1400,8 +1425,9 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             if self.bdf is int(2):
                 cebqe[('u_lastlast',ci)] = deepcopy(cebqe[('u',ci)])
                 cebqe[('grad(u)_lastlast',ci)] = deepcopy(cebqe[('grad(u)',ci)])
-
-
+        cebqe[('velocity_last',0)] = deepcopy(cebqe[('velocity',0)])
+        if self.bdf is int(2):
+            cebqe[('velocity_lastlast',0)] = deepcopy(cebqe[('velocity',0)])
     def initializeGeneralizedInterpolationPointQuadrature(self,t,cip):
         """
         Give the TC object access to the generalized interpolation point storage. These points are used  to project nonlinear potentials (phi).
@@ -1634,7 +1660,7 @@ class Pressure2D(TransportCoefficients.TC_base):
                 self.model.vectors_quadrature.add(('grad(u)_lastlast',ci))
                 self.model.vectors_elementBoundaryQuadrature.add(('grad(u)_lastlast',ci))
                 self.model.numericalFlux.ebqe[('grad(u)_lastlast',ci)]=deepcopy(self.model.ebqe[('grad(u)_lastlast',ci)])
-        if (self.usePressureExtrapolations and self.velocityModelIndex >= 0):
+        if ((self.usePressureExtrapolations or not self.useVelocityComponents) and self.velocityModelIndex >= 0):
             self.velocityModel = modelList[self.velocityModelIndex]
 
         if ( self.useRotationalModel and not self.useVelocityComponents and
@@ -1714,12 +1740,12 @@ class Pressure2D(TransportCoefficients.TC_base):
         """
         Give the TC object access to the element boundary quadrature storage
         """
-        # for ci in range(self.nc):
-        #     cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
-        #     cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
-        #     cebq_global[('u_last',ci)] = deepcopy(cebq_global[('u',ci)])
-        #     cebq_global[('grad(u)_last',ci)] = deepcopy(cebq_global[('grad(u)',ci)])
-        pass
+        for ci in range(self.nc):
+            cebq[('u_last',ci)] = deepcopy(cebq[('u',ci)])
+            cebq[('grad(u)_last',ci)] = deepcopy(cebq[('grad(u)',ci)])
+            if self.bdf is int(2):
+                cebq[('u_lastlast',ci)] = deepcopy(cebq[('u',ci)])
+                cebq[('grad(u)_lastlast',ci)] = deepcopy(cebq[('grad(u)',ci)])
     def initializeGlobalExteriorElementBoundaryQuadrature(self,t,cebqe):
         """
         Give the TC object access to the exterior element boundary quadrature storage
@@ -1759,7 +1785,10 @@ class Pressure2D(TransportCoefficients.TC_base):
             # self.evaluate(t,self.model.ebq)
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
-
+        else:
+            if not self.usePressureExtrapolations and not self.useRotationalModel:
+                assert ((self.model.q[('u',0)] - self.model.q[('u_last',0)] - self.pressureIncrementModel.q[('u',0)])**2 < 1.0e-16).all()
+                assert ((self.model.ebqe[('u',0)] - self.model.ebqe[('u_last',0)] - self.pressureIncrementModel.ebqe[('u',0)])**2 < 1.0e-16).all()
         copyInstructions = {}
         return copyInstructions
     def evaluate(self,t,c):
