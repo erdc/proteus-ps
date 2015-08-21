@@ -289,7 +289,7 @@ may not hold.  In the Proteus python library in which this will be implemented, 
 We will not hereafter distinguish between the velocity and the post processed velocity.  The theory only pertains to the computed velocity and so by default we will only be using the computed velocity.  However, in some of the examples and results we may include the use of the various post processed velocities in our algorithm.
 \end{remark}
 
-We now introduce the algorithms and some theory on expected convergence rates.  We will include the BDF1 constant time step algorithm in Section~\ref{sec:BDF1ConstantTimeSteppingAlgorithm} as well as the modification for variable time stepping in Section~\ref{sec:BDF1VariableTimeSteppingAlgorithm}.  We will then describe the BDF2 constant time step and variable time step algorithms in Section~\ref{sec:BDF2ConstantTimeSteppingAlgorithm} and Section~\ref{sec:BDF2VariableTimeSteppingAlgorithm} respectively, along with some conjectured rates of convergence for them.  We will finish with some numerical examples and observed convergence rates in Section~\ref{sec:NumericalResults}.
+We now introduce the algorithms and some theory on expected convergence rates.  We will describe the BDF1 constant time step algorithm in Section~\ref{sec:BDF1ConstantTimeSteppingAlgorithm} and the BDF2 constant time step in Section~\ref{sec:BDF2ConstantTimeSteppingAlgorithm}. We discuss the possibility of variable time stepping in Section~\ref{sec:VariableTimeSteppingAndCFL}  then give the general algorithm which handles both the BDF1 and BDF2 algorithm in Section~\ref{sec:GeneralAlgorithm}.  We then discuss the use of weak boundary conditions to the problem in Section~\ref{sec:WeakBoundaryConditions}.  We will finish with some numerical examples and observed convergence rates in Section~\ref{sec:NumericalResults}.
 
 %
 %
@@ -617,7 +617,7 @@ so that
 %
 %
 %
-\section{Variable Time Stepping and the CFL Condition}
+\section{Variable Time Stepping and the CFL Condition}\label{sec:VariableTimeSteppingAndCFL}
 
 %
 %
@@ -657,7 +657,7 @@ Here we have used $p_T$ to mean the maximal polynomial degree used on the cell $
 %
 %
 %
-\section{General First and Second Order Algorithm with Variable Time Steps}\label{sec:generalalgorithm}
+\section{General First and Second Order Algorithm with Variable Time Steps}\label{sec:GeneralAlgorithm}
 
 
 \begin{description}
@@ -729,8 +729,55 @@ At this stage, we note a practical consideration, mainly how to start the second
 %
 %
 %
-\section{Strong vs Weak Boundary Conditions}
+\section{Strong vs Weak Boundary Conditions}\label{sec:WeakBoundaryConditions}
 
+
+\begin{enumerate}
+\item Velocity:
+We add an upwind advection flux and an SIPG diffusion flux to weakly impose the dirichlet boundary conditions for velocity on $\partial\Lambda_d$.  Then we end up with the following system:
+\begin{align*}
+  &\dprod{ \rho^{\sharp}_h\left(\frac{\beta_0}{\tau} \ub^{k+1}_h - \frac{\beta_1}{\tau} \ub^{k}_h - \frac{\beta_2}{\tau} \ub^{k-1}_h\right)}{ \vb_h }_{\Lambda} &\\
+   &+ \dprod{ \rho^{k+1}_h \ub^{*}_h\cdot\nabla \ub^{k+1}_h}{ \vb_h }_{\Lambda} &\\
+   &+ \dprod{ \mu \nabla \ub^{k+1}_h}{ \nabla \vb_h }_{\Lambda} &\\
+   &+ \dprod{ \nabla \left( p^{k}_h + \frac{\beta_1}{\beta_0} \psi^{k}_h + \frac{\beta_2}{\beta_0} \psi^{k-1}_h \right)}{ \vb_h }_{\Lambda} &\\
+   &+ \dprod{ \frac{1}{2}\left[ D_{\tau}\left(\rho_h^{k+1}\right) + \nabla\cdot\left( \rho_h^{k+1}\ub_h^{*} \right)\right] \ub_h^{k+1}}{ \vb_h }_{\Lambda} &\mbox{(stability)}\\
+   &- \dprod{ \fb^{k+1}_h }{ \vb_h }_{\Lambda} &\\
+   &+ \dprod{ \max\left\{0, -\rho^{*}_h \ub^{*}_h\cdot\nu\right\} \left(\ub^{k+1}_h - \ub_d\right)}{ \vb_h }_{\partial\Lambda_d}     &\mbox{(upwind advective flux)}\\
+   &- \dprod{ \mu \nabla \ub^{k+1}_h\cdot\nu}{ \vb_h }_{\partial\Lambda_d}                          &\mbox{(diffusive flux)}\\
+   &- \dprod{ \ub^{k+1}_h}{ \mu \nabla \vb_h\cdot\nu }_{\partial\Lambda_d}                          &\mbox{(adjoint diffusive flux)}\\
+   &+ \dprod{ \frac{10\mu}{h} \left(\ub^{k+1}_h - \ub_d\right)}{ \vb_h }_{\partial\Lambda_d}                     &\mbox{(penalty flux)}\\
+   & = 0&
+\end{align*}
+where $\ub_d$ is the exact given dirichlet value for velocity on the dirichlet boundary $\partial\Lambda_d$ and $h$ is the mesh size.
+
+\item  Pressure increment:  We treat For the pure Neumann problem we get
+
+\begin{align*}
+  &\dprod{ \nabla \psi^{k+1}_h}{ \nabla r_h }_{\Lambda}&\\
+  & - \dprod{ \frac{\chi\beta_0}{\tau} \ub^{k+1}_h}{ \nabla r_h }_{\Lambda} &\\
+  &+ \dprod{ \frac{\chi\beta_0}{\tau} \ub^{k+1}_h\cdot\nu}{ r_h }_{\partial\Lambda}   &\mbox{(advective flux)}\\
+  &- \dprod{ \nabla \psi^{k+1}_h\cdot\nu}{ r_h }_{\partial\Lambda}      &\mbox{(diffusive flux)}\\
+  &- \dprod{ \psi^{k+1}_h}{ \nabla r_h\cdot\nu }_{\partial\Lambda}      &\mbox{(adjoint diffusive flux)}\\
+  &+ \dprod{ \frac{10}{h} \psi^{k+1}_h}{ r_h }_{\partial\Lambda}        &\mbox{(penalty flux)}\\
+  & = 0 &
+\end{align*}
+where $\ub^{k+1}$ on the boundary is from either self.velocityModel.ebqe  or self.velocityModel.numericalFlux.ebqe.    Notice that the (advective flux) gets overwritten by $advectiveFluxBoundaryCondition$ and  (diffusive flux) and (penalty flux) get overwritten by $diffusiveFluxBoundaryConditions$,  and (adjoint diffusive flux) is turned on or off based on the $isDOFBoundary$ flags which are set to True if $dirichletConditions$ returns None and False otherwise.
+
+\item  Pressure:
+
+\begin{align*}
+ &\dprod{ p^{k+1}_h}{ r_h}_{\Lambda} &\\
+  &- \dprod{ p^{k}_h}{ r_h }_{\Lambda} &\\
+  &- \dprod{ \psi^{k+1}_h}{ r_h }_{\Lambda} &\\
+  &- \dprod{ \mu \ub^{k+1}_h}{ \nabla r_h }_{\Lambda} &\\
+  &+ \dprod{ \mu \ub^{k+1}_h\cdot\nu}{ r_h }_{\partial\Lambda}        &\mbox{(advective flux)}\\
+  & = 0&
+\end{align*}
+
+where $\ub^{k+1}$ on the boundary is from either self.velocityModel.ebqe  or self.velocityModel.numericalFlux.ebqe.
+
+
+\end{enumerate}
 
 
 %
