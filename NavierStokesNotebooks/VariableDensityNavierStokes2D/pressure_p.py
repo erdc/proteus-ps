@@ -43,13 +43,11 @@ def getDBC_p(x,flag):
     else:
         return None
 
-def getNone(x,flag):
+def getDBC_none(x,flag):
     return None
 
-def getZeroFlux(x,flag):
-    if flag in [ctx.boundaryTags['bottom'],
-                ctx.boundaryTags['top'],
-                ctx.boundaryTags['fixed']]:
+def getFlux(x,flag):
+    if flag == 0:
         return lambda x,t: 0.0
     else:
         return None
@@ -65,7 +63,7 @@ initialConditions = {0:getIBC_p()}
 
 if ctx.useDirichletPressureBC:
     dirichletConditions = {0:getDBC_p } # pressure bc are explicitly set
+    advectiveFluxBoundaryConditions = {0:getFlux} # check this?
 else:
-    dirichletConditions = {0:getNone } # pressure bc are set by pressure increment
-
-advectiveFluxBoundaryConditions = {0:getNone} # check this?
+    dirichletConditions = {0:getDBC_none} # pressure bc are set by pressure increment
+    advectiveFluxBoundaryConditions = {0:getFlux} # check this?

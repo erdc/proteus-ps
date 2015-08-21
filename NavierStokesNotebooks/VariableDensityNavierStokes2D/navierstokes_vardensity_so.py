@@ -13,6 +13,7 @@ pnList = [("density_p", "density_n"),
 # name = "navierstokes_vardensity" + "_%3.0e_DT_BDF%1d_p" %(ctx.DT,int(float(ctx.globalBDFTimeOrder)))
 name = "navierstokes_vardensity" + "_DT_0_%s_BDF%1d_p" %(ctx.DT_string,int(float(ctx.globalBDFTimeOrder)))
 
+#modelSpinUpList = [2,3]
 # modelSpinUpList = [1] # for model [1] take a step and then rewind time to time t^0 and proceed as usual
 # systemStepControllerType = Sequential_MinAdaptiveModelStep  # uses minimal time step from each _n model
 # systemStepControllerType = Sequential_FixedStep  # not sure what this one currently does but it should use the DT
