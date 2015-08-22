@@ -65,16 +65,16 @@ class getIBC_p:
 
 initialConditions = {0:getIBC_p()}
 
-if ctx.useDirichletPressureIncrementBC:
+if ctx.useDirichletPressureIncrementBC:  # there are Dirichlet BC somewhere on boundary
     dirichletConditions = {0:getDBC_p }
     advectiveFluxBoundaryConditions = {0:getAdvectiveFlux}
     diffusiveFluxBoundaryConditions = {0:{0:getDiffusiveFlux_p}}
-else:
-    if ctx.useNoFluxPressureIncrementBC:
+else: # pure neumann laplacian problem
+    if ctx.useNoFluxPressureIncrementBC:  # solve pure neumann laplacian problem by removing null space using petsc solver
         dirichletConditions = {0:getNone }
         advectiveFluxBoundaryConditions = {0:getAdvectiveFlux}
         diffusiveFluxBoundaryConditions = {0:{0:getDiffusiveFlux_None}}
-    else:
+    else:   # solve pure neumann laplacian problem using a fixed dof then adjust for zero mean
         dirichletConditions = {0:getDBC_fixed }
         advectiveFluxBoundaryConditions = {0:getAdvectiveFlux}
         diffusiveFluxBoundaryConditions = {0:{0:getDiffusiveFlux_fixed}}

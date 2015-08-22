@@ -118,10 +118,11 @@ with initial and boundary conditions
 \begin{equation}\label{eqn:variabledensityNavierStokesBCIC}
   \begin{cases}
     \rho(\x,0) = \rho_0(\x), & \left.\rho(\x,t)\right|_{\partial\Lambda^{in}} = a(\x,t)\\
-    \ub(\x,0) = \ub_0(\x), & \left.\ub(\x,t)\right|_{\partial\Lambda} = b(\x,t)
+    \ub(\x,0) = \ub_0(\x), & \left.\ub(\x,t)\right|_{\partial\Lambda_d} = \ub_d(\x,t)\\
+    \left.\mu\nabla(\x,t)\cdot\nu\right|_{\partial\Lambda_n} = \fb_{\nu}(\x,t) 
   \end{cases}
 \end{equation}
-where the inflow boundary, $\partial\Lambda^{in} = \{ \x\in \partial\Lambda \:|\: \ub\cdot\n <0 \}$ where $\n$ is the outward unit normal vector.  Most all papers analyzing this method make the restrictive assumption that $\left.\ub(\x,t)\right|_{\partial\Lambda} = b(\x,t) = 0$, and thus $\partial\Lambda^{in}= \emptyset$.  However, we will discuss the inclusion of non-homogeneous dirichlet conditions on velocity and inflow conditions for density as well as other options such as natural or open boundary conditions on velocity in Section~\ref{sec:BoundaryConditions} as these are often desired in two phase flow type simulations.
+where the inflow boundary, $\partial\Lambda^{in} = \{ \x\in \partial\Lambda \:|\: \ub\cdot\n <0 \}$ where $\n$ is the outward unit normal vector.  Most all papers analyzing this method make the restrictive assumption that $\left.\ub(\x,t)\right|_{\partial\Lambda} = \ub_d(\x,t) = 0$, and thus $\partial\Lambda^{in}= \emptyset$.  However, we will discuss the inclusion of non-homogeneous dirichlet conditions on velocity and inflow conditions for density as well as other options such as natural or open boundary conditions on velocity in Section~\ref{sec:BoundaryConditions} as these are often desired in two phase flow type simulations.  For the purposes of this chapter, we will assume $\partial\Lambda_n=\emptyset$ and so $\partial\Lambda_d=\partial\Lambda$, but we will formulate the weak boundary conditions of Section~\ref{sec:WeakBoundaryConditions} in terms of both $\partial\Lambda_n$ and $\partial\Lambda_d$.  We do this in preparation for Chapter~\ref{ch:2PFlow} on unsteady navier stokes with two phase flow.
 
 
 %
@@ -289,7 +290,7 @@ may not hold.  In the Proteus python library in which this will be implemented, 
 We will not hereafter distinguish between the velocity and the post processed velocity.  The theory only pertains to the computed velocity and so by default we will only be using the computed velocity.  However, in some of the examples and results we may include the use of the various post processed velocities in our algorithm.
 \end{remark}
 
-We now introduce the algorithms and some theory on expected convergence rates.  We will describe the BDF1 constant time step algorithm in Section~\ref{sec:BDF1ConstantTimeSteppingAlgorithm} and the BDF2 constant time step in Section~\ref{sec:BDF2ConstantTimeSteppingAlgorithm}. We discuss the possibility of variable time stepping in Section~\ref{sec:VariableTimeSteppingAndCFL}  then give the general algorithm which handles both the BDF1 and BDF2 algorithm in Section~\ref{sec:GeneralAlgorithm}.  We then discuss the use of weak boundary conditions to the problem in Section~\ref{sec:WeakBoundaryConditions}.  We will finish with some numerical examples and observed convergence rates in Section~\ref{sec:NumericalResults}.
+We now introduce the algorithms and some theory on expected convergence rates.  We will describe the BDF1 constant time step algorithm in Section~\ref{sec:BDF1ConstantTimeSteppingAlgorithm} and the BDF2 constant time step algorithm in Section~\ref{sec:BDF2ConstantTimeSteppingAlgorithm}. We discuss the possibility of variable time stepping in Section~\ref{sec:VariableTimeSteppingAndCFL} and then give the general algorithm which handles both the BDF1 and BDF2 algorithm in Section~\ref{sec:GeneralAlgorithm}.  We then discuss the use of weak boundary conditions in the context of the general algorithm in Section~\ref{sec:WeakBoundaryConditions}.  We will finish with some numerical examples and observed convergence rates in Section~\ref{sec:NumericalResults}.
 
 %
 %
@@ -730,51 +731,62 @@ At this stage, we note a practical consideration, mainly how to start the second
 %
 %
 \section{Strong vs Weak Boundary Conditions}\label{sec:WeakBoundaryConditions}
-
+Even though we are working with Continuous Galerkin elements, we decided to implement the boundary conditions weakly.  To this end we add in the exterior terms (those from edges or faces on the boundary) using the symmetric interior penalty discontinuous Galerkin (SIPG) framework.  This will give weak imposition of the inflow, Dirichlet and Neumann boundary conditions based on our advective and diffusive terms in each equation and the desire weak dirichlet boundary conditions.  Thus we can think of them as taking care of the integration by parts terms and the weak dirichlet boundary conditions and the  neumann boundary conditions.
 
 \begin{enumerate}
 \item Velocity:
-We add an upwind advection flux and an SIPG diffusion flux to weakly impose the dirichlet boundary conditions for velocity on $\partial\Lambda_d$.  Then we end up with the following system:
+We add an upwind advection flux and an SIPG diffusion flux to weakly impose the dirichlet boundary conditions
+\begin{equation}
+  \ub^{k+1} = \ub_d(t^{k+1}),  \mbox{ for } \x \in \partial\Lambda_d
+\end{equation}
+and the neumann boundary conditions
+\begin{equation}
+  \mu\nabla\ub^{k+1}_h\cdot\nu = \fb_{\nu}(t^{k+1}),  \mbox{ for } \x \in \partial\Lambda_n.
+\end{equation}
+  The adjoint diffusive flux is only applied on $\partial\Lambda_d$ since on $\partial\Lambda_n$, our diffusive term is a known quantity and moves to the right hand side so there is no need to symmetrize.  Finally we use the penalty coefficient, $\eps_p = 10$, for the weak dirichlet boundary conditions.  Then we end up with the following system:
 \begin{align*}
-  &\dprod{ \rho^{\sharp}_h\left(\frac{\beta_0}{\tau} \ub^{k+1}_h - \frac{\beta_1}{\tau} \ub^{k}_h - \frac{\beta_2}{\tau} \ub^{k-1}_h\right)}{ \vb_h }_{\Lambda} &\\
-   &+ \dprod{ \rho^{k+1}_h \ub^{*}_h\cdot\nabla \ub^{k+1}_h}{ \vb_h }_{\Lambda} &\\
-   &+ \dprod{ \mu \nabla \ub^{k+1}_h}{ \nabla \vb_h }_{\Lambda} &\\
-   &+ \dprod{ \nabla \left( p^{k}_h + \frac{\beta_1}{\beta_0} \psi^{k}_h + \frac{\beta_2}{\beta_0} \psi^{k-1}_h \right)}{ \vb_h }_{\Lambda} &\\
-   &+ \dprod{ \frac{1}{2}\left[ D_{\tau}\left(\rho_h^{k+1}\right) + \nabla\cdot\left( \rho_h^{k+1}\ub_h^{*} \right)\right] \ub_h^{k+1}}{ \vb_h }_{\Lambda} &\mbox{(stability)}\\
+  &\dprod{ \rho^{\sharp}_h\left(D_{\tau}\ub_h^{k+1}\right)}{ \vb_h }_{\Lambda} + \dprod{ \nabla p^{\sharp}}{ \vb_h }_{\Lambda} &\\
+   &+ \dprod{ \rho^{k+1}_h \ub^{*}_h\cdot\nabla \ub^{k+1}_h}{ \vb_h }_{\Lambda} + \dprod{ \mu \nabla \ub^{k+1}_h}{ \nabla \vb_h }_{\Lambda} &\\
+   &+ \dprod{ \frac{1}{2}\left[ D_{\tau}\left(\rho_h^{k+1}\right) + \nabla\cdot\left( \rho_h^{k+1}\ub_h^{*} \right)\right] \ub_h^{k+1}}{ \vb_h }_{\Lambda} &\\
    &- \dprod{ \fb^{k+1}_h }{ \vb_h }_{\Lambda} &\\
-   &+ \dprod{ \max\left\{0, -\rho^{*}_h \ub^{*}_h\cdot\nu\right\} \left(\ub^{k+1}_h - \ub_d\right)}{ \vb_h }_{\partial\Lambda_d}     &\mbox{(upwind advective flux)}\\
+   &- \dprod{ \fb^{k+1}_{\nu}}{ \vb_h }_{\partial\Lambda_n}                                                   &\mbox{(neumann term)}\\
+   &+ \dprod{ \max\left\{0, -\rho^{k+1}_h \ub^{*}_h\cdot\nu\right\} \left(\ub^{k+1}_h - \ub_d\right)}{ \vb_h }_{\partial\Lambda_d}     &\mbox{(upwind advective flux)}\\
    &- \dprod{ \mu \nabla \ub^{k+1}_h\cdot\nu}{ \vb_h }_{\partial\Lambda_d}                          &\mbox{(diffusive flux)}\\
    &- \dprod{ \ub^{k+1}_h}{ \mu \nabla \vb_h\cdot\nu }_{\partial\Lambda_d}                          &\mbox{(adjoint diffusive flux)}\\
-   &+ \dprod{ \frac{10\mu}{h} \left(\ub^{k+1}_h - \ub_d\right)}{ \vb_h }_{\partial\Lambda_d}                     &\mbox{(penalty flux)}\\
+   &+ \dprod{ \frac{\eps_p\mu}{h} \left(\ub^{k+1}_h - \ub_d\right)}{ \vb_h }_{\partial\Lambda_d}                     &\mbox{(penalty flux)}\\
    & = 0&
 \end{align*}
-where $\ub_d$ is the exact given dirichlet value for velocity on the dirichlet boundary $\partial\Lambda_d$ and $h$ is the mesh size.
+where $h$ is the mesh size (minimal cell diameter).
 
-\item  Pressure increment:  We treat For the pure Neumann problem we get
-
+\item  Pressure Increment:  Again for the pressure increment equation, we add the advective and diffusive fluxes but this time we don't upwind the advective flux since it is already a known quantity.  Advective flux is applied to the region where we have neumann boundary conditions in pressure increment to control the integration by parts term from our right hand side.  Ideally we would have Neumann boundary conditions everywhere on the boundary for pressure increment, but without an additional modification (that will be described in Section~\ref{sec:OpenBoundaryConditions}), we must apply a zero dirichlet boundary condition to pressure increment everywhere that the velocity has a neumann condition.  In other words, we must set
+\begin{equation}
+  \psi^{k+1}_h = 0, \mbox{ for }\x\in\partial\Lambda_n.
+\end{equation}
+Unfortunately this introduces a boundary layer to pressure which causes our expected convergence rates for the $L^2(\Lambda)$ norm of pressure and the $H^1(\Lambda)^d$ norm for velocity to drop back down $\mathcal{O}(\tau^{1/2})$, essentially counteracting the benefit of our rotational model.  The modification described in Section~\ref{sec:OpenBoundaryConditions} gets us back up to full expected convergence in the case of open velocity and pressure increment boundary conditions, but at the expense of some more complicated linear algebra.  We use the penalty coefficient, $\eps_p = 10$, for the weak dirichlet boundary conditions.  Thus we have the pressure increment system:
 \begin{align*}
   &\dprod{ \nabla \psi^{k+1}_h}{ \nabla r_h }_{\Lambda}&\\
   & - \dprod{ \frac{\chi\beta_0}{\tau} \ub^{k+1}_h}{ \nabla r_h }_{\Lambda} &\\
-  &+ \dprod{ \frac{\chi\beta_0}{\tau} \ub^{k+1}_h\cdot\nu}{ r_h }_{\partial\Lambda}   &\mbox{(advective flux)}\\
-  &- \dprod{ \nabla \psi^{k+1}_h\cdot\nu}{ r_h }_{\partial\Lambda}      &\mbox{(diffusive flux)}\\
-  &- \dprod{ \psi^{k+1}_h}{ \nabla r_h\cdot\nu }_{\partial\Lambda}      &\mbox{(adjoint diffusive flux)}\\
-  &+ \dprod{ \frac{10}{h} \psi^{k+1}_h}{ r_h }_{\partial\Lambda}        &\mbox{(penalty flux)}\\
-  & = 0 &
+  &+ \dprod{ \frac{\chi\beta_0}{\tau} \ub^{k+1}_h\cdot\nu}{ r_h }_{\partial\Lambda_d}   &\mbox{(advective flux)}\\
+  &- \dprod{ \nabla \psi^{k+1}_h\cdot\nu}{ r_h }_{\partial\Lambda_n}      &\mbox{(diffusive flux)}\\
+  &- \dprod{ \psi^{k+1}_h}{ \nabla r_h\cdot\nu }_{\partial\Lambda_n}      &\mbox{(adjoint diffusive flux)}\\
+  &+ \dprod{ \frac{\eps_{p}}{h} \left(\psi^{k+1}_h - 0\right)}{ r_h }_{\partial\Lambda_n}        &\mbox{(penalty flux)}\\
+  & = 0. &
 \end{align*}
-where $\ub^{k+1}$ on the boundary is from either self.velocityModel.ebqe  or self.velocityModel.numericalFlux.ebqe.    Notice that the (advective flux) gets overwritten by $advectiveFluxBoundaryCondition$ and  (diffusive flux) and (penalty flux) get overwritten by $diffusiveFluxBoundaryConditions$,  and (adjoint diffusive flux) is turned on or off based on the $isDOFBoundary$ flags which are set to True if $dirichletConditions$ returns None and False otherwise.
+It is important to point out that because we are weakly imposing dirichlet boundary conditions on our velocity, there is some ambiguity here as to which velocity to use on the boundary.  Ideally it would be the exact dirichlet values to preserve the property
+\begin{align}
+  0 = \int_{\partial\Lambda} \ub^{k+1}_h \cdot \nu d\x - \int_{\partial\Lambda} \frac{\tau}{\chi\beta_0}\nabla\psi^{k+1}_h\cdot\nu d\x.
+\end{align}
+This comes from applying the divergence theorem to $0 = \int_{\Lambda} \nabla\cdot \ut^{k+1}_h d\x$ and using the equality $\ub^{k+1} - \ut^{k+1} = \frac{\tau}{\chi\beta_0}\nabla\psi^{k+1}_h$ where $\ut^{k+1}$ here is the divergence free velocity ( a temporary reversal from notation above).
 
-\item  Pressure:
+
+\item  Pressure:  The pressure inherits it's boundary conditions from the pressure increment.  Thus the only term we need to worry about is the integration by parts term of the divergence of velocity.  It takes on the form of an advective flux and we use the computed solution $\ub^{k+1}_h$ on the boundary for it.  So the pressure system looks like:
 
 \begin{align*}
- &\dprod{ p^{k+1}_h}{ r_h}_{\Lambda} &\\
-  &- \dprod{ p^{k}_h}{ r_h }_{\Lambda} &\\
-  &- \dprod{ \psi^{k+1}_h}{ r_h }_{\Lambda} &\\
+ &\dprod{ p^{k+1}_h - p_h^{k} - \psi_h^{k+1}}{ r_h}_{\Lambda} &\\
   &- \dprod{ \mu \ub^{k+1}_h}{ \nabla r_h }_{\Lambda} &\\
   &+ \dprod{ \mu \ub^{k+1}_h\cdot\nu}{ r_h }_{\partial\Lambda}        &\mbox{(advective flux)}\\
-  & = 0&
+  & = 0.&
 \end{align*}
-
-where $\ub^{k+1}$ on the boundary is from either self.velocityModel.ebqe  or self.velocityModel.numericalFlux.ebqe.
 
 
 \end{enumerate}
@@ -1108,7 +1120,7 @@ where $\fb_d$ is the desired Dirichlet boundary condition for velocity on $\part
 %
 %
 %
-\section{Open Boundary Conditions}\label{sec:BoundaryConditions}
+\section{Open Boundary Conditions}\label{sec:OpenBoundaryConditions}
 
 
 

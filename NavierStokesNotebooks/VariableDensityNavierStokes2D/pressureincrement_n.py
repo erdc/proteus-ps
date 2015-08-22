@@ -16,7 +16,7 @@ elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
 elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_degree)
 
 #numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
-numericalFluxType = NumericalFlux.ConstantAdvection_Diffusion_SIPG_exterior #weak boundary conditions (upwind)
+numericalFluxType = NumericalFlux.ConstantAdvection_Diffusion_SIPG_exterior #weak boundary conditions (upwind ?)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
@@ -25,11 +25,11 @@ matrix = LinearAlgebraTools.SparseMatrix
 #can also use our internal wrapper for SuperLU
 
 if ctx.useNoFluxPressureIncrementBC:
-    linearSmoother    = LinearSolvers.NavierStokesPressureCorrection
+    linearSmoother    = LinearSolvers.NavierStokesPressureCorrection # pure neumann laplacian solver
     multilevelLinearSolver = LinearSolvers.KSP_petsc4py
     levelLinearSolver = LinearSolvers.KSP_petsc4py
 else:
-    multilevelLinearSolver = LinearSolvers.LU
+    multilevelLinearSolver = LinearSolvers.LU  # solve via one fixed dof then adjust to mean zero or there is dirichlet bc
     levelLinearSolver = LinearSolvers.LU
 
 linear_solver_options_prefix = 'phi_'
