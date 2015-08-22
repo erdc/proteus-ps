@@ -26,7 +26,7 @@ useNonlinearAdvection = False # switches between extrapolated and fully nonlinea
 useNumericalFluxEbqe = False # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useDirichletPressureIncrementBC = False  # Dirichlet bc pressure or zeroMean pressure increment
-useNoFluxPressureIncrementBC = True
+useNoFluxPressureIncrementBC = True # use petsc builtin pure neumann laplacian solver
 useVelocityComponents = True  # False uses post processed velocity,
 useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
 setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
@@ -37,12 +37,11 @@ useASGS=True
 he_coeff = 0.75 # default to match Guermond paper: 0.75
 
 # setup time variables
-T = 10.0
-DT = 0.1  # target time step size
-DT *= 0.5
-DT *= 0.5
-DT *= 0.5
-DT *= 0.5
+T = 2.0
+DT = 0.0125  # target time step size
+#DT *= 0.5
+#DT *= 0.5
+#DT *= 0.5
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
     nFrames = int(T/DT) + 1
@@ -311,7 +310,7 @@ nLayersOfOverlapForParallel = 0
 
 # Time stepping for output
 # T=10.0
-# DT = 0.1
+# DT = 0.0125
 # nFrames = 51
 # dt = T/(nFrames-1)
 # tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
