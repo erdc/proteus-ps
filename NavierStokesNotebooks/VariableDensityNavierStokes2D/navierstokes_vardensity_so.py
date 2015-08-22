@@ -20,8 +20,13 @@ name = "navierstokes_vardensity" + "_DT_0_%s_BDF%1d_p" %(ctx.DT_string,int(float
 # systemStepControllerType = Sequential_MinModelStep # uses DT set in _n.py files
 systemStepControllerType = Sequential_FixedStep_Simple # uses time steps in so.tnList
 
-needEBQ_GLOBAL = False # need to be True for postprocessing ie conservativeFlux != none
-needEBQ = False  # need to be True for postprocessing ie conservativeFlux != none
+if not ctx.useVelocityComponents:
+    needEBQ_GLOBAL = True
+    needEBQ = True
+else:
+    needEBQ_GLOBAL = False
+    needEBQ = False
+
 archiveFlag = ArchiveFlags.EVERY_USER_STEP
 
 tnList = ctx.tnList

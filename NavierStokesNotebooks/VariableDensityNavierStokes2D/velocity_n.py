@@ -39,7 +39,10 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 numericalFluxType = NumericalFlux.HamiltonJacobi_DiagonalLesaintRaviart_Diffusion_SIPG_exterior
 
 if ctx.useASGS:
-    subgridError = HamiltonJacobiDiffusionReaction_ASGS(coefficients,nd=ctx.nd,lag=False)
+    subgridError = HamiltonJacobiDiffusionReaction_ASGS(coefficients,
+                                                        nd=ctx.nd,
+                                                        stabFlag='1',
+                                                        lag=False)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py

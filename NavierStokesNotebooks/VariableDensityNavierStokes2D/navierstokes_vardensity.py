@@ -7,6 +7,7 @@ import numpy as np
 
 from proteus import Context
 opts = Context.Options([
+    ("rlevel",0, "level of refinement"),
     ("parallel", False, "Run in parallel mode"),
     ("analytical", False, "Archive the analytical solution")
 ])
@@ -23,7 +24,7 @@ globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 useRotationalModel = True #  Standard vs Rotational models in pressure update
 useStabilityTerms = True  # stability terms in density and velocity models
 useNonlinearAdvection = False # switches between extrapolated and fully nonlinear advection in velocity model
-useNumericalFluxEbqe = False # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
+useNumericalFluxEbqe = True # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useDirichletPressureIncrementBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useNoFluxPressureIncrementBC = True
@@ -37,12 +38,9 @@ useASGS=True
 he_coeff = 0.75 # default to match Guermond paper: 0.75
 
 # setup time variables
-T = 10.0
+T = 0.2
 DT = 0.1  # target time step size
-DT *= 0.5
-DT *= 0.5
-DT *= 0.5
-DT *= 0.5
+DT *= 0.5**opts.rlevel
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
     nFrames = int(T/DT) + 1
@@ -117,7 +115,8 @@ vs = xs*sy_cos(ts)
 
 f1s = simplify((rhos*(diff(us,ts) + us*diff(us,xs) + vs*diff(us,ys)) + diff(ps,xs) - diff(mu*us,xs,xs) - diff(mu*us,ys,ys)))
 f2s = simplify((rhos*(diff(vs,ts) + us*diff(vs,xs) + vs*diff(vs,ys)) + diff(ps,ys) - diff(mu*vs,xs,xs) - diff(mu*vs,ys,ys)))
-
+#pf1s = simplify((f1s + mu*(diff(us,xs,xs)+diff(us,ys,ys)))/rhos - us*diff(us,xs) - vs*diff(us,ys))
+#pf2s = simplify((f2s + mu*(diff(vs,xs,xs)+diff(vs,ys,ys)))/rhos - us*diff(vs,xs) - vs*diff(vs,ys))
 # use lambdify to convert from sympy to python expressions
 pl = lambdify((xs, ys, ts), ps, "numpy")
 ul = lambdify((xs, ys, ts), us, "numpy")
@@ -246,7 +245,7 @@ if unitCircle:
     he = he_coeff*2.0*pi/150.0  # h size for edges of circle
 
     # no need to modify past here
-    nvertices = nsegments = int(ceil(2.0*pi/he))
+    nvertices = nsegments = 4*int(ceil(0.5*pi/he))
     dtheta = 2.0*pi/float(nsegments)
     vertices= []
     vertexFlags = []
@@ -290,7 +289,7 @@ if unitCircle:
     #
     #finished setting up circular domain
     #
-    triangleOptions="VApq30Dena%8.8f" % ((he**2)/2.0,)
+    triangleOptions="VApq33Dena%8.8f" % ((he**2)/2.0,)
 
     logEvent("""Mesh generated using: triangle -%s %s"""  % (triangleOptions,domain.polyfile+".poly"))
 

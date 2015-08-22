@@ -36,7 +36,9 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 if ctx.useASGS:
     subgridError = SubgridError.Advection_ASGS(coefficients,
                                                ctx.nd,
+                                               stabFlag='1',
                                                lag=False)
+
 #numerics.shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(physics.coefficients,
 #                                                                physics.nd,
 #                                                                lag = True,

@@ -57,8 +57,7 @@ periodicDirichletConditions=None
 
 # post processing
 
-conservativeFlux=None
-#all of these  should work
-#conservativeFlux = {0:'point-eval'}
-# conservativeFlux = {0:'pwl-bdm'}
-# conservativeFlux = {0:'pwl-bdm-opt'}
+if not ctx.useVelocityComponents:
+    conservativeFlux = {0:'pwl-bdm-opt'} #'point-eval','pwl-bdm'
+else:
+    conservativeFlux=None
