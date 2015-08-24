@@ -37,7 +37,7 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 #numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_SIPG_exterior
 #numericalFluxType = NumericalFlux.Advection_Diagonal_average
 
-if useConservativePressureTerm:
+if ctx.useConservativePressureTerm:
     numericalFluxType = NumericalFlux.HamiltonJacobi_Pressure_DiagonalLesaintRaviart_Diffusion_SIPG_exterior
 else:
     numericalFluxType = NumericalFlux.HamiltonJacobi_DiagonalLesaintRaviart_Diffusion_SIPG_exterior
