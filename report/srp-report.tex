@@ -125,7 +125,7 @@ with initial and boundary conditions
 where the inflow boundary for density is defined as $\partial\Lambda^{in} = \{ \x\in \partial\Lambda \:|\: \ub\cdot\nu <0 \}$.  Here $\nu$ is the outward unit normal vector on $\partial\Lambda$.  Most all papers analyzing this method make the restrictive assumption that $\left.\ub(\x,t)\right|_{\partial\Lambda} = \ub_d(\x,t) = 0$, and thus $\partial\Lambda^{in}= \emptyset$.  However, we will discuss the inclusion of non-homogeneous dirichlet conditions on velocity and inflow conditions for density as well as other options such as natural or open boundary conditions on velocity in Section~\ref{sec:OpenBoundaryConditions} as these are often desired in two phase flow type simulations.  
 
 
-In order to avoid unnecessary complications in introducing the method, we will assume in this chapter that $\partial\Lambda_n=\emptyset$ and so $\partial\Lambda_d=\partial\Lambda$, likewise that $\ub_d = 0$ and thus $\partial\Lambda^{in}=\emptyset$.  However, we will formulate the weak boundary conditions of Section~\ref{sec:WeakBoundaryConditions} in terms of both $\partial\Lambda_n$ and $\partial\Lambda_d$ with possible non-homogeneous conditions.  We do this in preparation for Chapter~\ref{ch:2PFlow} on unsteady Navier-Stokes with two phase flow.
+In order to avoid unnecessary complications in introducing the method, we will assume in this chapter that $\partial\Lambda_n=\emptyset$ and  likewise that $\ub_d = 0$ and thus so $\partial\Lambda_d=\partial\Lambda$ and $\partial\Lambda^{in}=\emptyset$.  However, we will formulate the weak boundary conditions of Section~\ref{sec:WeakBoundaryConditions} in terms of both $\partial\Lambda_n$ and $\partial\Lambda_d$ with possible non-homogeneous conditions.  We do this in preparation for Chapter~\ref{ch:2PFlow} on unsteady Navier-Stokes with two phase flow.
 
 
 %
@@ -137,7 +137,7 @@ In order to avoid unnecessary complications in introducing the method, we will a
 %
 %
 \subsection{Notation}
-We discretize and subdivide the smooth spatial domain $\Lambda\subset \R^d$ into a regular uniform triangulation $\mathcal{T}_h$ with $h>0$ denoting the mesh size.  We likewise discretize the time domain $[T_0,T_f]$ into the sequence $\{ t^0=T_0, t^1, t^2, \dots, t^N = T_f\}$  with $\tau^k:= t^k-t^{k-1}$ as the step size.  If we are using a uniform time step, then $\tau^k = \tau^{k-1} = \tau = T_f/N$, but we leave the option for adaptive time stepping.  We use the standard notation $f^{k} := f(t=t^k,\x)$ to refer to a function or solution $f$ at a specific timestep.  When calculating norms of solutions, we often will want a combination of time and spatial norms,  thus we introduce the notation $\left( f \right)_{\tau}:= \{ f^k \}_{k=0}^{N}$ to refer to the seqence of solutions.  For instance, give a true velocity $\ub$ and a discrete solution $\ub_h$ solved for at the time steps $\{t^0,\dots, t^{N}\}$, we may want to compute the maximum norm in time and the $X$ norm in space, say the $L^2(\Lambda)^d$ or $H^1(\Lambda)^d$, etc.  We denote this as
+We discretize and subdivide the smooth spatial domain $\Lambda\subset \R^d$ into a regular uniform triangulation $\mathcal{T}_h$ with $h>0$ denoting the mesh size.  We likewise discretize the time domain $[T_0,T_f]$ into the sequence $\{ t^0=T_0, t^1, t^2, \dots, t^N = T_f\}$  with $\tau^k:= t^k-t^{k-1}$ as the step size.  If we are using a uniform time step, then $\tau^k = \tau^{k-1} = \tau = (T_f-T_0)/N$, but we leave the option for adaptive time stepping.  We use the standard notation $f^{k} := f(t=t^k,\x)$ to refer to a function or solution $f$ at a specific timestep.  When calculating norms of solutions, we often will want a combination of time and spatial norms,  thus we introduce the notation $\left( f \right)_{\tau}:= \{ f^k \}_{k=0}^{N}$ to refer to the seqence of solutions.  For instance, give a true velocity $\ub$ and a discrete solution $\ub_h$ solved for at the time steps $\{t^0,\dots, t^{N}\}$, we may want to compute the maximum norm in time and the $X$ norm in space, say the $L^2(\Lambda)^d$ or $H^1(\Lambda)^d$, etc.  We denote this as
 \begin{equation}
   \left\| \left( \ub - \ub_h \right)_{\tau} \right\|_{\ell^{\infty}(X)} := \max_{1\leq k \leq N} \| \ub(t^{k}) - \ub_h^{k}\|_{X}
 \end{equation}
@@ -843,7 +843,13 @@ The triangulation is done using the \textbf{Triangle} 2D mesh generator provided
   \mbox{dim }\mathbb{X}_h = 40826,\\
   \mbox{dim }\mathbb{M}_h = 5161.
 \end{align}
-The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, ranging from $0.00625\leq \tau \leq 0.1$.  The mesh was chosen so that the spatial errors were much smaller than the temporal errors.  The convergence with respect to $\tau$ is shown for various algorithms and norms in Tables~\ref{table:firstconvergenceresult}-\ref{table:lastconvergenceresult}.
+
+We do the simulation over two separate time domains.  The first $t\in[0,10]$ has initial pressure $p_0 = 0$ but velocity non-zero.  The second $t\in\left[\frac{\pi}{2}, 10+\frac{\pi}{2} \right]$ has initial velcoity $\ub_0 = [0; 0]$ but pressure non zero.  The time step $\tau$ ranges between $0.00625\leq \tau \leq 0.1$ for the convergence analysis.  The mesh was chosen so that the spatial errors were much smaller than the temporal errors.  The convergence with respect to $\tau$ is shown for various algorithms and norms in Tables~\ref{table:firstconvergenceresult}-\ref{table:lastconvergenceresult}.
+
+
+
+
+\newpage
 
 %
 %
@@ -922,7 +928,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF2 Rotational Model, $T=10$}
+    \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$  & $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
       \hline
@@ -937,7 +943,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \parbox{.45\linewidth}{
     \tiny
     \centering
-      \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF2 Standard Model, $T=10$}
+      \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
       \begin{tabular}{c|c|c|c|c}
         $\tau$  & $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
         \hline
@@ -954,7 +960,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $T=10$}
+    \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)^d\right)$  &  Rate\\
       \hline
@@ -969,7 +975,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \parbox{.45\linewidth}{
     \tiny
     \centering
-      \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Standard Model, $T=10$}
+      \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
       \begin{tabular}{c|c|c|c|c}
         $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)^d\right)$  &  Rate\\
         \hline
@@ -987,7 +993,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $T=10$}
+    \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(H^1(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Lambda)^d\right)$  &  Rate\\
       \hline
@@ -1002,7 +1008,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \parbox{.45\linewidth}{
     \tiny
     \centering
-      \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Standard Model, $T=10$}
+      \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
       \begin{tabular}{c|c|c|c|c}
         $\tau$ &  $\ell^{\infty}\left(H^1(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Lambda)^d\right)$  &  Rate\\
         \hline
@@ -1019,7 +1025,7 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Pressure Error $(p - p_h)_{\tau}$ BDF2 Rotational Model, $T=10$}
+    \caption{Pressure Error $(p - p_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
       \hline
@@ -1034,8 +1040,8 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
     \parbox{.45\linewidth}{
     \tiny
     \centering
-      \caption{Pressure Error $(p - p_h)_{\tau}$ BDF2 Standard Model, $T=10$}
-      \begin{tabular}{c|c|c|c|c}\label{table:lastconvergenceresult}
+      \caption{Pressure Error $(p - p_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
+      \begin{tabular}{c|c|c|c|c}
         $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
         \hline
         1.000e-01 & 4.644e-02 &   -  & 1.061e-01 &   - \\
@@ -1048,11 +1054,76 @@ The approximation is done over the time domain $[0,10]$ with timestep, $\tau$, r
 \end{table}
 
 
-On the left is the rotational models,  on the right are the standard models.  Because it is a smooth circular domain with smooth exact solutions, we see the rates for pressure and the $H^1(\Lambda)$ norm of velocity behaving better than is predicted in both the rotational and standard forms.  The additional $\mathcal{O}(\tau^{1/2})$ jump that is predicted when using the rotational model is no longer visible because it has obtained that rate already.  The biggest difference is the value of the errors them selves.  The rotational model has smaller error norms accross the board.
+On the left is the rotational models,  on the right are the standard models.  Because it is a smooth circular domain with smooth exact solutions, we see the rates for pressure and the $H^1(\Lambda)$ norm of velocity behaving better than is predicted in both the rotational and standard forms.  The additional $\mathcal{O}(\tau^{1/2})$ jump that is predicted when using the rotational model is no longer visible because it has obtained that rate already.  The biggest difference is the value of the errors themselves.  The rotational model has smaller error norms across the board.
 
 
+%
+%
+\subsection{BDF2 Rotational Method with ASGS Stabilization Results}
 
+\begin{table}[h!]
+  \parbox{.45\linewidth}{
+  \tiny
+  \centering
+    \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
+    \begin{tabular}{c|c|c|c|c}
+      $\tau$  & $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
+      \hline
+      1.000e-01 & 1.453e-02 &  -   & 3.377e-02 &  -  \\
+      5.000e-02 & 4.255e-03 & 1.77 & 1.021e-02 & 1.73\\
+      2.500e-02 & 1.277e-03 & 1.74 & 3.060e-03 & 1.74\\
+      1.250e-02 & 4.194e-04 & 1.61 & 9.061e-04 & 1.76\\
+      6.250e-03 & 1.722e-04 & 1.28 & 2.806e-04 & 1.69
+    \end{tabular}
+    }
+    \hfill
+    \parbox{.45\linewidth}{
+      \tiny
+      \centering
+        \caption{Pressure Error $(p - p_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
+        \begin{tabular}{c|c|c|c|c}
+          $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
+          \hline
+          1.000e-01 & 1.438e-02 &  -   & 2.982e-02 &  -  \\
+          5.000e-02 & 4.403e-03 & 1.71 & 9.181e-03 & 1.70\\
+          2.500e-02 & 1.257e-03 & 1.81 & 2.642e-03 & 1.80\\
+          1.250e-02 & 3.417e-04 & 1.88 & 7.347e-04 & 1.85\\
+          6.250e-03 & 9.074e-05 & 1.91 & 2.352e-04 & 1.64
+        \end{tabular}
+    }
+\end{table}
 
+\begin{table}[h!]
+  \parbox{.45\linewidth}{
+  \tiny
+  \centering
+    \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
+    \begin{tabular}{c|c|c|c|c}
+      $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)^d\right)$  &  Rate\\
+      \hline
+      1.000e-01 & 4.414e-03 &  -   & 9.640e-03 &  -  \\
+      5.000e-02 & 1.371e-03 & 1.69 & 3.001e-03 & 1.68\\
+      2.500e-02 & 3.930e-04 & 1.80 & 8.603e-04 & 1.80\\
+      1.250e-02 & 1.068e-04 & 1.88 & 2.338e-04 & 1.88\\
+      6.250e-03 & 2.811e-05 & 1.93 & 6.151e-05 & 1.93
+    \end{tabular}
+    }
+    \hfill
+    \parbox{.45\linewidth}{
+    \tiny
+    \centering
+      \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
+      \begin{tabular}{c|c|c|c|c}\label{table:lastconvergenceresult}
+        $\tau$ &  $\ell^{\infty}\left(H^1(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Lambda)^d\right)$  &  Rate\\
+        \hline
+        1.000e-01 & 1.882e-02 &  -   & 4.097e-02 &  -  \\
+        5.000e-02 & 5.923e-03 & 1.67 & 1.297e-02 & 1.66\\
+        2.500e-02 & 1.744e-03 & 1.76 & 3.822e-03 & 1.76\\
+        1.250e-02 & 4.937e-04 & 1.82 & 1.084e-03 & 1.82\\
+        6.250e-03 & 1.373e-04 & 1.85 & 3.086e-04 & 1.81
+      \end{tabular}
+    }
+\end{table}
 
 
 %
