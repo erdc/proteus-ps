@@ -7,7 +7,6 @@ import numpy as np
 
 from proteus import Context
 opts = Context.Options([
-    ("rlevel",0, "level of refinement"),
     ("parallel", False, "Run in parallel mode"),
     ("analytical", False, "Archive the analytical solution")
 ])
@@ -34,13 +33,16 @@ setFirstTimeStepValues = False # interpolate the first step as well as the 0th s
 usePressureExtrapolations = False # use p_star instead of p_last in velocity and pressure model
 useConservativePressureTerm = False # use < -pI, grad w>  instead of < grad p, w> in velocity update
 useASGS=True
+
 # Spatial Discretization  he = he_coeff*2*Pi/150.0
 he_coeff = 0.75 # default to match Guermond paper: 0.75
 
 # setup time variables
+
 T = 10.0
-DT = 0.1  # target time step size
-DT *= 0.5**opts.rlevel
+DT = 0.05  # target time step size
+
+
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
     nFrames = int(T/DT) + 1
@@ -148,7 +150,7 @@ def vtrue(x,t):
     return vl(x[...,0],x[...,1],t)
 
 def pitrue(x,t): # pressure increment
-    return pl(x[...,0],x[...,1],t) - pl(x[...,0],x[...,1],t-DT)
+    return pl(x[...,0],x[...,1],t) - pl(x[...,0],x[...,1],t-DT) # diff from previous step
 
 def ptrue(x,t):
     return pl(x[...,0],x[...,1],t)
@@ -306,16 +308,3 @@ pressure_atol_res = 1.0e-8
 
 parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node
 nLayersOfOverlapForParallel = 0
-
-
-
-
-
-# Time stepping for output
-# T=10.0
-# DT = 0.0125
-# nFrames = 51
-# dt = T/(nFrames-1)
-# tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
-
-# tnList =  [ i*dt for i in range(nFrames) ]
