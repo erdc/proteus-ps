@@ -218,9 +218,9 @@ for i in range(num_filenames):
 
         if args.usePlots:
             # plot time series of errors
-            ax_L2.plot(tnList, L2Error,'o-',label='dt=%1.5f' %dt[i])
+            ax_L2.semilogy(tnList, L2Error,'o-',label='dt=%1.5f' %dt[i])
             if args.useH1Norm:
-                ax_H1.plot(tnList, H1Error,'o-',label='dt=%1.5f' %dt[i])
+                ax_H1.semilogy(tnList, H1Error,'o-',label='dt=%1.5f' %dt[i])
 
 
     else:
@@ -286,9 +286,9 @@ for i in range(num_filenames):
 
             if args.usePlots:
             	# plot time series of errors
-                ax_L2.plot(tnList, L2Error,'o-',label='dt=%1.5f' %dt[i])
+                ax_L2.semilogy(tnList, L2Error,'o-',label='dt=%1.5f' %dt[i])
                 if args.useH1Norm:
-            	    ax_H1.plot(tnList, H1Error,'o-',label='dt=%1.5f' %dt[i])
+            	    ax_H1.semilogy(tnList, H1Error,'o-',label='dt=%1.5f' %dt[i])
 
         finally:
             shelfvalue.close()

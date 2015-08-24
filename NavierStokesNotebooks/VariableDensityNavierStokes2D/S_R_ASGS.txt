@@ -1,0 +1,132 @@
+cekees@chewbacca:~/proteus-ps/NavierStokesNotebooks/VariableDensityNavierStokes2D$ python processErrors.py -p -t pressure results/pressure_BDF2_dt_0_100000_0.db results/pressure_BDF2_dt_0_050000_0.db results/pressure_BDF2_dt_0_025000_0.db  results/pressure_BDF2_dt_0_012500_0.db results/pressure_BDF2_dt_0_006250_0.db 0: File results/pressure_BDF2_dt_0_100000_0.db found and will be processed!
+1: File results/pressure_BDF2_dt_0_050000_0.db found and will be processed!
+2: File results/pressure_BDF2_dt_0_025000_0.db found and will be processed!
+3: File results/pressure_BDF2_dt_0_012500_0.db found and will be processed!
+4: File results/pressure_BDF2_dt_0_006250_0.db found and will be processed!
+
+Maximum in time norms for database 0 with numTimeSteps = 00100:
+  ||\pre||_{Linf-L2}	= 1.4379e-02
+\ell_2 in time norms for database 0 with numTimeSteps = 00100:
+  ||\pre||_{\ell_2-L2}	= 0.02982
+
+Maximum in time norms for database 1 with numTimeSteps = 00200:
+  ||\pre||_{Linf-L2}	= 4.4031e-03
+\ell_2 in time norms for database 1 with numTimeSteps = 00200:
+  ||\pre||_{\ell_2-L2}	= 0.009181
+
+Maximum in time norms for database 2 with numTimeSteps = 00400:
+  ||\pre||_{Linf-L2}	= 1.2570e-03
+\ell_2 in time norms for database 2 with numTimeSteps = 00400:
+  ||\pre||_{\ell_2-L2}	= 0.002642
+
+Maximum in time norms for database 3 with numTimeSteps = 00800:
+  ||\pre||_{Linf-L2}	= 3.4171e-04
+\ell_2 in time norms for database 3 with numTimeSteps = 00800:
+  ||\pre||_{\ell_2-L2}	= 0.0007347
+
+Maximum in time norms for database 4 with numTimeSteps = 01600:
+  ||\pre||_{Linf-L2}	= 9.0739e-05
+\ell_2 in time norms for database 4 with numTimeSteps = 01600:
+  ||\pre||_{\ell_2-L2}	= 0.0002352
+
+max dt      pre_maxL2   rate    pre_l2L2    rate
+1.000e-01   1.438e-02  +0.00    2.982e-02  +0.00
+5.000e-02   4.403e-03  +1.71    9.181e-03  +1.70
+2.500e-02   1.257e-03  +1.81    2.642e-03  +1.80
+1.250e-02   3.417e-04  +1.88    7.347e-04  +1.85
+6.250e-03   9.074e-05  +1.91    2.352e-04  +1.64
+
+cekees@chewbacca:~/proteus-ps/NavierStokesNotebooks/VariableDensityNavierStokes2D$ python processErrors.py -p -H1 -t velocity results/velocity_BDF2_dt_0_100000_0.db results/velocity_BDF2_dt_0_050000_0.db results/velocity_BDF2_dt_0_025000_0.db results/velocity_BDF2_dt_0_012500_0.db results/velocity_BDF2_dt_0_006250_0.db 
+0: File results/velocity_BDF2_dt_0_100000_0.db found and will be processed!
+1: File results/velocity_BDF2_dt_0_050000_0.db found and will be processed!
+2: File results/velocity_BDF2_dt_0_025000_0.db found and will be processed!
+3: File results/velocity_BDF2_dt_0_012500_0.db found and will be processed!
+4: File results/velocity_BDF2_dt_0_006250_0.db found and will be processed!
+
+Maximum in time norms for database 0 with numTimeSteps = 00100:
+  ||\vel||_{Linf-L2}	= 4.4136e-03
+  ||\vel||_{Linf-H1}	= 1.8823e-02
+\ell_2 in time norms for database 0 with numTimeSteps = 00100:
+  ||\vel||_{\ell_2-L2}	= 0.00964
+  ||\vel||_{\ell_2-H1}	= 0.04097
+
+Maximum in time norms for database 1 with numTimeSteps = 00200:
+  ||\vel||_{Linf-L2}	= 1.3708e-03
+  ||\vel||_{Linf-H1}	= 5.9226e-03
+\ell_2 in time norms for database 1 with numTimeSteps = 00200:
+  ||\vel||_{\ell_2-L2}	= 0.003001
+  ||\vel||_{\ell_2-H1}	= 0.01297
+
+Maximum in time norms for database 2 with numTimeSteps = 00400:
+  ||\vel||_{Linf-L2}	= 3.9301e-04
+  ||\vel||_{Linf-H1}	= 1.7441e-03
+\ell_2 in time norms for database 2 with numTimeSteps = 00400:
+  ||\vel||_{\ell_2-L2}	= 0.0008603
+  ||\vel||_{\ell_2-H1}	= 0.003822
+
+Maximum in time norms for database 3 with numTimeSteps = 00800:
+  ||\vel||_{Linf-L2}	= 1.0682e-04
+  ||\vel||_{Linf-H1}	= 4.9370e-04
+\ell_2 in time norms for database 3 with numTimeSteps = 00800:
+  ||\vel||_{\ell_2-L2}	= 0.0002338
+  ||\vel||_{\ell_2-H1}	= 0.001084
+
+Maximum in time norms for database 4 with numTimeSteps = 01600:
+  ||\vel||_{Linf-L2}	= 2.8109e-05
+  ||\vel||_{Linf-H1}	= 1.3727e-04
+\ell_2 in time norms for database 4 with numTimeSteps = 01600:
+  ||\vel||_{\ell_2-L2}	= 6.151e-05
+  ||\vel||_{\ell_2-H1}	= 0.0003086
+
+max dt      vel_maxL2   rate    vel_l2L2    rate
+1.000e-01   4.414e-03  +0.00    9.640e-03  +0.00
+5.000e-02   1.371e-03  +1.69    3.001e-03  +1.68
+2.500e-02   3.930e-04  +1.80    8.603e-04  +1.80
+1.250e-02   1.068e-04  +1.88    2.338e-04  +1.88
+6.250e-03   2.811e-05  +1.93    6.151e-05  +1.93
+
+max dt      vel_maxH1   rate    vel_l2H1    rate
+1.000e-01   1.882e-02  +0.00    4.097e-02  +0.00
+5.000e-02   5.923e-03  +1.67    1.297e-02  +1.66
+2.500e-02   1.744e-03  +1.76    3.822e-03  +1.76
+1.250e-02   4.937e-04  +1.82    1.084e-03  +1.82
+6.250e-03   1.373e-04  +1.85    3.086e-04  +1.81
+
+cekees@chewbacca:~/proteus-ps/NavierStokesNotebooks/VariableDensityNavierStokes2D$ python processErrors.py -p -t density results/density_BDF2_dt_0_100000_0.db results/density_BDF2_dt_0_050000_0.db results/density_BDF2_dt_0_025000_0.db results/density_BDF2_dt_0_012500_0.db results/density_BDF2_dt_0_006250_0.db 
+0: File results/density_BDF2_dt_0_100000_0.db found and will be processed!
+1: File results/density_BDF2_dt_0_050000_0.db found and will be processed!
+2: File results/density_BDF2_dt_0_025000_0.db found and will be processed!
+3: File results/density_BDF2_dt_0_012500_0.db found and will be processed!
+4: File results/density_BDF2_dt_0_006250_0.db found and will be processed!
+
+Maximum in time norms for database 0 with numTimeSteps = 00100:
+  ||\rho||_{Linf-L2}	= 1.4532e-02
+\ell_2 in time norms for database 0 with numTimeSteps = 00100:
+  ||\rho||_{\ell_2-L2}	= 0.03377
+
+Maximum in time norms for database 1 with numTimeSteps = 00200:
+  ||\rho||_{Linf-L2}	= 4.2547e-03
+\ell_2 in time norms for database 1 with numTimeSteps = 00200:
+  ||\rho||_{\ell_2-L2}	= 0.01021
+
+Maximum in time norms for database 2 with numTimeSteps = 00400:
+  ||\rho||_{Linf-L2}	= 1.2772e-03
+\ell_2 in time norms for database 2 with numTimeSteps = 00400:
+  ||\rho||_{\ell_2-L2}	= 0.00306
+
+Maximum in time norms for database 3 with numTimeSteps = 00800:
+  ||\rho||_{Linf-L2}	= 4.1937e-04
+\ell_2 in time norms for database 3 with numTimeSteps = 00800:
+  ||\rho||_{\ell_2-L2}	= 0.0009061
+
+Maximum in time norms for database 4 with numTimeSteps = 01600:
+  ||\rho||_{Linf-L2}	= 1.7221e-04
+\ell_2 in time norms for database 4 with numTimeSteps = 01600:
+  ||\rho||_{\ell_2-L2}	= 0.0002806
+
+max dt      rho_maxL2   rate    rho_l2L2    rate
+1.000e-01   1.453e-02  +0.00    3.377e-02  +0.00
+5.000e-02   4.255e-03  +1.77    1.021e-02  +1.73
+2.500e-02   1.277e-03  +1.74    3.060e-03  +1.74
+1.250e-02   4.194e-04  +1.61    9.061e-04  +1.76
+6.250e-03   1.722e-04  +1.28    2.806e-04  +1.69

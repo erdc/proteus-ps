@@ -38,7 +38,7 @@ useASGS=True
 he_coeff = 0.75 # default to match Guermond paper: 0.75
 
 # setup time variables
-T = 0.2
+T = 10.0
 DT = 0.1  # target time step size
 DT *= 0.5**opts.rlevel
 # setup tnList
@@ -69,6 +69,8 @@ else:
 decimal_length = 6
 DT_string = "{:1.{dec_len}f}".format(DT, dec_len=decimal_length)[2:]
 
+if not useVelocityComponents:
+    DT_string+='_velpp'
 
 # solutions
 
@@ -101,16 +103,16 @@ chi = 1.0  # 1.0 is the minimal value of rho density.
 
 # Given solution: (Modify here and if needed add more sympy.functions above with
 #                  notation sy_* to distinguish as symbolic functions)
+offset = 0.5*sy_pi
 rs = sy_sqrt(xs*xs + ys*ys)
 thetas = sy_atan2(ys,xs)
-rhos = 2 + rs*sy_cos(thetas-sy_sin(ts))
-
+rhos = 2 + rs*sy_cos(thetas-sy_sin(ts+offset))
 
 # rhos = 2 + rs*sy_cos(thetas-sy_sin(ts))
-ps = sy_sin(xs)*sy_sin(ys)*sy_sin(ts)
-us = -ys*sy_cos(ts)
-vs = xs*sy_cos(ts)
-
+ps = sy_sin(xs)*sy_sin(ys)*sy_sin(ts+offset)
+us = -ys*sy_cos(ts+offset)
+vs = xs*sy_cos(ts+offset)
+pst = diff(ps,ts)
 # manufacture the source terms:
 
 f1s = simplify((rhos*(diff(us,ts) + us*diff(us,xs) + vs*diff(us,ys)) + diff(ps,xs) - diff(mu*us,xs,xs) - diff(mu*us,ys,ys)))
@@ -119,6 +121,7 @@ f2s = simplify((rhos*(diff(vs,ts) + us*diff(vs,xs) + vs*diff(vs,ys)) + diff(ps,y
 #pf2s = simplify((f2s + mu*(diff(vs,xs,xs)+diff(vs,ys,ys)))/rhos - us*diff(vs,xs) - vs*diff(vs,ys))
 # use lambdify to convert from sympy to python expressions
 pl = lambdify((xs, ys, ts), ps, "numpy")
+ptl = lambdify((xs, ys, ts), pst, "numpy")
 ul = lambdify((xs, ys, ts), us, "numpy")
 vl = lambdify((xs, ys, ts), vs, "numpy")
 rhol = lambdify((xs, ys, ts), rhos, "numpy")
@@ -145,7 +148,7 @@ def vtrue(x,t):
     return vl(x[...,0],x[...,1],t)
 
 def pitrue(x,t): # pressure increment
-    return np.zeros(x[...,0].shape)
+    return pl(x[...,0],x[...,1],t) - pl(x[...,0],x[...,1],t-DT)
 
 def ptrue(x,t):
     return pl(x[...,0],x[...,1],t)
