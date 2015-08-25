@@ -2,8 +2,6 @@ from math import *
 from proteus import *
 from proteus.default_p import *
 from proteus import Context
-import navierstokes_vardensity
-Context.setFromModule(navierstokes_vardensity)
 ctx = Context.get()
 
 
@@ -12,7 +10,10 @@ import NavierStokesVariableDensity as NavierStokes
 domain = ctx.domain
 nd = ctx.nd
 name = "StokesProjection"
-coefficients=NavierStokes.StokesProjection2D(projectTime=0.0,
+coefficients=NavierStokes.StokesProjection2D(myModelIndex=4,
+                                             toModelIndex_v=1,
+                                             toModelIndex_p=3,
+                                             projectTime=0.0,
                                              grad_u_function = ctx.gradutrue,
                                              grad_v_function = ctx.gradvtrue,
                                              p_function = ctx.ptrue)

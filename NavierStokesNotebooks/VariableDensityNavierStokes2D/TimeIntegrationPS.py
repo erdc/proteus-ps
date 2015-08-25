@@ -1,4 +1,5 @@
 import proteus
+from proteus.Profiling import logEvent as log
 
 class NonConservativeBackwardEuler(proteus.TimeIntegration.BackwardEuler):
     def __init__(self,transport,integrateInterpolationPoints=False):
@@ -96,8 +97,7 @@ class NonConservativeVBDF(proteus.TimeIntegration.VBDF):
         proteus.TimeIntegration.VBDF.__init__(self, transport, timeOrder, integrateInterpolationPoints)
     def calculateElementCoefficients(self, q):
         self.calculateCoefs()
-        #mwf debug
-        #log("VBDF calculateElementCoefficients t= %s dt= %s alpha= %s " % (self.t,self.dt,self.alpha_bdf))
+        log("VBDF calculateElementCoefficients t= %s dt= %s alpha= %s " % (self.t,self.dt,self.alpha_bdf))
         for ci in self.massComponents:
             self.m_tmp[ci][:] = q[('u',ci)]  # use 'u' instead of 'm' to avoid conservativeness
             self.mt_tmp[ci][:]= q[('u',ci)]

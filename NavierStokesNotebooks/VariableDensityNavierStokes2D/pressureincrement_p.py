@@ -61,7 +61,7 @@ class getIBC_p:
         self.pitrue=ctx.pitrue
         pass
     def uOfXT(self,x,t):
-        return self.pitrue(x,t)
+        return 0.0#don't use self.pitrue(x,t)
 
 initialConditions = {0:getIBC_p()}
 

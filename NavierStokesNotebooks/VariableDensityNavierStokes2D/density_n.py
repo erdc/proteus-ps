@@ -34,10 +34,14 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 
 
 if ctx.useASGS:
-    subgridError = SubgridError.Advection_ASGS(coefficients,
-                                               ctx.nd,
-                                               stabFlag='1',
-                                               lag=False)
+#    subgridError = SubgridError.Advection_ASGS(coefficients,
+#                                               ctx.nd,
+#                                               stabFlag='1',
+#                                               lag=False)
+    subgridError = SubgridError.AdvectionDiffusionReaction_ASGS(coefficients,
+                                                                ctx.nd,
+                                                                stabFlag='2',
+                                                                lag=False)
 
 #numerics.shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(physics.coefficients,
 #                                                                physics.nd,
