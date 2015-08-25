@@ -1820,3 +1820,101 @@ class Pressure2D(TransportCoefficients.TC_base):
         #G&S11,p92, eq 3.10
         c[('r',0)][:] = p - p_star - phi
         c[('dr',0,0)][:] = 1.0
+
+class L2Projection(TransportCoefficients.TC_base):
+    def __init__(self,
+                 projectTime=None,
+                 toName='u',
+                 myModelIndex=0,
+                 toModelIndex=-1,
+                 toModel_u_ci=0,
+                 exactFunction=lambda x,t: 1.0):
+        TransportCoefficients.TC_base.__init__(self,
+                                               nc = 1,
+                                               variableNames = ['pi_'+toName],
+                                               reaction = {0:{0:'linear'}})
+        self.myModelIndex = myModelIndex
+        self.toModelIndex = toModelIndex
+        self.toModel_u_ci = toModel_u_ci
+        self.exactFunction = exactFunction
+        self.projectTime=projectTime
+    def attachModels(self,modelList):
+        self.myModel = modelList[self.myModelIndex]
+        self.toModel = modelList[self.toModelIndex]
+    def evaluate(self,t,c):
+        if self.projectTime is not None:
+            T=self.projectTime
+        else:
+            T=t
+        c[('r',0)][:] = c[('u',0)] - self.exactFunction(c['x'],0.0)
+        c[('dr',0,0)][:] = 1.0
+        if self.toModelIndex >= 0:
+            self.toModel.u[self.toModel_u_ci].dof[:] = self.myModel.u[0].dof
+
+class StokesProjection2D(TransportCoefficients.TC_base):
+    def __init__(self,
+                 grad_u_function,
+                 grad_v_function,
+                 p_function,
+                 mu=1.0,
+                 projectTime=0.0):
+        sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
+                          np.array([0,1],dtype='i')),
+                   (1,1):(np.array([0,1,2],dtype='i'),
+                          np.array([0,1],dtype='i'))}
+        dim=2; # dimension of space
+        xi=0; yi=1; # indices for first component or second component of dimension
+        eu=0; ev=1; ediv=2; # equation numbers  momentum u, momentum v, divergencefree
+        ui=0; vi=1; pi=2;  # variable name ordering
+        TransportCoefficients.TC_base.__init__(self,
+                         nc=dim+1, #number of components  u, v, p
+                         variableNames=['u','v','p'], # defines variable reference order [0, 1, 2]
+                        advection = {eu:{ui:'constant'},
+                                     ev:{vi:'constant'},
+                                     ediv:{ui:'constant',
+                                           vi:'constant'}},
+                         hamiltonian = {eu:{pi:'linear'},   # p_x
+                                        ev:{pi:'linear'}},  # p_y
+                         diffusion = {eu:{ui:{ui:'constant'}},  # - \mu * \grad u
+                                      ev:{vi:{vi:'constant'}}}, # - \mu * \grad v
+                         potential = {eu:{ui:'u'},
+                                      ev:{vi:'u'}}, # define the potential for the diffusion term to be the solution itself
+                         sparseDiffusionTensors=sdInfo,
+                         useSparseDiffusion = True),
+        self.vectorComponents=[ui,vi]
+        self.grad_u_function = grad_u_function
+        self.grad_v_function = grad_v_function
+        self.p_function = p_function
+        self.mu=mu
+        self.T=projectTime
+
+    def evaluate(self,t,c):
+        xi=0; yi=1; # indices for first component or second component of dimension
+        eu=0; ev=1; ediv=2; # equation numbers  momentum u, momentum v, divergencefree
+        ui=0; vi=1; pi=2;  # variable name ordering
+        u = c[('u',ui)]
+        v = c[('u',vi)]
+        p = c[('u',pi)]
+        grad_p = c[('grad(u)',pi)]
+
+
+        c[('H',eu)][:] = grad_p[...,xi]
+        c[('dH',eu,pi)][...,xi] = 1.0
+        c[('a',eu,ui)][...,0] = self.mu
+        c[('a',eu,ui)][...,1] = self.mu
+        c[('f',eu)][...,0]  = self.mu*self.grad_u_function(c['x'],self.T)[...,0] - self.p_function(c['x'],self.T)
+        c[('f',eu)][...,1]  = self.mu*self.grad_u_function(c['x'],self.T)[...,1]
+
+        c[('H',ev)][:] = grad_p[...,yi]
+        c[('dH',ev,pi)][...,yi] = 1.0
+        c[('a',ev,vi)][...,0] = self.mu
+        c[('a',ev,vi)][...,1] = self.mu
+        c[('f',ev)][...,0]  = self.mu*self.grad_v_function(c['x'],self.T)[...,0]
+        c[('f',ev)][...,1]  = self.mu*self.grad_v_function(c['x'],self.T)[...,1] - self.p_function(c['x'],self.T)
+
+        c[('f',ediv)][...,xi] = u
+        c[('f',ediv)][...,yi] = v
+        c[('df',ediv,ui)][...,xi] = 1.0  # d_f_d_u [xi]
+        c[('df',ediv,ui)][...,yi] = 0.0  # d_f_d_u [yi]
+        c[('df',ediv,vi)][...,xi] = 0.0  # d_f_d_v [xi]
+        c[('df',ediv,vi)][...,yi] = 1.0  # d_f_d_v [yi]

@@ -1,0 +1,63 @@
+from proteus import *
+from proteus.default_n import *
+from L2_rho_p import *
+
+
+triangleOptions = ctx.triangleOptions
+
+
+femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis}
+
+
+# stepController  = StepControl.Min_dt_cfl_controller
+# runCFL= 0.99
+# runCFL= 0.5
+
+#stepController=FixedStep
+#DT = ctx.DT
+
+#Quadrature rules for elements and element  boundaries
+elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
+elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_degree)
+#number of nodes in the x and y direction
+
+
+#matrix type
+#numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
+numericalFluxType = DoNothing
+matrix = LinearAlgebraTools.SparseMatrix
+#use petsc solvers wrapped by petsc4py
+#numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
+#numerics.levelLinearSolver = LinearSolvers.KSP_petsc4py
+#using petsc4py requires weak boundary condition enforcement
+#can also use our internal wrapper for SuperLU
+multilevelLinearSolver = LinearSolvers.LU
+levelLinearSolver = LinearSolvers.LU
+
+linear_solver_options_prefix = 'pi_u_'
+
+if ctx.opts.parallel:
+    multilevelLinearSolver = KSP_petsc4py
+    levelLinearSolver      = KSP_petsc4py
+    parallelPartitioningType = ctx.parallelPartitioningType
+    nLayersOfOverlapForParallel = ctx.nLayersOfOverlapForParallel
+    nonlinearSmoother = None
+    linearSmoother    = None
+
+multilevelNonlinearSolver = NonlinearSolvers.Newton
+levelNonlinearSolver = NonlinearSolvers.Newton
+
+#linear solve rtolerance
+
+linTolFac = 0.0
+l_atol_res = 0.1*ctx.velocity_atol_res
+tolFac = 0.0
+nl_atol_res = ctx.velocity_atol_res
+
+nonlinearSolverConvergenceTest      = 'r'
+levelNonlinearSolverConvergenceTest = 'r'
+linearSolverConvergenceTest         = 'r-true'
+
+periodicDirichletConditions=None
+
+conservativeFlux=None
