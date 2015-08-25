@@ -7,7 +7,6 @@ import numpy as np
 
 from proteus import Context
 opts = Context.Options([
-    ("rlevel",0, "level of refinement"),
     ("parallel", False, "Run in parallel mode"),
     ("analytical", False, "Archive the analytical solution")
 ])
@@ -22,7 +21,7 @@ quad_degree = 5  # exact for polynomials of this degree
 # Model Flags
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
 useRotationalModel = True #  Standard vs Rotational models in pressure update
-useStabilityTerms = True  # stability terms in density and velocity models
+useStabilityTerms = True  # stability terms in density and velocity models (should always be True)
 useNonlinearAdvection = False # switches between extrapolated and fully nonlinear advection in velocity model
 useNumericalFluxEbqe = True # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
@@ -33,14 +32,17 @@ useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ...
 setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
 usePressureExtrapolations = False # use p_star instead of p_last in velocity and pressure model
 useConservativePressureTerm = False # use < -pI, grad w>  instead of < grad p, w> in velocity update
-useASGS=True
+useASGS=False  # turn on/off Algebraic Subgrid Stabilization for velocity and density transport
+
 # Spatial Discretization  he = he_coeff*2*Pi/150.0
 he_coeff = 0.75 # default to match Guermond paper: 0.75
 
 # setup time variables
+
 T = 10.0
 DT = 0.1  # target time step size
-DT *= 0.5**opts.rlevel
+
+
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
     nFrames = int(T/DT) + 1
@@ -148,7 +150,7 @@ def vtrue(x,t):
     return vl(x[...,0],x[...,1],t)
 
 def pitrue(x,t): # pressure increment
-    return pl(x[...,0],x[...,1],t) - pl(x[...,0],x[...,1],t-DT)
+    return pl(x[...,0],x[...,1],t) - pl(x[...,0],x[...,1],t-DT) # diff from previous step
 
 def ptrue(x,t):
     return pl(x[...,0],x[...,1],t)
@@ -311,16 +313,3 @@ pressure_atol_res = 1.0e-8
 
 parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node
 nLayersOfOverlapForParallel = 0
-
-
-
-
-
-# Time stepping for output
-# T=10.0
-# DT = 0.0125
-# nFrames = 51
-# dt = T/(nFrames-1)
-# tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
-
-# tnList =  [ i*dt for i in range(nFrames) ]
