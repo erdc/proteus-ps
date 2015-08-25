@@ -220,18 +220,23 @@ class AnalyticSolutionConverter:
     """
     wrapper for function f(x) that satisfies proteus interface for analytical solutions
     """
-    def __init__(self,fx,gradfx=None):
+    def __init__(self,fx,gradfx=None,T=None):
         self.exact_function = fx
         self.exact_grad_function = gradfx
-
+        self.fixed_T=T
+    def get_t(self,t):
+        if self.fixed_T is not None:
+            return self.fixed_T
+        else:
+            return t
     def uOfXT(self,x,t):
-        return self.exact_function(x,t)
+        return self.exact_function(x,self.get_t(t))
     def uOfX(self,x):
-        return self.exact_function(x)
+        return self.exact_function(x,0.0)
     def duOfXT(self,x,t):
-        return self.exact_grad_function(x,t)
+        return self.exact_grad_function(x,self.get_t(t))
     def duOfX(self,x):
-        return self.exact_grad_function(x)
+        return self.exact_grad_function(x,0.0)
 
 
 
