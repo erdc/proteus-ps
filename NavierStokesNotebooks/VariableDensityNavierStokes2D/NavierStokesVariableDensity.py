@@ -126,7 +126,9 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                                                variableNames = ['rho'],
                                                mass = {0:{0:'linear'}},
                                                advection = {0:{0:'linear'}},
-                                               reaction = {0:{0:'linear'}} if useStabilityTerms else {} ) # for the stability term
+                                               diffusion = {0:{0:{0:'constant'}}},
+                                               potential = {0:{0:'u'}},
+                                               reaction = {0:{0:'linear'}}) # for the stability term
         self.bdf=int(bdf)
         self.currentModelIndex = currentModelIndex
         self.densityFunction = densityFunction
@@ -175,7 +177,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         """
 
         #Initialize the HistoryManipulation class for all of the models
-        self.HistoryManipulation = HistoryManipulation(modelList=modelList,
+        self.HistoryManipulation = HistoryManipulation(modelList=modelList[0:4],
                                                        bdf=self.bdf,
                                                        useNumericalFluxEbqe=self.useNumericalFluxEbqe)
 
@@ -444,23 +446,14 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         # hopefully with divergence free properties.
         dt = self.model.timeIntegration.dt  # 0 = densityModelIndex
         if self.bdf is int(2):
-            dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
+            if self.firstStep:
+                dt_last = dt
+            else:
+                dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
 
         tLast = self.model.timeIntegration.tLast
         if self.bdf is int(2) and not self.firstStep:
             tLastLast = tLast - dt_last
-
-        # extract scaling terms for post processed velocity (see pressureIncrement model for description)
-        if not self.useVelocityComponents and self.velocityFunction is None:
-            chi = self.chiValue
-            # beta_0 coefficient scalar
-            if self.bdf is int(1) or self.firstStep:
-                b0 = 1.0/dt
-            elif self.bdf is int(2):
-                r = dt/dt_last
-                dtInv = 1.0/dt
-                b0 = (1.0+2.0*r)/(1.0+r)*dtInv  # = self.model.timeIntegration.alpha_bdf  # = beta_0
-            Invb0chi = 1.0/(chi*b0)
 
         # extract last velocity components
         if self.velocityFunction != None:
@@ -700,12 +693,12 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                     grad_rho = self.densityModel.ebq[('grad(u)',0)]
                     self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebqe:
-                rho = self.densityModel.ebqe[('u',0)]
+                rho = self.densityModel.numericalFlux.ebqe[('u',0)]
                 self.c_rho[rho.shape] = rho
-                rho_last = self.densityModel.ebqe[('u_last',0)]
+                rho_last = self.densityModel.numericalFlux.ebqe[('u_last',0)]
                 self.c_rho_last[rho_last.shape] = rho_last
                 if self.bdf is int(2):
-                    rho_lastlast = self.densityModel.ebqe[('u_lastlast',0)]
+                    rho_lastlast = self.densityModel.numericalFlux.ebqe[('u_lastlast',0)]
                     self.c_rho_lastlast[rho_lastlast.shape] = rho_lastlast
                 if self.useStabilityTerms:
                     grad_rho = self.densityModel.ebqe[('grad(u)',0)]
@@ -958,8 +951,11 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
 
         # time management
         dt = self.model.timeIntegration.dt  # 0 = velocityModelIndex
-        if self.bdf is int(2) and not self.firstStep:
-            dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
+        if self.bdf is int(2):
+            if not self.firstStep:
+                dt_last = self.model.timeIntegration.dt_history[0] # note this only exists if we are using VBDF for Time integration
+            else:
+                dt_last = dt
             dtInv = 1.0/dt
             r = dt/dt_last
             # set coefficients  m_t  = b0*m^{k+1} - b1*m^{k} - b2*m^{k-1}
@@ -1120,8 +1116,12 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             u_star = u
             v_star = v
         elif not self.useVelocityComponents:
-            u_star = self.c_vel_last[grad_shap][...,0]
-            v_star = self.c_vel_last[grad_shap][...,1]
+            if self.bdf is int(1) or self.firstStep:
+                u_star = self.c_vel_last[grad_shap][...,0]
+                v_star = self.c_vel_last[grad_shap][...,1]
+            elif self.bdf is int(2):
+                u_star = self.c_vel_last[grad_shap][...,0] + dt/dt_last*( self.c_vel_last[grad_shap][...,0] - self.c_vel_lastlast[grad_shap][...,0] )
+                v_star = self.c_vel_last[grad_shap][...,1] + dt/dt_last*( self.c_vel_last[grad_shap][...,1] - self.c_vel_lastlast[grad_shap][...,1] )
         else: # use extrapolation of velocity
             if self.bdf is int(1) or self.firstStep:
                 # first order extrapolation
@@ -1143,7 +1143,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                 div_vel_star = div_vel_last + dt/dt_last*( div_vel_last - div_vel_lastlast)
             # set the stability div(rho_vel)
             div_rho_vel_star = grad_rho[...,xi]*u_star + grad_rho[...,yi]*v_star + rho*div_vel_star
-
         #equation eu = 0
         # rho_sharp*u_t + rho(u_star u_x + v_star u_y ) + p_sharp_x - f1 + div(-mu grad(u))
         #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )u = 0
@@ -1202,7 +1201,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('a',ev,vi)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
         c[('da',ev,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
         c[('da',ev,vi,vi)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
-
 
 class PressureIncrement2D(TransportCoefficients.TC_base):
     r"""
@@ -1334,7 +1332,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                 rho = self.densityModel.ebq[('u',0)]
                 self.c_rho[rho.shape] = rho
             if ('u',0) in self.densityModel.ebqe:
-                rho = self.densityModel.ebqe[('u',0)]
+                rho = self.densityModel.numericalFlux.ebqe[('u',0)]
                 self.c_rho[rho.shape] = rho
             if ('u',0) in self.densityModel.ebq_global:
                 rho = self.densityModel.ebq_global[('u',0)]
@@ -1466,11 +1464,12 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         # beta_0 coefficient scalar
         if self.bdf is int(1) or self.firstStep:
             b0 = 1.0/dt
+            dt_last = dt
         elif self.bdf is int(2):
             dt_last = self.velocityModel.timeIntegration.dt_history[0] # velocity model has the timeIntegration all set up.
-            dtInv = 1.0/dt
-            r = dt/dt_last
-            b0 = (1.0+2.0*r)/(1.0+r)*dtInv # use this instead of alpha_bdf since we have no timeIntegration in this model
+        dtInv = 1.0/dt
+        r = dt/dt_last
+        b0 = (1.0+2.0*r)/(1.0+r)*dtInv # use this instead of alpha_bdf since we have no timeIntegration in this model
 
         # find minimal density value set it to be chi
         if self.densityModelIndex>0:
@@ -1857,7 +1856,10 @@ class StokesProjection2D(TransportCoefficients.TC_base):
                  grad_v_function,
                  p_function,
                  mu=1.0,
-                 projectTime=0.0):
+                 projectTime=0.0,
+                 myModelIndex=0,
+                 toModelIndex_v=-1,
+                 toModelIndex_p=-1):
         sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
                           np.array([0,1],dtype='i')),
                    (1,1):(np.array([0,1,2],dtype='i'),
@@ -1868,7 +1870,7 @@ class StokesProjection2D(TransportCoefficients.TC_base):
         ui=0; vi=1; pi=2;  # variable name ordering
         TransportCoefficients.TC_base.__init__(self,
                          nc=dim+1, #number of components  u, v, p
-                         variableNames=['u','v','p'], # defines variable reference order [0, 1, 2]
+                         variableNames=['pi_u','pi_v','pi_p'], # defines variable reference order [0, 1, 2]
                         advection = {eu:{ui:'constant'},
                                      ev:{vi:'constant'},
                                      ediv:{ui:'constant',
@@ -1882,12 +1884,27 @@ class StokesProjection2D(TransportCoefficients.TC_base):
                          sparseDiffusionTensors=sdInfo,
                          useSparseDiffusion = True),
         self.vectorComponents=[ui,vi]
+        self.vectorName="pi_velocity"
+        self.myModelIndex = myModelIndex
+        self.toModelIndex_v = toModelIndex_v
+        self.toModelIndex_p = toModelIndex_p
         self.grad_u_function = grad_u_function
         self.grad_v_function = grad_v_function
         self.p_function = p_function
         self.mu=mu
         self.T=projectTime
-
+    def attachModels(self,modelList):
+        self.myModel = modelList[self.myModelIndex]
+        self.toModel_v = modelList[self.toModelIndex_v]
+        self.toModel_p = modelList[self.toModelIndex_p]
+    def postStep(self,t,firstStep=False):
+        self.toModel_v.u[0].dof[:]=self.myModel.u[0].dof
+        self.toModel_v.u[1].dof[:]=self.myModel.u[1].dof
+        self.toModel_v.calculateSolutionAtQuadrature()
+        self.toModel_v.numericalFlux.setDirichletValues(self.toModel_v.ebqe)
+        self.toModel_p.u[0].dof[:]=self.myModel.u[2].dof
+        self.toModel_p.calculateSolutionAtQuadrature()
+        self.toModel_p.numericalFlux.setDirichletValues(self.toModel_p.ebqe)
     def evaluate(self,t,c):
         xi=0; yi=1; # indices for first component or second component of dimension
         eu=0; ev=1; ediv=2; # equation numbers  momentum u, momentum v, divergencefree

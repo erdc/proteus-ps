@@ -45,7 +45,7 @@ else:
 if ctx.useASGS:
     subgridError = HamiltonJacobiDiffusionReaction_ASGS(coefficients,
                                                         nd=ctx.nd,
-                                                        stabFlag='1',
+                                                        stabFlag='2',
                                                         lag=False)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
