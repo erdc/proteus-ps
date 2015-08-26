@@ -35,8 +35,8 @@ class HistoryManipulation:
             u_lastlast = solution at time t^{0}
         """
         for model in self.modelList:
-            for transfer_from_c, transfer_to_c in zip([model.q, model.numericalFlux.ebqe, model.numericalFlux.ebqe if self.useNumericalFluxEbqe else model.ebqe, model.numericalFlux.ebqe],
-                                                      [model.q, model.numericalFlux.ebqe, model.ebqe, model.numericalFlux.ebqe]):
+            for transfer_from_c, transfer_to_c in zip([model.q, model.numericalFlux.ebqe, model.numericalFlux.ebqe if self.useNumericalFluxEbqe else model.ebqe],
+                                                      [model.q, model.numericalFlux.ebqe, model.ebqe]):
                 for ci in range(model.nc):
                     if self.bdf is int(2):
                         transfer_to_c[('u_lastlast',ci)][:] = transfer_from_c[('u',ci)]
@@ -62,8 +62,8 @@ class HistoryManipulation:
               u_lastlast = solution at time t^{n-2}
         """
         for model in self.modelList:
-            for transfer_from_c, transfer_to_c in zip([model.q, model.numericalFlux.ebqe, model.numericalFlux.ebqe, model.numericalFlux.ebqe if self.useNumericalFluxEbqe else model.ebqe],
-                                                      [model.q, model.numericalFlux.ebqe, model.numericalFlux.ebqe, model.ebqe]):
+            for transfer_from_c, transfer_to_c in zip([model.q, model.numericalFlux.ebqe, model.numericalFlux.ebqe if self.useNumericalFluxEbqe else model.ebqe],
+                                                      [model.q, model.numericalFlux.ebqe, model.ebqe]):
                 for ci in range(model.nc):
                     if self.bdf is int(2):
                         transfer_to_c[('u_lastlast',ci)][:] = transfer_from_c[('u_last',ci)]
