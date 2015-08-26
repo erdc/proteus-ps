@@ -803,7 +803,7 @@ and the neumann boundary conditions
 \end{align*}
 where $h$ is the mesh size (minimal cell diameter).
 
-\item  Pressure Increment:  Again for the pressure increment equation, we add the advective and diffusive fluxes but this time we don't upwind the advective flux since it is already a known quantity.  Advective flux is applied to the region where we have neumann boundary conditions in pressure increment to control the integration by parts term from our right hand side.  Ideally we would have Neumann boundary conditions everywhere on the boundary for pressure increment, but without an additional modification (that will be described in Section~\ref{sec:OpenBoundaryConditions}), we must apply a zero dirichlet boundary condition to pressure increment everywhere that the velocity has a neumann condition.  In other words, we must set
+\item  Pressure Increment:  Again for the pressure increment equation, we add the upwind advective and diffusive fluxes.  Upwinding advective flux is applied to the region where we have neumann boundary conditions in pressure increment to control the integration by parts term from our right hand side.  Ideally we would have Neumann boundary conditions everywhere on the boundary for pressure increment, but without an additional modification (that will be described in Section~\ref{sec:OpenBoundaryConditions}), we must apply a zero dirichlet boundary condition to pressure increment everywhere that the velocity has a neumann condition.  In other words, we must set
 \begin{equation}
   \psi^{k+1}_h = 0, \mbox{ for }\x\in\partial\Lambda_n.
 \end{equation}
@@ -811,7 +811,7 @@ Unfortunately this introduces a boundary layer to pressure which causes our expe
 \begin{align*}
   &\dprod{ \nabla \psi^{k+1}_h}{ \nabla r_h }_{\Lambda}&\\
   & - \dprod{ \frac{\chi\beta_0}{\tau} \ub^{k+1}_h}{ \nabla r_h }_{\Lambda} &\\
-  &+ \dprod{ \frac{\chi\beta_0}{\tau} \ub^{k+1}_h\cdot\nu}{ r_h }_{\partial\Lambda_d}   &\mbox{(advective flux)}\\
+  &+ \dprod{  \frac{\chi\beta_0}{\tau}\max\left\{0, -\ub^{k+1}_h\cdot\nu \right\} }{ r_h }_{\partial\Lambda_d}   &\mbox{(upwind advective flux)}\\
   &- \dprod{ \nabla \psi^{k+1}_h\cdot\nu}{ r_h }_{\partial\Lambda_n}      &\mbox{(diffusive flux)}\\
   &- \dprod{ \psi^{k+1}_h}{ \nabla r_h\cdot\nu }_{\partial\Lambda_n}      &\mbox{(adjoint diffusive flux)}\\
   &+ \dprod{ \frac{\eps_{p}}{h} \left(\psi^{k+1}_h - 0\right)}{ r_h }_{\partial\Lambda_n}        &\mbox{(penalty flux)}\\
