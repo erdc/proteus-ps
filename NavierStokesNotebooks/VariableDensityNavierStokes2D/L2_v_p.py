@@ -14,7 +14,9 @@ nd = ctx.nd
 name = "pi_v"
 coefficients=NavierStokes.L2Projection(projectTime=0.0,
                                        toName='v',
-                                       myModelIndex=0,
+                                       myModelIndex=7,
+                                       toModelIndex=1,
+                                       toModel_u_ci=1,
                                        exactFunction = ctx.vtrue)
 analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.vtrue,T=0.0)}
 class getIBC_u:
