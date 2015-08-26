@@ -10,6 +10,10 @@
 \usepackage[subnum]{cases} % force all numcases to be subnumcases
 \usepackage[section]{placeins}
 
+\usepackage{stmaryrd} % for the llbracket rrbracket jump notations
+\usepackage{cancel}  % for strike through up arrow terms as in 'goes to zero'
+
+
 \usepackage{hyperref}
 
 \usepackage{subfig}
@@ -645,20 +649,36 @@ so that
 %
 \section{Variable Time Stepping and the CFL Condition}\label{sec:VariableTimeSteppingAndCFL}
 
-%
-%
-%
-\subsection{Changes for First and Second Order Algorithm with Variable Time Steps}\label{sec:BDF1VariableTimeSteppingAlgorithm}
-In the case of variable time step  $\tau^{k} := t^{k}-t^{k-1}$, there are two types of changes to be made.  First, the second order extrapolation terms must be updated to reflect variable time stepping:
+It turns out that using the natural extension of the backward difference formula with variable time steps leads to a loss of first or second order accuracy in this model.  For instance, in the BDF1 case, we would end up with
 \begin{equation}
-  p^{\sharp}_h := p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\delta p_h^{k} = p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^{k} - p_h^{k-1} \right).
+  p^{\sharp}_h := p_h^{k} + \frac{\tau^{k}}{\tau^{k+1}}\delta p_h^{k} = p_h^{k} + \frac{\tau^{k}}{\tau^{k+1}}\left( p_h^{k} - p_h^{k-1} \right).
 \end{equation}
-and 
+which in uniform time step case reduces to $2p^k_h-p_h^{k-1}$ a second order extrapolation, but the desired variable-time second order extrapolation is 
 \begin{equation}
-  \ub_h^{*} = \ub_h^{k} + \frac{\tau^{k+1}}{\tau^k}\left( \ub_h^{k} - \ub_h^{k-1}\right).
+  p^{k+1}_h \approx p_h^{k} + \frac{\tau^{k+1}}{\tau^{k}}\left( p_h^{k} - p_h^{k-1} \right).
 \end{equation}
-Notice that these reduce to equations~(\ref{eq:pressureextrapolation_uniformtimestep}) and (\ref{eq:velocityextrapolation_uniformtimestep}) when $\tau^{k+1} = \tau^{k} = \tau$.  Secondly, in the remainder of the first order algorithm instead of $\tau$, we use the current time step $\tau^{k+1}$.
+Sadly what we get is not what we want.  The BDF2 case results in even more complications.  The derivation of the models with variable time stepping is given in Appendix~\ref{sec:VariableTimeSteppingAppendix} and the stability problems are discussed therein.  An adjustment to regain stability and convergence is known for the BDF1 case but is not yet discovered for the BDF2 cases.
 
+
+%
+%
+\subsection{Adjustment for BDF1 Algorithm with Variable Time Steps}
+We choose a $\tau^{max}<<1$ to be the maximum allowable time step size.  Then we change two places to adapt the model to variable time stepping, the first is the pressure term in the velocity update
+\begin{equation}
+  p^{\sharp}_h := p_h^{k} + \frac{\left(\tau^{max}\right)^2}{\tau^{k}\tau^{k+1}}\delta p_h^{k} = p_h^{k} + \frac{\left(\tau^{max}\right)^2}{\tau^{k}\tau^{k+1}}\left( p_h^{k} - p_h^{k-1} \right)
+\end{equation}
+and the second is in the right hand side of the pressure increment equation
+\begin{equation}
+  \dprod{\nabla\psi_h^{k+1}}{\nabla r_h} = \frac{\chi\tau^{k+1}}{\left(\tau^{max}\right)^2}\dprod{\ub_h^{k+1}}{\nabla r_h}.
+\end{equation}
+
+With these changes, it has been proved in \cite{bonito2015modified} that the BDF1 algorithm with variable density is stable and has convergence $\mathcal{O}(\tau^{max})$ in all the desired norms.
+
+
+%
+%
+\subsection{Adjustment for the BDF2 Algorithm with Variable Time Steps}
+Unfortunately, there is no known adjustment to regain stability and convergence in the BDF2 case with variable time stepping.  We must therefore recommend to only use this algorithm with uniform time stepping.
 
 
 
@@ -666,7 +686,7 @@ Notice that these reduce to equations~(\ref{eq:pressureextrapolation_uniformtime
 %
 %
 \subsection{CFL Condition For General Algorithm}\label{sec:CFLgeneralalgorithm}
-The convergence results have not been proved for the case of variable time stepping but it seems reasonable to expect them to still hold under a standard Courant-Friedrich-Levy (CFL) conditions augmented with a maximally allowed time step, ie
+We introduce the standard Courant-Friedrich-Levy (CFL) conditions augmented with a maximally allowed time step, ie
 \begin{equation}
   \tau^{k+1} \leq \min \left\{c \frac{\min_{T\in\mathcal{T}_h}\left(h_{T}/p_T\right)}{\|\ub_h^{*}\|_{L^{\infty}(\Lambda)}}, \tau^{max}\right\}, \hspace{1cm} c<1, \hspace{0.5cm}\tau^{\max} << 1,
 \end{equation}
@@ -684,7 +704,7 @@ Here we have used $p_T$ to mean the maximal polynomial degree used on the cell $
 %
 %
 \section{General First and Second Order Algorithm with Variable Time Steps}\label{sec:GeneralAlgorithm}
-
+We give the general formulation with extra adjustment for variable time stepping in the BDF1 case, but not in the BDF2 cases.  See above discussion.
 
 \begin{description}
 \item[Step 1] Density Update: Define
@@ -707,8 +727,8 @@ using any monotone hyperbolic scheme of appropriate order.
                        \rho_h^{k+1}, & \mbox{BDF2} 
                       \end{cases}\\
   p_h^{\sharp} &= \begin{cases}
-                  p_h^{k} + \psi^{k}, & \mbox{BDF1}\\ 
-                  p_h^{k} + \frac{\beta_1}{\beta_0}\psi^{k} + \frac{\beta_2}{\beta_0}\psi_h^{k-1}, & \mbox{BDF2} 
+                  p_h^{k} + \frac{\left(\tau^{max}\right)^2}{\tau^{k+1}\tau^{k}}\psi_h^{k}, & \mbox{BDF1}\\ 
+                  p_h^{k} + \frac{\beta_1}{\beta_0}\psi_h^{k} + \frac{\beta_2}{\beta_0}\psi_h^{k-1}, & \mbox{BDF2} 
                  \end{cases}
 \end{align}
 and solve for $\ub_h^{k+1}\in\mathbb{X}_h$ that satisfies for all $\vb_h\in\mathbb{X}_h$
@@ -722,7 +742,7 @@ where the last term on the left hand side is a stability term.
 
 \item[Step 3] Projection: Set $\chi = \min \rho_h^{k+1}$ and solve for $\psi_h^{k+1}\in \mathbb{M}_h$ such that for all $r_h\in \mathbb{M}_h$,
 \begin{equation}
- \dprod{\nabla \psi_h^{k+1}}{\nabla r_h} = \beta_0 \chi \dprod{\ub_h^{k+1}}{\nabla r_h}
+ \dprod{\nabla \psi_h^{k+1}}{\nabla r_h} = \begin{cases} \chi\frac{\tau^{k+1}}{\left(\tau^{max}\right)^2} \dprod{\ub_h^{k+1}}{\nabla r_h}, & \mbox{BDF1}\\ \chi\frac{\beta_0}{\tau^{k+1}} \dprod{\ub_h^{k+1}}{\nabla r_h}, & \mbox{BDF2} \end{cases}
 \end{equation}
 with $\int_{\Lambda}\psi_h^{k+1}d\x = 0$.  Notice that we have incorporated the natural boundary condition $\left.\nabla\psi_h^{k+1}\cdot\n\right|_{\partial\Lambda} = 0 $ already in this formulation.  
 
@@ -817,6 +837,52 @@ This comes from applying the divergence theorem to $0 = \int_{\Lambda} \nabla\cd
 \end{enumerate}
 
 
+\section{Numerical Stabilization Schemes}
+We include the option of Algebraic Subgrid Scale (ASGS) stabilization for the velocity and density models.  The ASGS term is in the form of a strong residual $R$ tested against the linear adjoint of our operator $\mathcal{L}$ on a test function. 
+\begin{equation}
+  \displaystyle\sum_{K}\dprod{\tau R}{\mathcal{L}^{*}w_h}
+\end{equation}
+which is added to the left hand side of the model.  
+
+\subsection{Density ASGS Stabilization} For the density model, our ASGS terms is
+\begin{equation}
+  +\displaystyle\sum_{K\in\mathcal{T}_h}\dprod{\tau_{\rho} R_{\rho}^{k+1}}{\mathcal{L}_{\rho}^{*} w_h}_{K}
+\end{equation}
+where $\tau_{\rho}$, the scaling parameter is defined pointwise (or at least quadrature point wise) as
+\begin{align}
+  \tau_{\rho} = \left(\left(\frac{2\|\ub^{*}_h\|_{\ell^{\infty}}}{h}\right)^2 + \left(\frac{\nabla\cdot \ub^{*}_h}{2}\right)^2 + \left( \frac{\beta_0}{\tau^{k+1}} \right)^2 + \eps_{tol}\right)^{-1/2}
+% \tau_{\rho}(\x) = \left(\frac{2\|\ub^{*}_h\|_{\ell^{\infty}}}{h} + \left| \frac{\beta_0}{\tau^{k+1}}\right| + \eps_{tol}\right)^{-1}.
+\end{align}
+In the Proteus library, we make the implicit assumption that for the advective flux terms of the form $\nabla\cdot(f)$, we have the property that $\frac{\partial f}{\partial\rho}$ is divergence free when computing the strong residual term.  We have taken the partial with respect to density since we are talking about the density equation.  In our case, $f = \rho_h^{k+1}\ub^{*}$ so that our strong residual term from the advective flux is reduced to something computable $\nabla\cdot(\rho^{k+1}_h\ub^{*}_h) = \ub^{*}_h\cdot\nabla\rho_h^{k+1} + \rho^{k+1}_h\cancelto{0}{\nabla\cdot\ub^{*}_h} = \ub^{*}_h\cdot\nabla\rho_h^{k+1}$.  Thus, the full strong density residual $R_{\rho}^{k+1}$ is
+\begin{equation}
+  R_{\rho}^{k+1} = D_\tau \rho^{k+1}_h + \ub^{*}_h\cdot\nabla\rho_h^{k+1} - \frac{\rho_h^{k+1}}{2}\nabla\cdot\ub^{*}_h
+\end{equation}
+and the adjoint operator $\mathcal{L}_{\rho}^{*}$ is
+\begin{equation}
+  \mathcal{L}_{\rho}^{*} w_h = -\ub_h^{*}\cdot\nabla\wb_h -\frac{\nabla\cdot\ub^{*}_h}{2} w_h.
+\end{equation}
+
+
+\subsection{Velocity ASGS Stabilization} For the velocity model, our ASGS terms is
+\begin{equation}
+  +\displaystyle\sum_{K\in\mathcal{T}_h}\dprod{\tau_u R_u^{k+1}}{\mathcal{L}_u^{*} \wb_h}_{K}
+\end{equation}
+where $\tau_u$, the scaling parameter is defined pointwise (or at least quadrature point wise) as
+\begin{align}
+\tau_u = \left(\left(\frac{2\|\ub^{*}_h\|_{\ell^{\infty}}}{h}\right)^2 + 9\left( \frac{4\mu}{h^2}\right)^2 + \left(\rho^{k+1}_h\nabla\cdot \ub^{k+1}_h\right)^2 + \left( \frac{\beta_0\rho^{k+1}_h}{\tau^{k+1}} \right)^2 + \eps_{tol}\right)^{-1/2},
+\end{align}
+the strong velocity residual $R_u^{k+1}$ is
+\begin{equation}
+  R_u^{k+1} = \rho_h^{\sharp}D_\tau \ub^{k+1}_h + \rho_h^{k+1}\ub_h^{*}\cdot\grad\ub_h^{k+1} - \mu\Delta\ub_h^{k+1} + \nabla p_h^{\sharp} - \fb^{k+1}
+\end{equation}
+and the adjoint operator $\mathcal{L}_{u}^{*}$ is
+\begin{equation}
+  \mathcal{L}_u^{*} \wb_h = -\rho_h^{k+1}\ub_h^{*}\cdot\nabla\wb_h - \mu\Delta \wb_h.
+\end{equation}
+
+
+
+
 %
 %
 %
@@ -844,12 +910,11 @@ The triangulation is done using the \textbf{Triangle} 2D mesh generator provided
   \mbox{dim }\mathbb{M}_h = 5161.
 \end{align}
 
-We do the simulation over two separate time domains.  The first $t\in[0,10]$ has initial pressure $p_0 = 0$ but velocity non-zero.  The second $t\in\left[\frac{\pi}{2}, 10+\frac{\pi}{2} \right]$ has initial velcoity $\ub_0 = [0; 0]$ but pressure non zero.  The time step $\tau$ ranges between $0.00625\leq \tau \leq 0.1$ for the convergence analysis.  The mesh was chosen so that the spatial errors were much smaller than the temporal errors.  The convergence with respect to $\tau$ is shown for various algorithms and norms in Tables~\ref{table:firstconvergenceresult}-\ref{table:lastconvergenceresult}.
-
-
+We do the simulation over two separate time domains.  The first case with $t\in[0,10]$ has initial pressure $p_0 = 0$ but velocity non-zero.  The second case with $t\in\left[\frac{\pi}{2}, 10+\frac{\pi}{2} \right]$ has initial velcoity $\ub_0 = [0; 0]$ but pressure non-zero.  The time step $\tau$ ranges between $0.00625\leq \tau \leq 0.1$ for the convergence analysis.  The mesh was chosen so that the spatial errors were much smaller than the temporal errors.  The convergence with respect to $\tau$ is shown for various algorithms and norms in Tables~\ref{table:firstconvergenceresult}-\ref{table:lastconvergenceresult}.
 
 
 \newpage
+
 
 %
 %
@@ -858,7 +923,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF1 Standard Model, $T=10$}
+    \caption{Density $L^2$ Error $(\rho - \rho_h)_{\tau}$ BDF1 Standard Model, $t\in[0,10]$}
     \begin{tabular}{c|c|c|c|c}\label{table:firstconvergenceresult}
       $\tau$  & $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
       \hline
@@ -873,7 +938,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
     \parbox{.45\linewidth}{
       \tiny
       \centering
-        \caption{Pressure Error $(p - p_h)_{\tau}$ BDF1 Standard Model, $T=10$}
+        \caption{Pressure $L^2$ Error $(p - p_h)_{\tau}$ BDF1 Standard Model, $t\in[0,10]$}
         \begin{tabular}{c|c|c|c|c}
           $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
           \hline
@@ -890,7 +955,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF1 Standard Model, $T=10$}
+    \caption{Velocity $L^2$ Error $(\ub - \ub_h)_{\tau}$ BDF1 Standard Model, $t\in[0,10]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)^d\right)$  &  Rate\\
       \hline
@@ -905,7 +970,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
     \parbox{.45\linewidth}{
     \tiny
     \centering
-      \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF1 Standard Model, $T=10$}
+      \caption{Velocity $H^1$ Error $(\ub - \ub_h)_{\tau}$ BDF1 Standard Model, $t\in[0,10]$}
       \begin{tabular}{c|c|c|c|c}
         $\tau$ &  $\ell^{\infty}\left(H^1(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Lambda)^d\right)$  &  Rate\\
         \hline
@@ -928,7 +993,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
+    \caption{Density $L^2$ Error $(\rho - \rho_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$  & $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
       \hline
@@ -943,7 +1008,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
     \parbox{.45\linewidth}{
     \tiny
     \centering
-      \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
+      \caption{Density $L^2$ Error $(\rho - \rho_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
       \begin{tabular}{c|c|c|c|c}
         $\tau$  & $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
         \hline
@@ -960,7 +1025,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
+    \caption{Velocity $L^2$ Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)^d\right)$  &  Rate\\
       \hline
@@ -975,7 +1040,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
     \parbox{.45\linewidth}{
     \tiny
     \centering
-      \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
+      \caption{Velocity $L^2$ Error $(\ub - \ub_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
       \begin{tabular}{c|c|c|c|c}
         $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)^d\right)$  &  Rate\\
         \hline
@@ -993,7 +1058,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
+    \caption{Velocity $H^1$ Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(H^1(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Lambda)^d\right)$  &  Rate\\
       \hline
@@ -1008,7 +1073,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
     \parbox{.45\linewidth}{
     \tiny
     \centering
-      \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
+      \caption{Velocity $H^1$ Error $(\ub - \ub_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
       \begin{tabular}{c|c|c|c|c}
         $\tau$ &  $\ell^{\infty}\left(H^1(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Lambda)^d\right)$  &  Rate\\
         \hline
@@ -1025,7 +1090,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Pressure Error $(p - p_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
+    \caption{Pressure $L^2$ Error $(p - p_h)_{\tau}$ BDF2 Rotational Model, $t\in[0,10]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
       \hline
@@ -1040,7 +1105,7 @@ We do the simulation over two separate time domains.  The first $t\in[0,10]$ has
     \parbox{.45\linewidth}{
     \tiny
     \centering
-      \caption{Pressure Error $(p - p_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
+      \caption{Pressure $L^2$ Error $(p - p_h)_{\tau}$ BDF2 Standard Model, $t\in[0,10]$}
       \begin{tabular}{c|c|c|c|c}
         $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
         \hline
@@ -1065,7 +1130,7 @@ On the left is the rotational models,  on the right are the standard models.  Be
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Density Error $(\rho - \rho_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
+    \caption{Density $L^2$ Error $(\rho - \rho_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$  & $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
       \hline
@@ -1080,7 +1145,7 @@ On the left is the rotational models,  on the right are the standard models.  Be
     \parbox{.45\linewidth}{
       \tiny
       \centering
-        \caption{Pressure Error $(p - p_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
+        \caption{Pressure $L^2$ Error $(p - p_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
         \begin{tabular}{c|c|c|c|c}
           $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)\right)$  &  Rate\\
           \hline
@@ -1097,7 +1162,7 @@ On the left is the rotational models,  on the right are the standard models.  Be
   \parbox{.45\linewidth}{
   \tiny
   \centering
-    \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
+    \caption{Velocity $L^2$ Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
     \begin{tabular}{c|c|c|c|c}
       $\tau$ &  $\ell^{\infty}\left(L^2(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(L^2(\Lambda)^d\right)$  &  Rate\\
       \hline
@@ -1112,7 +1177,7 @@ On the left is the rotational models,  on the right are the standard models.  Be
     \parbox{.45\linewidth}{
     \tiny
     \centering
-      \caption{Velocity Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
+      \caption{Velocity $H^1$ Error $(\ub - \ub_h)_{\tau}$ BDF2 Rotational Model, $t\in[\pi/2, 10+\pi/2]$}
       \begin{tabular}{c|c|c|c|c}\label{table:lastconvergenceresult}
         $\tau$ &  $\ell^{\infty}\left(H^1(\Lambda)^d\right)$ &  Rate  &  $\ell^2\left(H^1(\Lambda)^d\right)$  &  Rate\\
         \hline
@@ -1382,8 +1447,8 @@ This last conjecture is more of an observation of what we expect we should obser
 %
 %
 %
-\section{Derivation of Adaptive Time Stepping Formulation}
-It turns out taht it is not a simple matter to take the uniform algorithm and generalize it to adaptive time steps.  We must go back to the basic principles where the uniform model came from and derive it in terms of adaptivity.  To this end we present such a derivation in the case of constant density and using the standard form of model.  This is typically the starting point for more complicated models in the uniform time step case.  Likewise, in this basic case, much of the complicated structure is simplified away to discuss the goal of handling adaptive time steps.  To this end, we drop the nonlinear advection term and assume we have constant density and viscosity.  The model for first order time stepping is introduced with an adjustment that will maintain stability even under random sized time steps.  Then the second order model is derived and discussed.  There is no known adjustment to preserve stability for the second order model.
+\section{Derivation of Adaptive Time Stepping Formulation}\label{sec:VariableTimeSteppingAppendix}
+It turns out that it is not a simple matter to take the uniform algorithm and generalize it to adaptive time steps.  We must go back to the basic principles where the uniform model came from and derive it in terms of adaptivity.  To this end we present such a derivation in the case of constant density and using the standard form of model.  This is typically the starting point for more complicated models in the uniform time step case.  Likewise, in this basic case, much of the complicated structure is simplified away to discuss the goal of handling adaptive time steps.  To this end, we drop the nonlinear advection term and assume we have constant density and viscosity.  The model for first order time stepping is introduced with an adjustment that will maintain stability even under random sized time steps.  Then the second order model is derived and discussed.  There is no known adjustment to preserve stability for the second order model.
 
 
 %
