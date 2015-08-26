@@ -22,7 +22,7 @@ simFlagsList[0]['storeQuantities']= ['simulationData','errorData'] #include erro
 simFlagsList[0]['storeTimes']     = ['Last']
 
 # Velocity
-simFlagsList[1]['errorQuantities']=['u','v']
+simFlagsList[1]['errorQuantities']=['u']
 simFlagsList[1]['errorTypes']= ['numericalSolution'] #compute error in soln and glob. mass bal
 simFlagsList[1]['errorNorms']= ['L2','H1'] #compute L2 norm in space or H1 or ...
 simFlagsList[1]['errorTimes']= ['All'] #'All', 'Last'
