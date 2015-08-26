@@ -128,7 +128,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                                                advection = {0:{0:'linear'}},
                                                diffusion = {0:{0:{0:'constant'}}},
                                                potential = {0:{0:'u'}},
-                                               reaction = {0:{0:'linear'}} if useStabilityTerms else {} ) # for the stability term
+                                               reaction = {0:{0:'linear'}}) # for the stability term
         self.bdf=int(bdf)
         self.currentModelIndex = currentModelIndex
         self.densityFunction = densityFunction
@@ -693,12 +693,12 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                     grad_rho = self.densityModel.ebq[('grad(u)',0)]
                     self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebqe:
-                rho = self.densityModel.ebqe[('u',0)]
+                rho = self.densityModel.numericalFlux.ebqe[('u',0)]
                 self.c_rho[rho.shape] = rho
-                rho_last = self.densityModel.ebqe[('u_last',0)]
+                rho_last = self.densityModel.numericalFlux.ebqe[('u_last',0)]
                 self.c_rho_last[rho_last.shape] = rho_last
                 if self.bdf is int(2):
-                    rho_lastlast = self.densityModel.ebqe[('u_lastlast',0)]
+                    rho_lastlast = self.densityModel.numericalFlux.ebqe[('u_lastlast',0)]
                     self.c_rho_lastlast[rho_lastlast.shape] = rho_lastlast
                 if self.useStabilityTerms:
                     grad_rho = self.densityModel.ebqe[('grad(u)',0)]
@@ -1116,8 +1116,12 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             u_star = u
             v_star = v
         elif not self.useVelocityComponents:
-            u_star = self.c_vel_last[grad_shap][...,0]
-            v_star = self.c_vel_last[grad_shap][...,1]
+            if self.bdf is int(1) or self.firstStep:
+                u_star = self.c_vel_last[grad_shap][...,0]
+                v_star = self.c_vel_last[grad_shap][...,1]
+            elif self.bdf is int(2):
+                u_star = self.c_vel_last[grad_shap][...,0] + dt/dt_last*( self.c_vel_last[grad_shap][...,0] - self.c_vel_lastlast[grad_shap][...,0] )
+                v_star = self.c_vel_last[grad_shap][...,1] + dt/dt_last*( self.c_vel_last[grad_shap][...,1] - self.c_vel_lastlast[grad_shap][...,1] )
         else: # use extrapolation of velocity
             if self.bdf is int(1) or self.firstStep:
                 # first order extrapolation
@@ -1197,7 +1201,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         c[('a',ev,vi)][...,1] = self.mu # -mu*\grad v :       new diagonal notation from sDInfo above is [0 .; . 1] -> [0; 1]
         c[('da',ev,vi,vi)][...,0] = 0.0 # -(da/d vi)_0   # could leave these off since it is 0
         c[('da',ev,vi,vi)][...,1] = 0.0 # -(da/d vi)_1   # could leave these off since it is 0
-
 
 class PressureIncrement2D(TransportCoefficients.TC_base):
     r"""
@@ -1329,7 +1332,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
                 rho = self.densityModel.ebq[('u',0)]
                 self.c_rho[rho.shape] = rho
             if ('u',0) in self.densityModel.ebqe:
-                rho = self.densityModel.ebqe[('u',0)]
+                rho = self.densityModel.numericalFlux.ebqe[('u',0)]
                 self.c_rho[rho.shape] = rho
             if ('u',0) in self.densityModel.ebq_global:
                 rho = self.densityModel.ebq_global[('u',0)]
@@ -1898,8 +1901,10 @@ class StokesProjection2D(TransportCoefficients.TC_base):
         self.toModel_v.u[0].dof[:]=self.myModel.u[0].dof
         self.toModel_v.u[1].dof[:]=self.myModel.u[1].dof
         self.toModel_v.calculateSolutionAtQuadrature()
+        self.toModel_v.numericalFlux.setDirichletValues(self.toModel_v.ebqe)
         self.toModel_p.u[0].dof[:]=self.myModel.u[2].dof
         self.toModel_p.calculateSolutionAtQuadrature()
+        self.toModel_p.numericalFlux.setDirichletValues(self.toModel_p.ebqe)
     def evaluate(self,t,c):
         xi=0; yi=1; # indices for first component or second component of dimension
         eu=0; ev=1; ediv=2; # equation numbers  momentum u, momentum v, divergencefree
