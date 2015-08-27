@@ -155,7 +155,7 @@ def vtrue(x,t):
     return vl(x[...,0],x[...,1],t)
 
 def pitrue(x,t): # pressure increment
-    return pl(x[...,0],x[...,1],t) - pl(x[...,0],x[...,1],t-DT) # diff from previous step
+    return np.zeros(x[...,0].shape) #pl(x[...,0],x[...,1],t) - pl(x[...,0],x[...,1],t-DT) # diff from previous step
 
 def ptrue(x,t):
     return pl(x[...,0],x[...,1],t)
