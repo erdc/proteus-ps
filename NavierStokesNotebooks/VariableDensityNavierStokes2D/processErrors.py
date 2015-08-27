@@ -139,6 +139,7 @@ if args.useH1Norm:
     maxH1Norm = [0.0]*num_filenames
     ell2H1Norm = [0.0]*num_filenames
 
+
 # open shelves
 shelfvalue_p = {}
 for i in range(num_filenames):
@@ -161,11 +162,18 @@ for i in range(num_filenames):
                             print "Error: The key 'error_u_H1' is not in shelf['errorData'][%d][0] for %s, so setting useH1Norm = False." %(j,filename_p)
                             args.useH1Norm = False
 
+                # intialize data storage for time series plots
+                if p is 0:
+                    L2Error = np.array([0.0]*(len(errorData_p[0][0]['error_u_L2'])+1))
+                    if args.useH1Norm:
+                        H1Error = np.array([0.0]*(len(errorData_p[0][0]['error_u_H1'])+1))
+
                 # cycle through the components if they exist and take l2 norm of components
                 L2Error_p = np.array([0.0]*(len(errorData_p[0][0]['error_u_L2'])+1))
                 if args.useH1Norm:
                     H1Error_p = np.array([0.0]*(len(errorData_p[0][0]['error_u_H1'])+1))
 
+                # L2 norm of components
                 for j in errorData_p:
                     L2Error_p += np.array([0] + errorData_p[j][0]['error_u_L2'])**2
                     if args.useH1Norm:
@@ -188,17 +196,22 @@ for i in range(num_filenames):
                     dtn = tnList[j] - tnList[j-1]
                     ell2L2Norm_p += dtn * L2Error_p[j]**2
                     if args.useH1Norm:
-                        ell2H1Norm_p += dtn * H1Error_p**2
+                        ell2H1Norm_p += dtn * H1Error_p[j]**2
 
                 ell2L2Norm_p = np.sqrt(ell2L2Norm_p)
                 if args.useH1Norm:
                     ell2H1Norm_p = np.sqrt(ell2H1Norm_p)
 
+                # add up data for time series plots
+                L2Error = np.sqrt(L2Error**2 + L2Error_p**2)
+                if args.useH1Norm:
+                    H1Error = np.sqrt(H1Error**2 + H1Error_p**2)
+
                 # consolidate all the _p terms into global
-                maxL2Norm[i] = np.max(maxL2Norm[i], maxL2Norm_p)
+                maxL2Norm[i] = np.max([maxL2Norm[i], maxL2Norm_p])
                 ell2L2Norm[i] = np.sqrt(ell2L2Norm[i]**2 + ell2L2Norm_p**2)
                 if args.useH1Norm:
-                    maxH1Norm[i] = np.max(maxH1Norm[i], maxH1Norm_p)
+                    maxH1Norm[i] = np.max([maxH1Norm[i], maxH1Norm_p])
                     ell2H1Norm[i] = np.sqrt(ell2H1Norm[i]**2 + ell2H1Norm_p**2)
 
             finally:
