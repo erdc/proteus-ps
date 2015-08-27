@@ -14,7 +14,7 @@ nd = ctx.nd
 name = "pi_p"
 coefficients=NavierStokes.L2Projection(projectTime=0.0,
                                        toName='p',
-                                       myModelIndex=8,
+                                       myModelIndex=7,
                                        toModelIndex=3,
                                        toModel_u_ci=0,
                                        exactFunction = ctx.ptrue)

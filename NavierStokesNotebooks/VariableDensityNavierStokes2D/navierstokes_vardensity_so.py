@@ -14,27 +14,25 @@ if ctx.useInitialConditions is int(0): # Interpolate initial conditions
               ("pressure_p", "pressure_n")]
     # modelSpinUpList = []
     systemStepControllerType = Sequential_FixedStep_Simple # uses time steps in so.tnList
-if ctx.useInitialConditions is int(1): # use projection for everything
+if ctx.useInitialConditions is int(1): # use projection for everything but calculate pressure increment from velocity.
     pnList = [("density_p", "density_n"),
               ("velocity_p", "velocity_n"),
               ("pressureincrement_p", "pressureincrement_n"),
               ("pressure_p", "pressure_n"),
               ("L2_rho_p","L2_rho_n"),
-              ("L2_pi_p","L2_pi_n"),
               ("L2_u_p","L2_u_n"),
               ("L2_v_p","L2_v_n"),
               ("L2_p_p","L2_p_n")]
-    modelSpinUpList = [4,5,6,7,8]# density through pressure
+    modelSpinUpList = [4,5,6,7]# density through pressure
     systemStepControllerType = SplitOperatorPS.Sequential_FixedStep_SimplePS # uses time steps in so.tnList
-elif ctx.useInitialConditions is int(2): # use Stokes projection for velocity and pressure and standard projection for others
+elif ctx.useInitialConditions is int(2): # use Stokes projection for velocity and pressure and calculate pressure increment from velocity and use L2 proj for density
     pnList = [("density_p", "density_n"),
               ("velocity_p", "velocity_n"),
               ("pressureincrement_p", "pressureincrement_n"),
               ("pressure_p", "pressure_n"),
               ("L2_rho_p","L2_rho_n"),
-              ("L2_pi_p","L2_pi_n"),
               ("StokesProjection_p","StokesProjection_n")]
-    modelSpinUpList = [6,4,5]#stokes projection, density, pressure increment
+    modelSpinUpList = [4,5,2] # density, stokes projection, pressure increment,
     systemStepControllerType = SplitOperatorPS.Sequential_FixedStep_SimplePS # uses time steps in so.tnList
 
 

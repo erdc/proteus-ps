@@ -10,7 +10,7 @@ import NavierStokesVariableDensity as NavierStokes
 domain = ctx.domain
 nd = ctx.nd
 name = "StokesProjection"
-coefficients=NavierStokes.StokesProjection2D(myModelIndex=6,
+coefficients=NavierStokes.StokesProjection2D(myModelIndex=5,
                                              toModelIndex_v=1,
                                              toModelIndex_p=3,
                                              projectTime=0.0,
