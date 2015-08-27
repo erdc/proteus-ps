@@ -36,8 +36,8 @@ useASGS=False  # turn on/off Algebraic Subgrid Stabilization for velocity and de
 
 # choose initial condition format
 useInitialConditions=int(0) # 0 = use Interpolation initial conditions
-                            # 1 = use L2 Projection for (rho,pi,u,v,p) initial conditions
-                            # 2 = use (u,v,p) Stokes Projection, (rho, pi) L2 projection
+                            # 1 = use L2 Projection for (rho,u,v,p) and calculate (pi) from [u,v]
+                            # 2 = use (u,v,p) Stokes Projection, (rho) L2 projection, calculate (pi) from [u,v]
 
 # Spatial Discretization  he = he_coeff*2*Pi/150.0
 he_coeff = 0.75 # default to match Guermond paper: 0.75

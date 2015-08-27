@@ -467,8 +467,8 @@ class DensityTransport2D(TransportCoefficients.TC_base):
             if self.useStabilityTerms:
                 div_vel_last = self.c_grad_u_last[grad_shape][...,0] + self.c_grad_v_last[grad_shape][...,1]
         else:
-            u_last = Invb0chi*self.c_velocity_last[grad_shape][...,0]
-            v_last = Invb0chi*self.c_velocity_last[grad_shape][...,1]
+            u_last = self.c_velocity_last[grad_shape][...,0]
+            v_last = self.c_velocity_last[grad_shape][...,1]
             if self.useStabilityTerms:
                 div_vel_last = self.c_grad_u_last[grad_shape][...,0] + self.c_grad_v_last[grad_shape][...,1]
 
@@ -1401,7 +1401,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         from math import fabs
         import proteus.Norms as Norms
-        from proteus.flcbdfWrappers import globalSum,globalMax
+        # from proteus.flcbdfWrappers import globalSum,globalMax
 
 
         # Do adjustment to get zero value for mean of pressure increment
