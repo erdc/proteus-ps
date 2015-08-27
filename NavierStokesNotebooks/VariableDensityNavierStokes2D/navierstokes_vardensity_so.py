@@ -23,7 +23,7 @@ if ctx.useInitialConditions is int(1): # use projection for everything but calcu
               ("L2_u_p","L2_u_n"),
               ("L2_v_p","L2_v_n"),
               ("L2_p_p","L2_p_n")]
-    modelSpinUpList = [4,5,6,7]# density through pressure
+    modelSpinUpList = [4,5,6,7,2]# density through pressure then initialize pressure increment based on velocity
     systemStepControllerType = SplitOperatorPS.Sequential_FixedStep_SimplePS # uses time steps in so.tnList
 elif ctx.useInitialConditions is int(2): # use Stokes projection for velocity and pressure and calculate pressure increment from velocity and use L2 proj for density
     pnList = [("density_p", "density_n"),
