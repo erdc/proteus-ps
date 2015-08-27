@@ -71,6 +71,11 @@ if ctx.opts.parallel:
     nonlinearSmoother = None
     linearSmoother    = None
 
+#import numpy
+#matrix = numpy.array
+#computeEigenvalues = True
+#computeEigenvectors = 'right' #'left'
+
 multilevelNonlinearSolver = NonlinearSolvers.Newton
 levelNonlinearSolver = NonlinearSolvers.Newton
 
