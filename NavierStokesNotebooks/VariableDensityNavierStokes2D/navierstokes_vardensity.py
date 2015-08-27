@@ -32,14 +32,21 @@ useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ...
 setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
 usePressureExtrapolations = False # use p_star instead of p_last in velocity and pressure model
 useConservativePressureTerm = False # use < -pI, grad w>  instead of < grad p, w> in velocity update
-useASGS=False  # turn on/off Algebraic Subgrid Stabilization for velocity and density transport
+
+useDensityASGS=True  # turn on/off Algebraic Subgrid Stabilization for density transport
+useVelocityASGS=False # turn on/off Algebraic Subgrid Stabilization for velocity  transport
+
+# choose initial condition format
+useInitialConditions=int(1) # 0 = use Interpolation initial conditions
+                            # 1 = use L2 Projection for (rho,u,v,p) and calculate (pi) from [u,v]
+                            # 2 = use (u,v,p) Stokes Projection, (rho) L2 projection, calculate (pi) from [u,v]
 
 # Spatial Discretization  he = he_coeff*2*Pi/150.0
 he_coeff = 0.75 # default to match Guermond paper: 0.75
 
 # setup time variables
 
-T = 10.0
+T = 1.0
 DT = 0.1  # target time step size
 
 
@@ -150,7 +157,7 @@ def vtrue(x,t):
     return vl(x[...,0],x[...,1],t)
 
 def pitrue(x,t): # pressure increment
-    return pl(x[...,0],x[...,1],t) - pl(x[...,0],x[...,1],t-DT) # diff from previous step
+    return np.zeros(x[...,0].shape) #pl(x[...,0],x[...,1],t) - pl(x[...,0],x[...,1],t-DT) # diff from previous step
 
 def ptrue(x,t):
     return pl(x[...,0],x[...,1],t)

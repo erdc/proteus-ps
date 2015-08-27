@@ -215,9 +215,9 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                     self.c_velocity_lastlast[vel_last.shape] = vel_last
                 if self.useStabilityTerms:
                     grad_u_last = self.velocityModel.q[('grad(u)',0)].copy()
-                    grad_u_last[:] = 0.0 #hack--just used in calculating div
+                    grad_u_last[:] = 0.0 #hack--just used in calculating div since post processed velocity is div free, set = 0
                     grad_v_last = self.velocityModel.q[('grad(u)',1)].copy()
-                    grad_v_last[:] = 0.0 #hack--just used in calculating div
+                    grad_v_last[:] = 0.0 #hack--just used in calculating div since pp velocity is div free, set = 0
                     self.c_grad_u_last[grad_u_last.shape] = grad_u_last
                     self.c_grad_v_last[grad_v_last.shape] = grad_v_last
                 if self.bdf is int(2):
@@ -603,14 +603,14 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                                       ev:{vi:{vi:'constant'}}}, # - \mu * \grad v
                          potential = {eu:{ui:'u'},
                                       ev:{vi:'u'}}, # define the potential for the diffusion term to be the solution itself
-                         reaction  = {eu:{ui:'constant'},  # -f1(x) + (d/dx p^\#)
-                                      ev:{vi:'constant'}}  # -f2(x) + (d/dy p^\#)
+                         reaction  = {eu:{ui:'constant'},  # -f1(x) (+ (d/dx p^\#))
+                                      ev:{vi:'constant'}}  # -f2(x) (+ (d/dy p^\#))
                                      if not useStabilityTerms else
-                                     {eu:{ui:'linear'},  # -f1(x) + (d/dx p^\#) + (stability terms u extrapolated * u
-                                      ev:{vi:'linear'}}  # -f2(x) + (d/dy p^\#) + (stability terms v extrapolated) * v
+                                     {eu:{ui:'linear'},  # -f1(x) (+ (d/dx p^\#)) + (stability terms u extrapolated * u
+                                      ev:{vi:'linear'}}  # -f2(x) (+ (d/dy p^\#)) + (stability terms v extrapolated) * v
                                      if not useNonlinearAdvection else
-                                     {eu:{ui:'nonlinear',vi:'linear'},  # -f1(x) + (d/dx p^\#) + (stability terms u,v) * u
-                                      ev:{ui:'linear',vi:'nonlinear'}}, # -f2(x) + (d/dy p^\#) + (stability terms u,v) * v
+                                     {eu:{ui:'nonlinear',vi:'linear'},  # -f1(x) (+ (d/dx p^\#)) + (stability terms u,v) * u
+                                      ev:{ui:'linear',vi:'nonlinear'}}, # -f2(x) (+ (d/dy p^\#)) + (stability terms u,v) * v
                          sparseDiffusionTensors=sdInfo,
                          useSparseDiffusion = True),
         self.vectorComponents=[ui,vi]  # for plotting and hdf5 output only
@@ -693,7 +693,7 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                     grad_rho = self.densityModel.ebq[('grad(u)',0)]
                     self.c_rho[grad_rho.shape] = grad_rho
             if ('u',0) in self.densityModel.ebqe:
-                rho = self.densityModel.numericalFlux.ebqe[('u',0)]
+                rho = self.densityModel.numericalFlux.ebqe[('u',0)]  # why use numericalFlux.ebqe?
                 self.c_rho[rho.shape] = rho
                 rho_last = self.densityModel.numericalFlux.ebqe[('u_last',0)]
                 self.c_rho_last[rho_last.shape] = rho_last
@@ -1401,7 +1401,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
         """
         from math import fabs
         import proteus.Norms as Norms
-        from proteus.flcbdfWrappers import globalSum,globalMax
+        # from proteus.flcbdfWrappers import globalSum,globalMax
 
 
         # Do adjustment to get zero value for mean of pressure increment
@@ -1467,9 +1467,9 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             dt_last = dt
         elif self.bdf is int(2):
             dt_last = self.velocityModel.timeIntegration.dt_history[0] # velocity model has the timeIntegration all set up.
-        dtInv = 1.0/dt
-        r = dt/dt_last
-        b0 = (1.0+2.0*r)/(1.0+r)*dtInv # use this instead of alpha_bdf since we have no timeIntegration in this model
+            dtInv = 1.0/dt
+            r = dt/dt_last
+            b0 = (1.0+2.0*r)/(1.0+r)*dtInv # use this instead of alpha_bdf since we have no timeIntegration in this model
 
         # find minimal density value set it to be chi
         if self.densityModelIndex>0:
@@ -1500,7 +1500,13 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
 
         # set coefficients  -div (grad phi) + chi b0 div (u) = 0
         #  div ( f - a grad phi  )  = div( chi b0 u - grad phi) = 0
-        rescale=True
+
+        rescale = True  # True: makes the residuals (newton linear step, nonlinear)
+                        # better scaled and gives 'f' the right velocity scale
+                        # so that since the post processor takes from 'f' - 'a' grad 'phi'
+                        # there is no need to rescale anything elsewhere if we user
+                        # the pp velocity from the pressure increment 'f' ...  which will
+                        # be divergence free.
         if rescale:
             c[('f',0)][...,0] = u
             c[('f',0)][...,1] = v
@@ -1783,17 +1789,6 @@ class Pressure2D(TransportCoefficients.TC_base):
             phi = self.c_phi[u_shape]
 
         if self.useRotationalModel:
-            # extract scaling terms for post processed velocity (see pressureIncrement model for description)
-            if not self.useVelocityComponents:
-                dt = self.model.timeIntegration.dt
-                chi = self.chiValue
-                # beta_0 coefficient scalar
-                if self.bdf is int(1) or self.firstStep:
-                    b0 = 1.0/dt
-                elif self.bdf is int(2):
-                    b0 = self.velocityModel.timeIntegration.alpha_bdf  # = beta_0
-                Invb0chi = 1.0/(chi*b0)
-
             # extract velocity components
             if self.velocityFunction != None:
                 u = self.velocityFunction(c['x'],t)[...,0]
@@ -1802,8 +1797,10 @@ class Pressure2D(TransportCoefficients.TC_base):
                 u = self.c_u[u_shape]
                 v = self.c_v[u_shape]
             else:
-                u = self.c_velocity[grad_shape][...,0] # adjust post processed velocity to be physical units by mult by dt/chi
-                v = self.c_velocity[grad_shape][...,1] # adjust post processed velocity to be physical units by mult by dt/chi
+                u = self.c_velocity[grad_shape][...,0]
+                v = self.c_velocity[grad_shape][...,1]
+
+
         # set coefficients   p - p_star - phi + div (mu u) = 0
         #G&S11,p941,remark 5.5
         if self.useRotationalModel:
