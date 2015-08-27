@@ -32,7 +32,9 @@ useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ...
 setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
 usePressureExtrapolations = False # use p_star instead of p_last in velocity and pressure model
 useConservativePressureTerm = False # use < -pI, grad w>  instead of < grad p, w> in velocity update
-useASGS=False  # turn on/off Algebraic Subgrid Stabilization for velocity and density transport
+
+useDensityASGS=True  # turn on/off Algebraic Subgrid Stabilization for density transport
+useVelocityASGS=False # turn on/off Algebraic Subgrid Stabilization for velocity  transport
 
 # choose initial condition format
 useInitialConditions=int(0) # 0 = use Interpolation initial conditions
@@ -45,7 +47,7 @@ he_coeff = 0.75 # default to match Guermond paper: 0.75
 # setup time variables
 
 T = 1.0
-DT = 0.1  # target time step size
+DT = 0.05  # target time step size
 
 
 # setup tnList

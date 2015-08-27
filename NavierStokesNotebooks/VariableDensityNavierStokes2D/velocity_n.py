@@ -42,11 +42,12 @@ if ctx.useConservativePressureTerm:
 else:
     numericalFluxType = NumericalFlux.HamiltonJacobi_DiagonalLesaintRaviart_Diffusion_SIPG_exterior
 
-if ctx.useASGS:
+if ctx.useVelocityASGS:
     subgridError = HamiltonJacobiDiffusionReaction_ASGS(coefficients,
                                                         nd=ctx.nd,
                                                         stabFlag='2',
                                                         lag=False)
+                                                        
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
