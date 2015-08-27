@@ -63,3 +63,5 @@ def getDBC_p(x,flag):
 dirichletConditions = {0:getDBC_u,
                        1:getDBC_v,
                        2:getDBC_p}
+
+fluxBoundaryConditions = {0:None, 1:None, 2:None}

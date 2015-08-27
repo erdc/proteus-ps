@@ -37,7 +37,7 @@ useDensityASGS=True  # turn on/off Algebraic Subgrid Stabilization for density t
 useVelocityASGS=False # turn on/off Algebraic Subgrid Stabilization for velocity  transport
 
 # choose initial condition format
-useInitialConditions=int(0) # 0 = use Interpolation initial conditions
+useInitialConditions=int(1) # 0 = use Interpolation initial conditions
                             # 1 = use L2 Projection for (rho,u,v,p) and calculate (pi) from [u,v]
                             # 2 = use (u,v,p) Stokes Projection, (rho) L2 projection, calculate (pi) from [u,v]
 
@@ -47,7 +47,7 @@ he_coeff = 0.75 # default to match Guermond paper: 0.75
 # setup time variables
 
 T = 1.0
-DT = 0.05  # target time step size
+DT = 0.1  # target time step size
 
 
 # setup tnList
