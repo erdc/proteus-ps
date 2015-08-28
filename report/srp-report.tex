@@ -29,7 +29,7 @@
 
 \laboratory{Coastal and Hydraulics Laboratory}
 \reportnum{ERDC/CHL TR-00-00}
-\program{Military Engineering 6.2}
+\program{Navigation Systems Research Program}
 
 \title{Finite Element Methods for Variable Density Flows}
 
@@ -65,7 +65,7 @@ College Station, TX 77843-3368}
 %\preparedfor{U.S. Army Engineer Research and Development Center\\
 % 3909 Halls Ferry Road, Vicksburg, MS 39180-6199} 
 
-\contractnum{K5318C}
+\contractnum{J6F263}
 
 %\monitoredby{U.S. Army Engineer Research and Development Center\\
 %  3909 Halls Ferry Road, Vicksburg, MS 39180-6199}
@@ -1252,15 +1252,93 @@ where $\x^{+}$ is in the direction of the normal $\n$ and $\x^{-}$ is in the opp
 
 
 \section{Tracking the Boundary, $\Gamma$}\label{sec:TrackingBoundaryGamma}
-As the two phase boundary $\Gamma$ is free to move around the domain, but the physics depend on where it is, we must be able to track $\Gamma$.  To this end, we implement a level set method combined with a volume of fluid solver to track $\Gamma$ and use the volume of fluid calculation to enforce mass conservation of the system.  The level set method is notorious for losing volume or mass, but when combined with a volume of fluid solver and adjusted accordingly as in \cite{kees2011conservative}, we can maintain global mass conservation.  Unfortunately, there is not yet a good method to enforce local mass conservation with the level set method.
+
+As the two phase boundary $\Gamma$ is free to move around the domain,
+but the physics depend on where it is, we must be able to track
+$\Gamma$.  To this end, we implement a level set method combined with
+a volume of fluid solver to track $\Gamma$ and use the volume of fluid
+calculation to enforce mass conservation of the system.  The level set
+method is notorious for losing volume or mass, but when combined with
+a volume of fluid solver and adjusted accordingly as in
+\cite{kees2011conservative}, we can maintain global mass conservation.
+Unfortunately, there is not yet a good method to enforce local mass
+conservation with the level set method.
 
 \subsection{The Volume of Fluid Method}\label{sec:VoFMEthod}
 
+We denote by $\theta(x,t)$ the characteristic function of the set
+$\Gamma/\Omega$. Note that the characteristic function of the set
+$\Omega$ is simply $1-\theta$. Integrating $\theta$ over any subdomain results
+in the volume of fluid occupied by the subdomain, and, therefore, for
+incompressible fluids $\theta$ satisfies the volume conservation equation
+\begin{equation}
+    \theta_t + \nabla\cdot\left( \theta \ub\right) = 0 \quad \mbox{in }\Lambda\times[T_0,T_f]
+\end{equation}
+If this equation could be solved exactly at any time, then $\theta$
+could be used to describe the phase distribution at later
+times. Unfortunately, the exact function $\theta$ has jump
+discontinuities which move in time in complex ways for real flows,
+such as breaking waves. This representation therefore poses challenges
+to numerical methods, which are typically require the addition of
+regularizing numerical diffusion to resolve transport of discontinuous
+fields, which causes loss of information about the precise location of
+the interface.  The family of volume of fluid methods can be viewed as
+numerical methods for transporting $\theta$ while periodically reconstructing sharp interface or sharpening the $\theta$ field in some manner.
+
 \subsection{The Level Set Method}\label{sec:LevelSetMethod}
+
+An alternative characterization of the two-phase domain is to describe
+$\partial \Omega$ as the zero isosurface (or level set) of a scalar
+function $\phi(x,t)$. The kinematic boundary condition for a material
+boundary results in the equation
+\begin{equation}\label{eqn:variabledensityNavierStokes}
+    \phi_t + \ub \cdot \nabla \phi = 0 \quad  \mbox{in }\Lambda\times[T_0,T_f]
+\end{equation}
+which holds initially on $\partial \Omega$ but which can be extended
+to all of $\Lambda$ somewhat arbitrarily. Above we use the simple
+approach of using the fluid velocity everywhere and taking as initial
+conditions the signed distance to the interface $\partial \Omega$,
+with the convention that the sign is negative inside $\Omega$ and
+positive outside. The class of level set methods for moving interface
+problems can be viewed as numerical methods for approximating the
+solution of $\phi$ along with tools for enforcing boundary conditions
+at the immersed boundary $\phi=0$ based on the geometric information
+that can be extracted from the signd distance function $\phi$.  The
+advantages of the level set approach to interface tracking are that it
+has continuous solutions which are in fact smooth in the vicinity of
+$\partial \Omega$ and that geometric quantiteis such as the interface
+normal and curvature are easily extracted.
 
 \subsection{The Volume Correction}\label{sec:VolumeCorrection}
 
-
+The level set method has a signficant weakness, which is that there is
+no inherent control of fluid mass or volume conservation. Note,
+however that for the exact solutions of $\phi$ and $\theta$ we have
+\begin{equation}
+  \mbox{H}(\phi) = \theta
+\end{equation}
+where $H$ is the Heaviside function. We view this equation as a constraint that can be enforced on the discrete solution at each step by solving for the level set correction $\phi'$ satifying
+\begin{equation}
+  \int_{\Gamma} \left\{ \left[ H_{\epsilon_1}\left(\phi_h+\phi'_h \right) - \theta \right] w_h + \epsilon_2 \nabla \phi'_h \cdot \nabla w_h \right\} dV \quad \forall w \in W_h(\Lambda)
+\end{equation}
+where $H_{\epsilon_1}$ is the regularized Heaviside function with transition width $\epsilon_1$ while $\epsilon_2$ is a positive regularization constant.
+Notice that as long as $W_h$ contains the constant functions on $\Lambda$, then $\phi_h+\phi'_h$ satisfies
+\begin{equation}
+  \int_{\Gamma} \left[ \left(H_{\epsilon_1}(\phi_h+\phi'_h \right) - \theta \right] dV \quad \forall w \in W_h (\Lambda)
+\end{equation}
+That is, it conserves fluid volume globally. Local (element-wise)
+conservation can be enforced by choosing $W_h(\Lambda)$ to include the
+constant functions on each element, but this approach requires more
+care in the selection of the approximation spaces for $\phi_h$ and
+$\phi'_h$. One additional feature of this correction is that
+$\theta_h$ can be reset to $H_{\epsilon_1}(\phi_h + \phi'_h)$ at each
+step as well, which results in a sharpening of the numerically smeared
+volume fraction so that it always precisely obeys the regularization
+transition width set controlled by $\epsilon_1$. Taken together the
+scheme is both of volume of fluid scheme with nonlinear sharpening and
+a level set scheme with strong control on conservation, and it is
+formally independent of the approximation spaces used for $phi$ and
+$\theta$ (that is no fixed polynomial reconstruction is assumed). 
 
 %
 %
@@ -1281,22 +1359,46 @@ where $\fb_d$ is the desired Dirichlet boundary condition for velocity on $\part
 %
 %
 %
-\section{Open Boundary Conditions}\label{sec:OpenBoundaryConditions}
+%% \section{Open Boundary Conditions}\label{sec:OpenBoundaryConditions}
 
-
+%% Hydraulic structure problems commonly have so-called open boundary
+%% conditions. Physically this correponds to a known pressure
+%% distribution at the ``downstream'' boundary.
 
 %
 %
 %
 \section{General Two Phase Flow Algorithm}\label{sec:General2PFlowAlgorithm}
 
+Since we are initially viewing the phases as incompressible, the
+density in two phase flow is approximated as
+\begin{equation}
+  \rho = (1-\theta) \rho_0 + \theta \rho_1
+\end{equation}
+Due the level set and volume fraction correction, we know furthemore that $\rho_1 \leq \rho \leq \rho_0$.
 
+\begin{description}
+\item[Step 1] Interface Update: Solve for $\hat{\theta}^{k+1}$ and $\hat{\phi}^{k+1}$ by applying the BDF1 or BDF2 transport schemes given above for density but modified appropriately for the volume fraction and level set equations.
+\item[Step 2] Interface Correction: Solve for a signed distance $\phi^d$, conservation correction $\phi'$, and correct the level set and volume of fluid to their final approximations $\phi^{k+1}$ and $\theta^{k+1}$. This step is independent of time and requires no extrapolation. 
+\item [Step 3] Momentum Update: Given the new density field, $\rho(\theta^{k+1})$ and viscosity field, $\nu(\theta^{k+1})$, solve for the provisional velocity $v^{k+1}$ using the BDF1 or BDF2 version of the variable density algorithml
+\item [Step 4] Pressure Correction: Solve for $\psi^{\sharp}$ precisely as above with $\chi=\rho_1$
+\item [Step 5] Pressure Update : Solve for $p$ with either the standard or rotational pressure update
+\end{description}
 
+\chapter{Summary and Conclusions}
+
+We have presented a scheme for density dependent flow based on prior
+work and verified the scheme using a manufactored solution. We also
+presented additional details of the scheme including boundary
+conditions, initialization, advective stabiliation, and velocity
+post-processing which are of interest for practical applications. Next
+we presented an extension of the scheme two two-phase incompressible
+flow.
 
 %
 %
 %
-\section{Numerical Results}\label{sec:NumericalResults2PFlow}
+%\section{Numerical Results}\label{sec:NumericalResults2PFlow}
 
 
 
