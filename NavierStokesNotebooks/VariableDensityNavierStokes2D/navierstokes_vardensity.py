@@ -37,23 +37,24 @@ useDensityASGS=True  # turn on/off Algebraic Subgrid Stabilization for density t
 useVelocityASGS=False # turn on/off Algebraic Subgrid Stabilization for velocity  transport
 
 # choose initial condition format
-useInitialConditions=int(1) # 0 = use Interpolation initial conditions
+useInitialConditions=int(0) # 0 = use Interpolation initial conditions
                             # 1 = use L2 Projection for (rho,u,v,p) and calculate (pi) from [u,v]
                             # 2 = use (u,v,p) Stokes Projection, (rho) L2 projection, calculate (pi) from [u,v]
 
 # Spatial Discretization  he = he_coeff*2*Pi/150.0
 he_coeff = 0.75 # default to match Guermond paper: 0.75
-
+time_offset_coeff = 0.0  # offsets time by coeff*pi ie (t0 = 0 + coeff pi)
 # setup time variables
 
-T = 1.0
-DT = 0.1  # target time step size
+T = 2.0  # length of time interval
+DT = 0.00625  # target time step size
+
 
 
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
     nFrames = int(T/DT) + 1
-    tnList =  [ i*DT for i in range(nFrames) ]
+    tnList =  [i*DT for i in range(nFrames) ]
 elif globalBDFTimeOrder == 2:
     # spin up to DT from DT**2  doubling each time until we have DT then continue
     DTstep = DT*DT
@@ -112,7 +113,7 @@ chi = 1.0  # 1.0 is the minimal value of rho density.
 
 # Given solution: (Modify here and if needed add more sympy.functions above with
 #                  notation sy_* to distinguish as symbolic functions)
-offset = 0.5*sy_pi
+offset = time_offset_coeff*sy_pi
 rs = sy_sqrt(xs*xs + ys*ys)
 thetas = sy_atan2(ys,xs)
 rhos = 2 + rs*sy_cos(thetas-sy_sin(ts+offset))
