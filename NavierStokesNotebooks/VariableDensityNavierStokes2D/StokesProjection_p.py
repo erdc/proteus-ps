@@ -10,7 +10,7 @@ import NavierStokesVariableDensity as NavierStokes
 domain = ctx.domain
 nd = ctx.nd
 name = "StokesProjection"
-coefficients=NavierStokes.StokesProjection2D(myModelIndex=4,
+coefficients=NavierStokes.StokesProjection2D(myModelIndex=5,
                                              toModelIndex_v=1,
                                              toModelIndex_p=3,
                                              projectTime=0.0,
@@ -63,3 +63,5 @@ def getDBC_p(x,flag):
 dirichletConditions = {0:getDBC_u,
                        1:getDBC_v,
                        2:getDBC_p}
+
+fluxBoundaryConditions = {0:None, 1:None, 2:None}

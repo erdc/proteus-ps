@@ -33,7 +33,7 @@ elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
 elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_degree)
 
 
-if ctx.useASGS:
+if ctx.useDensityASGS:
 #    subgridError = SubgridError.Advection_ASGS(coefficients,
 #                                               ctx.nd,
 #                                               stabFlag='1',
