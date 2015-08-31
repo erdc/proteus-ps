@@ -27,7 +27,7 @@ useNumericalFluxEbqe = True # ebqe history manipulation use ebqe or numericalFlu
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useDirichletPressureIncrementBC = False  # Dirichlet bc pressure or zeroMean pressure increment
 useNoFluxPressureIncrementBC = True # use petsc builtin pure neumann laplacian solver
-useVelocityComponents = True  # False uses post processed velocity,
+useVelocityComponents = False# False uses post processed velocity,
 useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
 setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
 usePressureExtrapolations = False # use p_star instead of p_last in velocity and pressure model
@@ -42,7 +42,9 @@ useInitialConditions=int(0) # 0 = use Interpolation initial conditions
                             # 2 = use (u,v,p) Stokes Projection, (rho) L2 projection, calculate (pi) from [u,v]
 
 # Spatial Discretization  he = he_coeff*2*Pi/150.0
-he_coeff = 0.025 # default to match Guermond paper: 0.75
+he_coeff = 0.025
+#he_coeff *= 2.0
+#he_coeff *= 0.5
 time_offset_coeff = 0.0  # offsets time by coeff*pi ie (t0 = 0 + coeff pi)
 # setup time variables
 
@@ -50,14 +52,15 @@ g = 1.0
 gvec = [0.0,-g]
 d = 1.0 #reference length
 rho_min = 1.0
-chi = rho_min
+chi = 0.95*rho_min
 At = 0.5 #(rho_max - rho_min)/(rho_max+rho_min)
 rho_max = (1.0+At)*rho_min / (1.0-At) # 1.5/0.5 = 3.0
 Re = 1000.0
 mu = (rho_min*d**(3.0/2.0)*g**(1.0/2.0))/Re
-T = 2.5*sqrt(At)  # length of time interval
-DT = 0.00125*sqrt(At)  # target time step size
-
+T = 2.5/sqrt(At)  # length of time interval
+DT = 0.00125
+#DT *= 2.0
+#DT*= 0.5
 class AnalyticSolutionConverter:
     """
     wrapper for function f(x) that satisfies proteus interface for analytical solutions
@@ -179,10 +182,10 @@ def gradptrue(x,t):
     return np.zeros(x.shape)
 
 # numerical tolerances
-density_atol_res = 1.0e-8
-velocity_atol_res = 1.0e-8
-phi_atol_res = 1.0e-8
-pressure_atol_res = 1.0e-8
+density_atol_res = 1.0e-4
+velocity_atol_res = 1.0e-4
+phi_atol_res = 1.0e-4
+pressure_atol_res = 1.0e-4
 
 
 parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node

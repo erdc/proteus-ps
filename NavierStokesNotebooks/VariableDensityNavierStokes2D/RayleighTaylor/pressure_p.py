@@ -54,11 +54,13 @@ class getIBC_p:
     def uOfXT(self,x,t):
         from math import cos,pi
         z = - 0.1*cos(2.0*pi*x[0]/ctx.d)
+        pMean = 0.5*(0.5*(0.0+2.0*ctx.d*ctx.rho_max*ctx.g) +
+                     0.5*(2.0*ctx.d*ctx.rho_max*ctx.g + 2.0*ctx.rho_min*ctx.g))
         if (x[1] - z) > 0:
             p = (2*ctx.d - x[1])*ctx.rho_max*ctx.g
         if (x[1] - z) < 0:
             p = (2-z)*ctx.d*ctx.rho_max*ctx.g + (z - x[1])*ctx.rho_min*ctx.g
-        return 0.0#self.ptrue(x,t)
+        return p - pMean
 
 initialConditions = {0:getIBC_p()}
 
