@@ -48,7 +48,10 @@ def getDBC_u(x,flag):
 def getDBC_v(x,flag):
     return None
 
-def getDFlux(x,flag):
+def getDFlux_u(x,flag):
+    return lambda x,t: 0.0
+
+def getDFlux_v(x,flag):
     return lambda x,t: 0.0
 
 class getIBC_u:
@@ -69,5 +72,5 @@ initialConditions = {0:getIBC_u(),
 dirichletConditions = {0:getDBC_u,
                        1:getDBC_v }
 
-diffusiveFluxBoundaryConditions = {0:{0:getDFlux},
-                                   1:{1:getDFlux}}
+diffusiveFluxBoundaryConditions = {0:{0:getDFlux_u},
+                                   1:{1:getDFlux_v}}

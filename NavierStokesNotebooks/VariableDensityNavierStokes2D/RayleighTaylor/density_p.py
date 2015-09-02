@@ -52,4 +52,3 @@ dirichletConditions = {0:getDBC_rho}
 
 advectiveFluxBoundaryConditions = {0:getAFlux}
 diffusiveFluxBoundaryConditions = {0:{0:getDFlux}}
-fluxBoundaryConditions = {0:'outFlow'} #this only has an effect when numericalFlux is not used
