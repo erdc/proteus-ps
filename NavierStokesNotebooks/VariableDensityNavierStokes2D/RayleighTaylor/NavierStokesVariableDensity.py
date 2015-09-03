@@ -1481,7 +1481,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             b0 = (1.0+2.0*r)/(1.0+r)*dtInv # use this instead of alpha_bdf since we have no timeIntegration in this model
 
         # find minimal density value set it to be chi
-        if self.densityModelIndex>0:
+        if self.densityModelIndex>=0:
             rho = self.c_rho[u_shape]
         else:
             rho = [self.chiValue] # just give it the self.chiValue so that test passes as we assume user has given correct chiValue in this case.
