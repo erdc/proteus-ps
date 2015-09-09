@@ -40,13 +40,14 @@ if ctx.useDensityASGS:
 #                                               lag=False)
     subgridError = SubgridError.AdvectionDiffusionReaction_ASGS(coefficients,
                                                                 ctx.nd,
-                                                                stabFlag='2',
+                                                                stabFlag='1',
                                                                 lag=False)
 
-#numerics.shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(physics.coefficients,
-#                                                                physics.nd,
-#                                                                lag = True,
-#                                                                nStepsToDelay=1)
+shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(coefficients,
+                                                       ctx.nd,
+                                                       lag = False,
+                                                       shockCapturingFactor = 0.5,
+                                                       nStepsToDelay=2)
 #numerics.nny= 41
 
 #matrix type
@@ -82,12 +83,14 @@ levelNonlinearSolver = NonlinearSolvers.Newton
 #linear solve rtolerance
 
 linTolFac = 0.0
-l_atol_res = 0.1*ctx.density_atol_res
+l_atol_res = 0.01*ctx.density_atol_res
 tolFac = 0.0
 nl_atol_res = ctx.density_atol_res
 nonlinearSolverConvergenceTest = 'r'
 levelNonlinearSolverConvergenceTest = 'r'
 linearSolverConvergenceTest             = 'r-true'
+maxLineSearches = 0
+maxNonlinearIts =100
 
 periodicDirichletConditions=None
 

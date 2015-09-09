@@ -53,12 +53,12 @@ nl_atol_res = ctx.phi_atol_res
 nonlinearSolverConvergenceTest = 'r'
 levelNonlinearSolverConvergenceTest = 'r'
 linearSolverConvergenceTest             = 'r-true'
-
+maxLineSearches=0
 periodicDirichletConditions=None
 
 # post processing
 
 if not ctx.useVelocityComponents:
-    conservativeFlux = {0:'pwl-bdm'} #'point-eval','pwl-bdm'
+    conservativeFlux = {0:'pwl-bdm-opt'} #'point-eval','pwl-bdm-opt'
 else:
     conservativeFlux=None

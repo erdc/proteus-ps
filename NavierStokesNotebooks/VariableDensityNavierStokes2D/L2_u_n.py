@@ -1,20 +1,20 @@
 from proteus import *
 from proteus.default_n import *
-from pressure_p import *
+from L2_u_p import *
 
 
 triangleOptions = ctx.triangleOptions
 
 
-femSpaces = {0:FemTools.C0_AffineLinearOnSimplexWithNodalBasis} #pressure P1 space
+femSpaces = {0:FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis}
 
 
 # stepController  = StepControl.Min_dt_cfl_controller
 # runCFL= 0.99
 # runCFL= 0.5
 
-stepController=FixedStep
-DT = ctx.DT
+#stepController=FixedStep
+#DT = ctx.DT
 
 #Quadrature rules for elements and element  boundaries
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
@@ -24,7 +24,7 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 
 #matrix type
 #numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
-numericalFluxType = NumericalFlux.ConstantAdvection_exterior
+numericalFluxType = DoNothing
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
@@ -34,7 +34,7 @@ matrix = LinearAlgebraTools.SparseMatrix
 multilevelLinearSolver = LinearSolvers.LU
 levelLinearSolver = LinearSolvers.LU
 
-linear_solver_options_prefix = 'pressure_'
+linear_solver_options_prefix = 'pi_u_'
 
 if ctx.opts.parallel:
     multilevelLinearSolver = KSP_petsc4py
@@ -50,9 +50,9 @@ levelNonlinearSolver = NonlinearSolvers.Newton
 #linear solve rtolerance
 
 linTolFac = 0.0
-l_atol_res = 0.1*ctx.pressure_atol_res
+l_atol_res = 0.1*ctx.velocity_atol_res
 tolFac = 0.0
-nl_atol_res = ctx.pressure_atol_res
+nl_atol_res = ctx.velocity_atol_res
 
 nonlinearSolverConvergenceTest      = 'r'
 levelNonlinearSolverConvergenceTest = 'r'

@@ -574,8 +574,9 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                  useNonlinearAdvection=False,
                  usePressureExtrapolations=False,
                  useConservativePressureTerm=False,
-                 useVelocityComponents=True):
-
+                 useVelocityComponents=True,
+                 g=[0.0,-9.8]):
+        self.g=g
         sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
                           np.array([0,1],dtype='i')),
                    (1,1):(np.array([0,1,2],dtype='i'),
@@ -1148,15 +1149,19 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )u = 0
         c[('m',eu)][:] = rho_sharp*u    # d/dt ( rho_sharp * u) = d/dt (m_0)
         c[('dm',eu,ui)][:] = rho_sharp  # dm^0_du
+        c[('r',eu)][:] = -rho*self.g[eu]
         if self.useConservativePressureTerm:
-            c[('r',eu)][:] = -self.f1ofx(c['x'][:],t)
+            if self.f1ofx:
+                c[('r',eu)] -= self.f1ofx(c['x'][:],t)
             c[('dr',eu,ui)][:] = 0.0
             c[('f',eu)][...,xi] = p_sharp
             c[('f',eu)][...,yi] = 0.0      #< div (p I), w >, so that f = [p_sharp, 0] for eu component
             c[('df',eu,ui)][...,xi] = 0.0
             c[('df',eu,ui)][...,yi] = 0.0
         else:
-            c[('r',eu)][:] = -self.f1ofx(c['x'][:],t) + grad_p_sharp[...,xi]
+            c[('r',eu)] += grad_p_sharp[...,xi]
+            if self.f1ofx:
+                c[('r',eu)] -= self.f1ofx(c['x'][:],t)
             c[('dr',eu,ui)][:] = 0.0
         if self.useStabilityTerms:
             c[('r',eu)][:] += 0.5*( rho_t + div_rho_vel_star )*u
@@ -1177,15 +1182,19 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )v = 0
         c[('m',ev)][:] = rho_sharp*v    # d/dt ( rho_sharp * v) = d/dt (m_0)
         c[('dm',ev,vi)][:] = rho_sharp  # dm^0_dv
+        c[('r',ev)][:] = -rho*self.g[ev]
         if self.useConservativePressureTerm:
-            c[('r',ev)][:] = -self.f2ofx(c['x'][:],t)
+            if self.f2ofx:
+                c[('r',ev)] -= self.f2ofx(c['x'][:],t)
             c[('dr',ev,vi)][:] = 0.0
             c[('f',ev)][...,xi] = 0.0         #< div (p I), w >, so that f = [0 p_sharp] for ev component
             c[('f',ev)][...,yi] = p_sharp
             c[('df',ev,vi)][...,xi] = 0.0
             c[('df',ev,vi)][...,yi] = 0.0
         else:
-            c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_p_sharp[...,yi]
+            c[('r',ev)] += grad_p_sharp[...,yi]
+            if self.f2ofx:
+                c[('r',ev)] -= self.f2ofx(c['x'][:],t)
             c[('dr',ev,vi)][:] = 0.0
         if self.useStabilityTerms:
             c[('r',ev)][:] += 0.5*( rho_t + div_rho_vel_star )*v

@@ -23,7 +23,7 @@ coefficients=NavierStokes.Pressure2D(bdf=ctx.globalBDFTimeOrder,
                                      pressureIncrementFunction=None,  # use ctx.gradpitrue for exact pressure increment (=0)
                                      useRotationalModel=ctx.useRotationalModel,
                                      currentModelIndex=3,
-                                     pressureFunction=ctx.ptrue,
+                                     pressureFunction=None,
                                      setFirstTimeStepValues=ctx.setFirstTimeStepValues,
                                      usePressureExtrapolations=ctx.usePressureExtrapolations)
 
@@ -36,15 +36,11 @@ if ctx.opts.analytical:
 # Define boundary conditions and initial conditions of system
 
 def getDBC_p(x,flag):
-    if flag in [ctx.boundaryTags['bottom'],
-                ctx.boundaryTags['top'],
-                ctx.boundaryTags['fixed']]:
-        return lambda x,t: ctx.ptrue(x,t)
-    else:
-        return None
-
-def getDBC_none(x,flag):
     return None
+#    if flag == ctx.boundaryTags['top']:
+#        return lambda x,t: 0.0
+#    else:
+#        return None
 
 def getFlux(x,flag):
     if flag == 0:
@@ -54,16 +50,19 @@ def getFlux(x,flag):
 
 class getIBC_p:
     def __init__(self):
-        self.ptrue=ctx.ptrue
         pass
     def uOfXT(self,x,t):
-        return self.ptrue(x,t)
+        from math import cos,pi
+        z = - 0.1*cos(2.0*pi*x[0]/ctx.d)
+        pMean = 0.5*(0.5*(0.0+2.0*ctx.d*ctx.rho_max*ctx.g) +
+                     0.5*(2.0*ctx.d*ctx.rho_max*ctx.g + 2.0*ctx.rho_min*ctx.g))
+        if (x[1] - z) > 0:
+            p = (2*ctx.d - x[1])*ctx.rho_max*ctx.g
+        if (x[1] - z) < 0:
+            p = (2-z)*ctx.d*ctx.rho_max*ctx.g + (z - x[1])*ctx.rho_min*ctx.g
+        return p - pMean
 
 initialConditions = {0:getIBC_p()}
 
-if ctx.useDirichletPressureBC:
-    dirichletConditions = {0:getDBC_p } # pressure bc are explicitly set
-    advectiveFluxBoundaryConditions = {0:getFlux}
-else:
-    dirichletConditions = {0:getDBC_none} # pressure bc are set by pressure increment
-    advectiveFluxBoundaryConditions = {0:getFlux}
+dirichletConditions = {0:getDBC_p } # pressure bc are explicitly set
+advectiveFluxBoundaryConditions = {0:getFlux}
