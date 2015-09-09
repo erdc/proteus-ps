@@ -51,6 +51,14 @@ ps = sy_sin(xs)*sy_sin(ys)*sy_sin(ts)
 us = -ys*sy_cos(ts)
 vs = xs*sy_cos(ts)
 
+# #gradient terms for H1 norms later
+# dus_dx = simplify(diff(us,xs))
+# dus_dy = diff(us,ys)
+# dvs_dx = diff(vs,xs)
+# dvs_dy = diff(vs,ys)
+# dps_dx = diff(ps,xs)
+# dps_dy = diff(ps,ys)
+
 # manufacture the source terms:
 
 f1s = simplify((rhos*(diff(us,ts) + us*diff(us,xs) + vs*diff(us,ys)) + diff(ps,xs) - diff(mu*us,xs,xs) - diff(mu*us,ys,ys)))
@@ -68,6 +76,14 @@ vl = lambdify((xs, ys, ts), vs, "numpy")
 rhol = lambdify((xs, ys, ts), rhos, "numpy")
 f1l = lambdify((xs, ys, ts), f1s, "numpy")
 f2l = lambdify((xs, ys, ts), f2s, "numpy")
+
+dul_dx = lambdify((xs, ys, ts), simplify(diff(us,xs)), "numpy")
+dul_dy = lambdify((xs, ys, ts), simplify(diff(us,ys)), "numpy")
+dvl_dx = lambdify((xs, ys, ts), simplify(diff(vs,xs)), "numpy")
+dvl_dy = lambdify((xs, ys, ts), simplify(diff(vs,ys)), "numpy")
+dpl_dx = lambdify((xs, ys, ts), simplify(diff(ps,xs)), "numpy")
+dpl_dy = lambdify((xs, ys, ts), simplify(diff(ps,ys)), "numpy")
+
 
 # convert python expressions to the format we need for multidimensional x values
 def ptrue(x,t):
@@ -93,6 +109,53 @@ def velocityFunction(x,t):
                       vtrue(x,t)[...,np.newaxis].transpose())
                     ).transpose()
 
+def velocityFunctionLocal(x,t):
+    return np.array([utrue(x,t),vtrue(x,t)])
+
+
+# analytic derivatives
+def dudxtrue(x,t):
+    return dul_dx(x[...,0],x[...,1],t)
+def dudytrue(x,t):
+    return dul_dy(x[...,0],x[...,1],t)
+
+def dvdxtrue(x,t):
+    return dvl_dx(x[...,0],x[...,1],t)
+def dvdytrue(x,t):
+    return dvl_dy(x[...,0],x[...,1],t)
+
+def dpdxtrue(x,t):
+    return dpl_dx(x[...,0],x[...,1],t)
+def dpdytrue(x,t):
+    return dpl_dy(x[...,0],x[...,1],t)
+
+# analytic gradients
+def gradutrue(x,t):
+    return np.array([dudxtrue(x,t), dudytrue(x,t)])
+
+def gradvtrue(x,t):
+    return np.array([dvdxtrue(x,t), dvdytrue(x,t)])
+
+def gradptrue(x,t):
+    return np.array([dpdxtrue(x,t), dpdytrue(x,t)])
+
+
+class AnalyticSolutionConverter:
+    """
+    wrapper for function f(x) that satisfies proteus interface for analytical solutions
+    """
+    def __init__(self,fx,gradfx=None):
+        self.exact_function = fx
+        self.exact_grad_function = gradfx
+
+    def uOfXT(self,x,t):
+        return self.exact_function(x,t)
+    def uOfX(self,x):
+        return self.exact_function(x)
+    def duOfXT(self,x,t):
+        return self.exact_grad_function(x,t)
+    def duOfX(self,x):
+        return self.exact_grad_function(x)
 
 # Domain and mesh
 
@@ -104,7 +167,7 @@ if unitCircle:
     radius = 1.0
     center_x = 0.0
     center_y = 0.0
-    he = 2.0*pi/50.0  # h size for edges of circle
+    he = 2.0*pi/150.0  # h size for edges of circle
 
     # no need to modify past here
     nvertices = nsegments = int(ceil(2.0*pi/he))
@@ -151,8 +214,24 @@ if unitCircle:
 # numerical tolerances
 ns_nl_atol_res = max(1.0e-8,0.01*he**2)
 
-# Time stepping
+# actual time step for FixedStep
 T=10.0
+DT = 0.1
+nFrames = int(T/DT) + 1
+tnList =  [ i*DT for i in range(nFrames) ]
+
+# dummy variable for time integration order outputting ( not used anywhere buit in output file names )
+globalTimeOrder = 2
+
+# Time stepping for output
+# T=10.0
+# DT = 0.025
+# nFrames = 51
+# dt = T/(nFrames-1)
+# tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
+
+# tnList =  [ i*dt for i in range(nFrames) ]
+
 
 nFrames = 41
 dt = T/(nFrames-1)

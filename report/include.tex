@@ -1,11 +1,31 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %begin macros section from qfrkdg-macros
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%... cek macros ...
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+% \newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{lemma}[theorem]{Lemma}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{claim}{Claim}
+
+
+
 
 %% Create shortcut commands for various fonts and common symbols
 
 %boldface in math mode
+\newcommand{\Ab}{\mathbf{A}}
+\newcommand{\Bb}{\mathbf{B}}
 \newcommand{\bm}[1]{\mbox{{\boldmath ${#1}$}}}
 \newcommand{\C}{\mathbb{C}}
 \newcommand{\Du}{\underline{D}}
@@ -13,8 +33,7 @@
 \newcommand{\deld}{\nabla \cdot}
 \newcommand{\veps}{\varepsilon}
 \newcommand{\eps}{\epsilon}
-\newcommand{\f}{\textbf{f}}
-\newcommand{\fb}{\textbf{f}}
+\newcommand{\fb}{\mathbf{f}}
 \newcommand{\F}{\mathbb{F}}
 \newcommand{\Fb}{\textbf{F}}
 \newcommand{\gb}{\textbf{g}}
@@ -40,6 +59,7 @@
 \newcommand{\Surf}{\textbf{S}}
 \newcommand{\tpsi}{\tilde{\psi}}
 \newcommand{\ub}{\textbf{u}}
+\newcommand{\ut}{\mathbf{\tilde{u}}}
 \newcommand{\U}{\textbf{U}}
 \newcommand{\vb}{\textbf{v}}
 \newcommand{\V}{\mathbb{V}}
@@ -148,7 +168,6 @@
 \newcommand{\Tabst}[2]{Tables \ref {tab:#1} and \ref {tab:#2}} 
 \newcommand{\tabs}[2]{tables \ref{tab:#1}--\ref{tab:#2}} 
 \newcommand{\Tabs}[2]{Tables \ref{tab:#1}--\ref{tab:#2}}
-\newtheorem{theorem}{Theorem}
 %%velocity                                                                                                                                                                                                            
 \newcommand{\vel}{\gvec{\sigma}}
 \newenvironment{neqnarray}[1]{\begin{minipage}[t]{6.5in}  \begin{minipage}[b]{1.0in} #1 \end{minipage}  \begin{minipage}[b]{5.5in}\begin{eqnarray}}{\end{eqnarray}\end{minipage}\end{minipage}}
@@ -236,4 +255,8 @@
 \newcommand{\delv}{\delta v}
 \newcommand{\uDel}{u_\Delta}
 \newcommand{\delu}{\delta u}
+
+
+
+
 
