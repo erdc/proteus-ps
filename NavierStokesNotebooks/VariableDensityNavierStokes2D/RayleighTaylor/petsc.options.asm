@@ -1,0 +1,4 @@
+-density_ksp_type  bcgsl -density_pc_type  asm -density_pc_asm_type basic -density_sub_ksp_type preonly -density_sub_pc_type lu -density_sub_pc_factor_mat_solver_package superlu 
+-velocity_ksp_type bcgsl -velocity_pc_type asm -velocity_pc_asm_type basic -velocity_sub_ksp_type preonly -velocity_sub_pc_type lu -velocity_sub_pc_factor_mat_solver_package superlu
+-phi_ksp_type cg -phi_pc_type hypre -phi_pc_hypre_type  boomeramg
+-pressure_ksp_type cg -pressure_pc_type asm

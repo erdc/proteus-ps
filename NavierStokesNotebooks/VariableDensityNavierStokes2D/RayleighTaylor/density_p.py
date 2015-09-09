@@ -15,7 +15,7 @@ name = "density"
 coefficients=NavierStokes.DensityTransport2D(bdf=ctx.globalBDFTimeOrder,
                                              chiValue=ctx.chi,
                                              currentModelIndex=0,
-                                             densityFunction=ctx.rhotrue,
+                                             densityFunction=None,#ctx.rhotrue,
                                              velocityModelIndex=1,  #don't change this unless the order in so-file is changed
                                              velocityFunction=None, #or ctx.velocityFunction to use exact solution (uncoupled transport)
                                              divVelocityFunction=None, # or ctx.divVelocityFunction to use exact divergence solution
@@ -32,32 +32,23 @@ if ctx.opts.analytical:
 # wherever they are set
 
 def getDBC_rho(x,flag):
-   if flag in [ctx.boundaryTags['bottom'],
-               ctx.boundaryTags['top'],
-               ctx.boundaryTags['fixed']]:
-      return lambda x,t: ctx.rhotrue(x,t)
-
-def getNone(x,flag):
-    return None
+   return None
 
 def getAFlux(x,flag):
-   if flag in [ctx.boundaryTags['bottom'],
-               ctx.boundaryTags['top'],
-               ctx.boundaryTags['fixed']]:
-      return None
-   else:
-      return lambda x,t: 0.0
+   return lambda x,t: 0.0
+
+def getDFlux(x,flag):
+   return lambda x,t: 0.0
 
 class getIBC_rho:
     def __init__(self):
-        self.rhotrue=ctx.rhotrue
         pass
     def uOfXT(self,x,t):
-        return self.rhotrue(x,t)
+       return ctx.rho_init(x[0],x[1])
 
 initialConditions = {0:getIBC_rho()}
 
 dirichletConditions = {0:getDBC_rho}
 
 advectiveFluxBoundaryConditions = {0:getAFlux}
-fluxBoundaryConditions = {0:'outFlow'} #this only has an effect when numericalFlux is not used
+diffusiveFluxBoundaryConditions = {0:{0:getDFlux}}
