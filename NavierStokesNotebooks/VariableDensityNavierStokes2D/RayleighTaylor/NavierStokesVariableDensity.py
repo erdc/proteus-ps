@@ -401,10 +401,6 @@ class DensityTransport2D(TransportCoefficients.TC_base):
         Give the TC object an opportunity to modify itself before the time step.
         """
         self.firstStep = firstStep # save for in evaluate
-        if self.firstStep:
-            for ci in range(self.nc):
-                self.model.q[('u_lastlast',ci)][:] = self.model.q[('u',ci)]
-                self.model.ebqe[('u_lastlast',ci)][:] = self.model.ebqe[('u',ci)]
 
         # Transfer the solutions to the new time step representation
         if self.firstStep:
@@ -509,6 +505,7 @@ class DensityTransport2D(TransportCoefficients.TC_base):
                 div_vel_star = div_vel_last + dt/dt_last*(div_vel_last - div_vel_lastlast )
         else:
             assert False, "Error: self.bdf = %f is not supported" %self.bdf
+
         #  rho_t + div( rho vel_star) - 0.5 rho div( vel_star ) = 0
         c[('m',0)][:] = rho
         c[('dm',0,0)][:] = 1.0
@@ -577,8 +574,9 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
                  useNonlinearAdvection=False,
                  usePressureExtrapolations=False,
                  useConservativePressureTerm=False,
-                 useVelocityComponents=True):
-
+                 useVelocityComponents=True,
+                 g=[0.0,-9.8]):
+        self.g=g
         sdInfo  = {(0,0):(np.array([0,1,2],dtype='i'),  # sparse diffusion uses diagonal element for diffusion coefficient
                           np.array([0,1],dtype='i')),
                    (1,1):(np.array([0,1,2],dtype='i'),
@@ -928,8 +926,6 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
             self.evaluate(t,self.model.ebqe)
             self.model.timeIntegration.calculateElementCoefficients(self.model.q)
 
-            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
         copyInstructions = {}
         return copyInstructions
     def evaluate(self,t,c):
@@ -1153,15 +1149,19 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )u = 0
         c[('m',eu)][:] = rho_sharp*u    # d/dt ( rho_sharp * u) = d/dt (m_0)
         c[('dm',eu,ui)][:] = rho_sharp  # dm^0_du
+        c[('r',eu)][:] = -rho*self.g[eu]
         if self.useConservativePressureTerm:
-            c[('r',eu)][:] = -self.f1ofx(c['x'][:],t)
+            if self.f1ofx:
+                c[('r',eu)] -= self.f1ofx(c['x'][:],t)
             c[('dr',eu,ui)][:] = 0.0
             c[('f',eu)][...,xi] = p_sharp
             c[('f',eu)][...,yi] = 0.0      #< div (p I), w >, so that f = [p_sharp, 0] for eu component
             c[('df',eu,ui)][...,xi] = 0.0
             c[('df',eu,ui)][...,yi] = 0.0
         else:
-            c[('r',eu)][:] = -self.f1ofx(c['x'][:],t) + grad_p_sharp[...,xi]
+            c[('r',eu)] += grad_p_sharp[...,xi]
+            if self.f1ofx:
+                c[('r',eu)] -= self.f1ofx(c['x'][:],t)
             c[('dr',eu,ui)][:] = 0.0
         if self.useStabilityTerms:
             c[('r',eu)][:] += 0.5*( rho_t + div_rho_vel_star )*u
@@ -1182,15 +1182,19 @@ class VelocityTransport2D(TransportCoefficients.TC_base):
         #            + 0.5( rho_t + rho_x u_star + rho_y v_star + rho div([u_star,v_star]) )v = 0
         c[('m',ev)][:] = rho_sharp*v    # d/dt ( rho_sharp * v) = d/dt (m_0)
         c[('dm',ev,vi)][:] = rho_sharp  # dm^0_dv
+        c[('r',ev)][:] = -rho*self.g[ev]
         if self.useConservativePressureTerm:
-            c[('r',ev)][:] = -self.f2ofx(c['x'][:],t)
+            if self.f2ofx:
+                c[('r',ev)] -= self.f2ofx(c['x'][:],t)
             c[('dr',ev,vi)][:] = 0.0
             c[('f',ev)][...,xi] = 0.0         #< div (p I), w >, so that f = [0 p_sharp] for ev component
             c[('f',ev)][...,yi] = p_sharp
             c[('df',ev,vi)][...,xi] = 0.0
             c[('df',ev,vi)][...,yi] = 0.0
         else:
-            c[('r',ev)][:] = -self.f2ofx(c['x'][:],t) + grad_p_sharp[...,yi]
+            c[('r',ev)] += grad_p_sharp[...,yi]
+            if self.f2ofx:
+                c[('r',ev)] -= self.f2ofx(c['x'][:],t)
             c[('dr',ev,vi)][:] = 0.0
         if self.useStabilityTerms:
             c[('r',ev)][:] += 0.5*( rho_t + div_rho_vel_star )*v
@@ -1452,9 +1456,6 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             self.evaluate(t,self.model.ebqe)
             # self.evaluate(t,self.model.ebq_global)
 
-        for ci in range(self.nc):
-            self.model.q[('grad(u)_last',ci)][:] = self.model.q[('grad(u)',ci)]
-            self.model.ebqe[('grad(u)_last',ci)][:] = self.model.ebqe[('grad(u)',ci)]
         copyInstructions = {}
         return copyInstructions
     def evaluate(self,t,c):
@@ -1480,7 +1481,7 @@ class PressureIncrement2D(TransportCoefficients.TC_base):
             b0 = (1.0+2.0*r)/(1.0+r)*dtInv # use this instead of alpha_bdf since we have no timeIntegration in this model
 
         # find minimal density value set it to be chi
-        if self.densityModelIndex>0:
+        if self.densityModelIndex>=0:
             rho = self.c_rho[u_shape]
         else:
             rho = [self.chiValue] # just give it the self.chiValue so that test passes as we assume user has given correct chiValue in this case.

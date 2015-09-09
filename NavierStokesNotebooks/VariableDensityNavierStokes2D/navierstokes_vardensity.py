@@ -19,23 +19,42 @@ nd = 2
 quad_degree = 5  # exact for polynomials of this degree
 
 # Model Flags
-useStabilityTerms = False  # stability terms in density and velocity models
-useVelocityComponents = True  # False uses post processed velocity,
 globalBDFTimeOrder = 2 # 1 or 2 for time integration algorithms
+useRotationalModel = True #  Standard vs Rotational models in pressure update
+useStabilityTerms = True  # stability terms in density and velocity models (should always be True)
+useNonlinearAdvection = False # switches between extrapolated and fully nonlinear advection in velocity model
+useNumericalFluxEbqe = True # ebqe history manipulation use ebqe or numericalFlux.ebqe which is exact
 useDirichletPressureBC = False  # Dirichlet bc pressure or zeroMean pressure increment
-useRotationalModel = False #  Standard vs Rotational models in pressure update
+useDirichletPressureIncrementBC = False  # Dirichlet bc pressure or zeroMean pressure increment
+useNoFluxPressureIncrementBC = True # use petsc builtin pure neumann laplacian solver
+useVelocityComponents = True  # False uses post processed velocity,
 useScaleUpTimeStepsBDF2 = False  # Time steps = [dt^2, 2dt^2, 4dt^2, ... dt, ... , dt, T-tLast]
-setFirstTimeStepValues = True # interpolate the first step as well as the 0th step from exact solutions
+setFirstTimeStepValues = False # interpolate the first step as well as the 0th step from exact solutions
+usePressureExtrapolations = False # use p_star instead of p_last in velocity and pressure model
+useConservativePressureTerm = False # use < -pI, grad w>  instead of < grad p, w> in velocity update
 
+useDensityASGS=True  # turn on/off Algebraic Subgrid Stabilization for density transport
+useVelocityASGS=False # turn on/off Algebraic Subgrid Stabilization for velocity  transport
+
+# choose initial condition format
+useInitialConditions=int(0) # 0 = use Interpolation initial conditions
+                            # 1 = use L2 Projection for (rho,u,v,p) and calculate (pi) from [u,v]
+                            # 2 = use (u,v,p) Stokes Projection, (rho) L2 projection, calculate (pi) from [u,v]
+
+# Spatial Discretization  he = he_coeff*2*Pi/150.0
+he_coeff = 0.75 # default to match Guermond paper: 0.75
+time_offset_coeff = 0.0  # offsets time by coeff*pi ie (t0 = 0 + coeff pi)
 # setup time variables
-T = 1.0
-DT = 0.05  # target time step size
-DT *=0.5
-DT *=0.5
+
+T = 2.0  # length of time interval
+DT = 0.00625  # target time step size
+
+
+
 # setup tnList
 if globalBDFTimeOrder == 1 or not useScaleUpTimeStepsBDF2:
     nFrames = int(T/DT) + 1
-    tnList =  [ i*DT for i in range(nFrames) ]
+    tnList =  [i*DT for i in range(nFrames) ]
 elif globalBDFTimeOrder == 2:
     # spin up to DT from DT**2  doubling each time until we have DT then continue
     DTstep = DT*DT
@@ -60,6 +79,8 @@ else:
 decimal_length = 6
 DT_string = "{:1.{dec_len}f}".format(DT, dec_len=decimal_length)[2:]
 
+if not useVelocityComponents:
+    DT_string+='_velpp'
 
 # solutions
 
@@ -88,27 +109,29 @@ xs,ys,ts = symbols('x y t')
 
 # viscosity coefficient
 mu = 1.0 # the viscosity coefficient
-chi = 0.8  # 1.0 is the minimal value of rho density.
+chi = 1.0  # 1.0 is the minimal value of rho density.
 
 # Given solution: (Modify here and if needed add more sympy.functions above with
 #                  notation sy_* to distinguish as symbolic functions)
+offset = time_offset_coeff*sy_pi
 rs = sy_sqrt(xs*xs + ys*ys)
 thetas = sy_atan2(ys,xs)
-rhos = 2 + rs*sy_cos(thetas-sy_sin(ts))
-
+rhos = 2 + rs*sy_cos(thetas-sy_sin(ts+offset))
 
 # rhos = 2 + rs*sy_cos(thetas-sy_sin(ts))
-ps = sy_sin(xs)*sy_sin(ys)*sy_sin(ts)
-us = -ys*sy_cos(ts)
-vs = xs*sy_cos(ts)
-
+ps = sy_sin(xs)*sy_sin(ys)*sy_sin(ts+offset)
+us = -ys*sy_cos(ts+offset)
+vs = xs*sy_cos(ts+offset)
+pst = diff(ps,ts)
 # manufacture the source terms:
 
 f1s = simplify((rhos*(diff(us,ts) + us*diff(us,xs) + vs*diff(us,ys)) + diff(ps,xs) - diff(mu*us,xs,xs) - diff(mu*us,ys,ys)))
 f2s = simplify((rhos*(diff(vs,ts) + us*diff(vs,xs) + vs*diff(vs,ys)) + diff(ps,ys) - diff(mu*vs,xs,xs) - diff(mu*vs,ys,ys)))
-
+#pf1s = simplify((f1s + mu*(diff(us,xs,xs)+diff(us,ys,ys)))/rhos - us*diff(us,xs) - vs*diff(us,ys))
+#pf2s = simplify((f2s + mu*(diff(vs,xs,xs)+diff(vs,ys,ys)))/rhos - us*diff(vs,xs) - vs*diff(vs,ys))
 # use lambdify to convert from sympy to python expressions
 pl = lambdify((xs, ys, ts), ps, "numpy")
+ptl = lambdify((xs, ys, ts), pst, "numpy")
 ul = lambdify((xs, ys, ts), us, "numpy")
 vl = lambdify((xs, ys, ts), vs, "numpy")
 rhol = lambdify((xs, ys, ts), rhos, "numpy")
@@ -135,7 +158,7 @@ def vtrue(x,t):
     return vl(x[...,0],x[...,1],t)
 
 def pitrue(x,t): # pressure increment
-    return np.zeros(x[...,0].shape)
+    return np.zeros(x[...,0].shape) #pl(x[...,0],x[...,1],t) - pl(x[...,0],x[...,1],t-DT) # diff from previous step
 
 def ptrue(x,t):
     return pl(x[...,0],x[...,1],t)
@@ -207,18 +230,23 @@ class AnalyticSolutionConverter:
     """
     wrapper for function f(x) that satisfies proteus interface for analytical solutions
     """
-    def __init__(self,fx,gradfx=None):
+    def __init__(self,fx,gradfx=None,T=None):
         self.exact_function = fx
         self.exact_grad_function = gradfx
-
+        self.fixed_T=T
+    def get_t(self,t):
+        if self.fixed_T is not None:
+            return self.fixed_T
+        else:
+            return t
     def uOfXT(self,x,t):
-        return self.exact_function(x,t)
+        return self.exact_function(x,self.get_t(t))
     def uOfX(self,x):
-        return self.exact_function(x)
+        return self.exact_function(x,0.0)
     def duOfXT(self,x,t):
-        return self.exact_grad_function(x,t)
+        return self.exact_grad_function(x,self.get_t(t))
     def duOfX(self,x):
-        return self.exact_grad_function(x)
+        return self.exact_grad_function(x,0.0)
 
 
 
@@ -231,10 +259,11 @@ if unitCircle:
     radius = 1.0
     center_x = 0.0
     center_y = 0.0
-    he = 0.75*2.0*pi/150.0  # h size for edges of circle
+
+    he = he_coeff*2.0*pi/150.0  # h size for edges of circle
 
     # no need to modify past here
-    nvertices = nsegments = int(ceil(2.0*pi/he))
+    nvertices = nsegments = 4*int(ceil(0.5*pi/he))
     dtheta = 2.0*pi/float(nsegments)
     vertices= []
     vertexFlags = []
@@ -278,30 +307,17 @@ if unitCircle:
     #
     #finished setting up circular domain
     #
-    triangleOptions="VApq30Dena%8.8f" % ((he**2)/2.0,)
+    triangleOptions="VApq33Dena%8.8f" % ((he**2)/2.0,)
 
     logEvent("""Mesh generated using: triangle -%s %s"""  % (triangleOptions,domain.polyfile+".poly"))
 
 
 # numerical tolerances
-density_atol_res = 1.0e-10
-velocity_atol_res = 1.0e-10
-phi_atol_res = 1.0e-10
-pressure_atol_res = 1.0e-10
+density_atol_res = 1.0e-8
+velocity_atol_res = 1.0e-8
+phi_atol_res = 1.0e-8
+pressure_atol_res = 1.0e-8
 
 
 parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node
 nLayersOfOverlapForParallel = 0
-
-
-
-
-
-# Time stepping for output
-# T=10.0
-# DT = 0.05
-# nFrames = 51
-# dt = T/(nFrames-1)
-# tnList = [0, DT] + [ i*dt for i in range(1,nFrames) ]
-
-# tnList =  [ i*dt for i in range(nFrames) ]

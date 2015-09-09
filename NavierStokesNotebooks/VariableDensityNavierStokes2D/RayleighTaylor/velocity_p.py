@@ -14,15 +14,15 @@ name = "velocity"
 
 # from pnList in *_so.py  0 = density,  1 = (u,v), 2 = (pressureincrement),  3 = (pressure)
 coefficients=NavierStokes.VelocityTransport2D(bdf=ctx.globalBDFTimeOrder,
-                                              f1ofx=ctx.f1true,
-                                              f2ofx=ctx.f2true,
+                                              f1ofx=None,#ctx.f1true,
+                                              f2ofx=None,#ctx.f2true,
                                               mu=ctx.mu,
                                               densityModelIndex=0,
                                               densityFunction=None, #set to ctx.rhotrue for exact density (uncoupled  flow)
                                               densityGradFunction=None,  #set to ctx.gradrhotrue for exact grad density
                                               currentModelIndex=1,
-                                              uFunction=ctx.utrue,
-                                              vFunction=ctx.vtrue,
+                                              uFunction=None,#ctx.utrue,
+                                              vFunction=None,#ctx.vtrue,
                                               pressureIncrementModelIndex=2,
                                               pressureIncrementFunction=None, # set to ctx.pitrue for exact pressure increment
                                               pressureIncrementGradFunction=None, # set to ctx.gradpitrue for exact pressure increment
@@ -33,7 +33,8 @@ coefficients=NavierStokes.VelocityTransport2D(bdf=ctx.globalBDFTimeOrder,
                                               setFirstTimeStepValues=ctx.setFirstTimeStepValues,
                                               useNonlinearAdvection=ctx.useNonlinearAdvection,
                                               usePressureExtrapolations=ctx.usePressureExtrapolations,
-                                              useConservativePressureTerm=ctx.useConservativePressureTerm)
+                                              useConservativePressureTerm=ctx.useConservativePressureTerm,
+                                              g=ctx.gvec)
 
 if ctx.opts.analytical:
     analyticalSolution = {0:ctx.AnalyticSolutionConverter(ctx.utrue,ctx.gradutrue),
@@ -42,40 +43,28 @@ if ctx.opts.analytical:
 # Define boundary conditions and initial conditions of system
 
 def getDBC_u(x,flag):
-    if flag in [ctx.boundaryTags['bottom'],
-                ctx.boundaryTags['top'],
-                ctx.boundaryTags['fixed']]:
-       return lambda x,t: ctx.utrue(x,t)
-    else:
-        return None
+    return None
 
 def getDBC_v(x,flag):
-    if flag in [ctx.boundaryTags['bottom'],
-                ctx.boundaryTags['top'],
-                ctx.boundaryTags['fixed']]:
-        return lambda x,t: ctx.vtrue(x,t)
-    else:
-        return None
+    return None
 
-def getDFlux(x,flag):
-    if flag == 0: # artificial boundary from parallelization
-       return lambda x,t: 0.0
-    else:
-        return None
+def getDFlux_u(x,flag):
+    return lambda x,t: 0.0
+
+def getDFlux_v(x,flag):
+    return lambda x,t: 0.0
 
 class getIBC_u:
     def __init__(self):
-        self.utrue=ctx.utrue
         pass
     def uOfXT(self,x,t):
-        return self.utrue(x,t)
+        return 0.0
 
 class getIBC_v:
     def __init__(self):
-        self.vtrue=ctx.vtrue
         pass
     def uOfXT(self,x,t):
-        return self.vtrue(x,t)
+        return 0.0
 
 initialConditions = {0:getIBC_u(),
                      1:getIBC_v()}
@@ -83,5 +72,5 @@ initialConditions = {0:getIBC_u(),
 dirichletConditions = {0:getDBC_u,
                        1:getDBC_v }
 
-diffusiveFluxBoundaryConditions = {0:{0:getDFlux},
-                                   1:{1:getDFlux}}
+diffusiveFluxBoundaryConditions = {0:{0:getDFlux_u},
+                                   1:{1:getDFlux_v}}

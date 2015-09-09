@@ -15,9 +15,7 @@ DT = ctx.DT
 elementQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd,ctx.quad_degree)
 elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_degree)
 
-#numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
-#numericalFluxType = NumericalFlux.ConstantAdvection_Diffusion_SIPG_exterior #weak boundary conditions (upwind ?)
-numericalFluxType = NumericalFlux.Advection_DiagonalUpwind_Diffusion_SIPG_exterior #weak boundary conditions (upwind ?)
+numericalFluxType = NumericalFlux.ConstantAdvection_Diffusion_SIPG_exterior #weak boundary conditions (upwind ?)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
@@ -47,18 +45,18 @@ levelNonlinearSolver = NonlinearSolvers.Newton
 #linear solve rtolerance
 
 linTolFac = 0.0
-l_atol_res = 0.1*ctx.phi_atol_res
+l_atol_res = 0.01*ctx.phi_atol_res
 tolFac = 0.0
 nl_atol_res = ctx.phi_atol_res
 nonlinearSolverConvergenceTest = 'r'
 levelNonlinearSolverConvergenceTest = 'r'
 linearSolverConvergenceTest             = 'r-true'
-
+maxLineSearches=0
 periodicDirichletConditions=None
 
 # post processing
 
 if not ctx.useVelocityComponents:
-    conservativeFlux = {0:'pwl-bdm'} #'point-eval','pwl-bdm'
+    conservativeFlux = {0:'pwl-bdm-opt'} #'point-eval','pwl-bdm-opt'
 else:
     conservativeFlux=None

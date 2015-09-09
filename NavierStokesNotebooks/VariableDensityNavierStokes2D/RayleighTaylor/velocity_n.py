@@ -43,11 +43,17 @@ else:
     numericalFluxType = NumericalFlux.HamiltonJacobi_DiagonalLesaintRaviart_Diffusion_SIPG_exterior
 
 if ctx.useVelocityASGS:
-    subgridError = HamiltonJacobiDiffusionReaction_ASGS(coefficients,
-                                                        nd=ctx.nd,
-                                                        stabFlag='2',
-                                                        lag=False)
-                                                        
+   subgridError = HamiltonJacobiDiffusionReaction_ASGS(coefficients,
+                                                       nd=ctx.nd,
+                                                       stabFlag='2',
+                                                       lag=False)
+
+shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(coefficients,
+                                                      ctx.nd,
+                                                      lag = False,
+                                                      shockCapturingFactor = 0.5,
+                                                      nStepsToDelay=2,
+                                                      isotropic=True)
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
 #numerics.multilevelLinearSolver = LinearSolvers.KSP_petsc4py
@@ -79,7 +85,7 @@ levelNonlinearSolver = NonlinearSolvers.Newton
 # nl_atol_res = 1.0e-5
 
 linTolFac = 0.0
-l_atol_res = 0.1*ctx.velocity_atol_res
+l_atol_res = 0.01*ctx.velocity_atol_res
 tolFac = 0.0
 nl_atol_res = ctx.velocity_atol_res
 nonlinearSolverConvergenceTest      = 'r'
@@ -91,3 +97,5 @@ periodicDirichletConditions=None
 # post processing
 
 conservativeFlux=None
+maxLineSearches = 0
+maxNonlinearIts =100

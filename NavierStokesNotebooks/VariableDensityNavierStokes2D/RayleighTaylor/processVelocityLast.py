@@ -6,22 +6,16 @@ import shelve # to open and read the database file
 
 import numpy as np
 
-usePlots = True
+import matplotlib.pyplot as plt
+from matplotlib import rc
+rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+## for Palatino and other serif fonts use:
+#rc('font',**{'family':'serif','serif':['Palatino']})
+rc('text', usetex=True)
 
-if usePlots:
-    import matplotlib
-    matplotlib.use('AGG')   # generate png output by default
-
-    import matplotlib.pyplot as plt
-    from matplotlib import rc
-    rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-    ## for Palatino and other serif fonts use:
-    #rc('font',**{'family':'serif','serif':['Palatino']})
-    rc('text', usetex=True)
-
-    # create plots for time series of errors
-    fig_L2, ax_L2 = plt.subplots(nrows=1, ncols=1)
-    fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
+# create plots for time series of errors
+fig_L2, ax_L2 = plt.subplots(nrows=1, ncols=1)
+fig_H1, ax_H1 = plt.subplots(nrows=1, ncols=1)
 
 # read in file names and test if they can be found.  if so
 # then add them to our list of filenames to be processed
@@ -65,7 +59,7 @@ for i in range(num_filenames):
 # momentum0.db, momentum1.db, momentum2.db, etc
 
 numTimeSteps = [None]*num_filenames
-dt = [0.0]*num_filenames
+dt = [None]*num_filenames
 vel_maxL2Norm =[None]*num_filenames
 vel_maxH1Norm = [None]*num_filenames
 vel_ell2L2Norm = [None]*num_filenames
@@ -74,7 +68,7 @@ vel_ell2H1Norm = [None]*num_filenames
 # do analysis of errors
 for i in range(num_filenames):
     numTimeSteps[i] = len(database[i]['timeValues'])-1 # subtract 1 to get the number of steps not the number of time values
-    dt[i] = np.max(np.array(database[i]['timeValues'])[1:-1]-np.array(database[i]['timeValues'])[0:-2])
+    dt[i] = 1.0#database[i]['timeValues'][1] - database[i]['timeValues'][0]
 
     # extract data from database i
     u_L2Error = np.array([0] + database[i]['errorData'][0][0]['error_u_L2'])
@@ -95,41 +89,18 @@ for i in range(num_filenames):
     print "  ||v||_{Linf-H1}\t= %2.4e" %vel_maxH1Norm[i]
 
 
-    # calculate the \ell_2 time E space norm
-    vel_ell2L2Norm[i] = 0
-    vel_ell2H1Norm[i] = 0
-    tnList = database[i]['timeValues']
-    for j,t in enumerate(tnList):
-        if j == 0: continue  # skip first step
-        dtn = tnList[j] - tnList[j-1]
-        vel_ell2L2Norm[i] += dtn * vel_L2Error[j]**2
-        vel_ell2H1Norm[i] += dtn * vel_H1Error[j]**2
+# format plots
+ax_L2.set_xlabel('Time')
+ax_L2.set_ylabel(r'$e_h(t)$')
+ax_L2.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+fig_L2.savefig('plotVelocityErrorL2.png', bbox_inches='tight')
+plt.close(fig_L2)
 
-    vel_ell2L2Norm[i] = np.sqrt(vel_ell2L2Norm[i])
-    vel_ell2H1Norm[i] = np.sqrt(vel_ell2H1Norm[i])
-
-    print "\\ell_2 in time norms for database %1d with numTimeSteps = %05d:" %(i,numTimeSteps[i])
-    print "  ||v||_{\\ell_2-L2}\t= %2.4g" %vel_ell2L2Norm[i]
-    print "  ||v||_{\\ell_2-H1}\t= %2.4g" %vel_ell2H1Norm[i]
-
-    if usePlots:
-        # plot time series of errors
-        ax_L2.plot(tnList, vel_L2Error,label='dt=%1.5f' %dt[i])
-        ax_H1.plot(tnList, vel_H1Error,label='dt=%1.5f' %dt[i])
-
-if usePlots:
-    # format plots
-    ax_L2.set_xlabel('Time')
-    ax_L2.set_ylabel(r'$e_h(t)$')
-    ax_L2.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    fig_L2.savefig('plotVelocityErrorL2.png', bbox_inches='tight')
-    plt.close(fig_L2)
-
-    ax_H1.set_xlabel('Time')
-    ax_H1.set_ylabel(r'$e_h(t)$')
-    ax_H1.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    fig_H1.savefig('plotVelocityErrorH1.png', bbox_inches='tight')
-    plt.close(fig_H1)
+ax_H1.set_xlabel('Time')
+ax_H1.set_ylabel(r'$e_h(t)$')
+ax_H1.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+fig_H1.savefig('plotVelocityErrorH1.png', bbox_inches='tight')
+plt.close(fig_H1)
 
 
 
@@ -148,7 +119,7 @@ if num_filenames > 1:
         rate_vel_ell2H1Norm[i] = -np.log(vel_ell2H1Norm[i]/vel_ell2H1Norm[i-1])/np.log(float(numTimeSteps[i])/numTimeSteps[i-1])
 
 
-    print "\nAdaptive Time Stepping Calculation:"
+
     print "\nnumTS   vel_maxL2   rate    vel_maxH1   rate"
     for i in range(num_filenames):
         print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
@@ -157,33 +128,5 @@ if num_filenames > 1:
     print "\nnumTS   vel_l2L2    rate    vel_l2H1    rate"
     for i in range(num_filenames):
         print "%05d   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(numTimeSteps[i],\
-                vel_ell2L2Norm[i],rate_vel_ell2L2Norm[i],\
-                vel_ell2H1Norm[i],rate_vel_ell2H1Norm[i])
-
-
-# calculate rates of convergence and make a table
-if num_filenames > 1:
-
-    rate_vel_maxL2Norm = [0]*num_filenames
-    rate_vel_maxH1Norm = [0]*num_filenames
-    rate_vel_ell2L2Norm = [0]*num_filenames
-    rate_vel_ell2H1Norm = [0]*num_filenames
-    for i in range(1,num_filenames):
-        rate_vel_maxL2Norm[i] = np.log(vel_maxL2Norm[i]/vel_maxL2Norm[i-1])/np.log(float(dt[i])/dt[i-1])
-        rate_vel_maxH1Norm[i] = np.log(vel_maxH1Norm[i]/vel_maxH1Norm[i-1])/np.log(float(dt[i])/dt[i-1])
-
-        rate_vel_ell2L2Norm[i] = np.log(vel_ell2L2Norm[i]/vel_ell2L2Norm[i-1])/np.log(float(dt[i])/dt[i-1])
-        rate_vel_ell2H1Norm[i] = np.log(vel_ell2H1Norm[i]/vel_ell2H1Norm[i-1])/np.log(float(dt[i])/dt[i-1])
-
-
-    print "\n\nUniform Time Stepping Calculation:"
-    print "\nmax dt     vel_maxL2   rate    vel_maxH1   rate"
-    for i in range(num_filenames):
-        print "%1.3e  %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
-                                                    vel_maxL2Norm[i],rate_vel_maxL2Norm[i],\
-                                                    vel_maxH1Norm[i],rate_vel_maxH1Norm[i])
-    print "\nmax dt      vel_l2L2    rate    vel_l2H1    rate"
-    for i in range(num_filenames):
-        print "%1.3e   %3.3e  %+1.2f    %3.3e  %+1.2f"  %(dt[i],\
                 vel_ell2L2Norm[i],rate_vel_ell2L2Norm[i],\
                 vel_ell2H1Norm[i],rate_vel_ell2H1Norm[i])

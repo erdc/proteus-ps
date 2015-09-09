@@ -23,7 +23,6 @@ elementBoundaryQuadrature = Quadrature.SimplexGaussQuadrature(ctx.nd-1,ctx.quad_
 
 
 #matrix type
-#numericalFluxType = NumericalFlux.StrongDirichletFactory(fluxBoundaryConditions) #strong boundary conditions
 numericalFluxType = NumericalFlux.ConstantAdvection_exterior
 matrix = LinearAlgebraTools.SparseMatrix
 #use petsc solvers wrapped by petsc4py
@@ -53,7 +52,7 @@ linTolFac = 0.0
 l_atol_res = 0.1*ctx.pressure_atol_res
 tolFac = 0.0
 nl_atol_res = ctx.pressure_atol_res
-
+maxLineSearches = 0
 nonlinearSolverConvergenceTest      = 'r'
 levelNonlinearSolverConvergenceTest = 'r'
 linearSolverConvergenceTest         = 'r-true'
