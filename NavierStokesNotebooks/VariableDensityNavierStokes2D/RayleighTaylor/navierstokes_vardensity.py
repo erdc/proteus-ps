@@ -43,8 +43,9 @@ useInitialConditions=int(0) # 0 = use Interpolation initial conditions
 
 # Spatial Discretization  he = he_coeff*2*Pi/150.0
 he_coeff = 0.025
-he_coeff *= 2.0
-#he_coeff *= 0.5
+#he_coeff *= 2.0
+#he_coeff *= 2.0
+he_coeff *= 0.5
 time_offset_coeff = 0.0  # offsets time by coeff*pi ie (t0 = 0 + coeff pi)
 # setup time variables
 
@@ -59,7 +60,7 @@ Re = 1000.0
 mu = (rho_min*d**(3.0/2.0)*g**(1.0/2.0))/Re
 T = 2.5/sqrt(At)  # length of time interval
 DT = 0.00125
-DT *= 2.0
+#DT *= 2.0
 #DT*= 0.5
 class AnalyticSolutionConverter:
     """
@@ -152,7 +153,7 @@ logEvent("""Mesh generated using: triangle -%s %s"""  % (triangleOptions,domain.
 def rho_init(x,y):
     from math import cos,pi,tanh
     eta = -0.1*d*cos(2.0*pi*x/d)
-    rho = rho_min*(2.0+tanh((y - eta)/(0.01*d)))
+    rho = rho_min*(2.0+tanh((y - eta)/max(he_coeff,0.01*d)))
     return max(rho_min,min(rho_max,rho))
 
 rho_init_v = np.vectorize(rho_init)
@@ -182,10 +183,10 @@ def gradptrue(x,t):
     return np.zeros(x.shape)
 
 # numerical tolerances
-density_atol_res = 1.0e-4
-velocity_atol_res = 1.0e-4
-phi_atol_res = 1.0e-6
-pressure_atol_res = 1.0e-4
+density_atol_res =  max(0.1*he_coeff**2,1.0e-8)
+velocity_atol_res = max(0.1*he_coeff**2,1.0e-8)
+phi_atol_res = max(0.1*he_coeff**2,1.0e-8)
+pressure_atol_res = max(0.1*he_coeff**2,1.0e-8)
 
 
 parallelPartitioningType = proteus.MeshTools.MeshParallelPartitioningTypes.node

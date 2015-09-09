@@ -40,7 +40,7 @@ if ctx.useDensityASGS:
 #                                               lag=False)
     subgridError = SubgridError.AdvectionDiffusionReaction_ASGS(coefficients,
                                                                 ctx.nd,
-                                                                stabFlag='1',
+                                                                stabFlag='2',
                                                                 lag=False)
 
 shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(coefficients,

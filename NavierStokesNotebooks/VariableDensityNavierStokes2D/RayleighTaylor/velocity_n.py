@@ -45,7 +45,7 @@ else:
 if ctx.useVelocityASGS:
    subgridError = HamiltonJacobiDiffusionReaction_ASGS(coefficients,
                                                        nd=ctx.nd,
-                                                       stabFlag='1',
+                                                       stabFlag='2',
                                                        lag=False)
 
 shockCapturing = ShockCapturing.ResGradQuadDelayLag_SC(coefficients,
