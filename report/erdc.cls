@@ -207,8 +207,8 @@ US Army Corps of Engineers]
 \newcommand{\coverart}[2][]{%
   \def\@tempa{#1}%
   \ifx\@empty\@tempa
-     \gdef\@coverart{\includegraphics[width=435\p@]{#2}}\else
-     \gdef\@coverart{\includegraphics[#1]{#2}}\fi}
+     \gdef\@coverart{\begin{center}\includegraphics[width=435\p@]{#2}\end{center}}\else
+     \gdef\@coverart{\begin{center}\includegraphics[#1]{#2}\end{center}}\fi}
 \def\@coverart{}%
 \def\reporttype#1{\gdef\@reporttype{#1}}
 \reporttype{}
